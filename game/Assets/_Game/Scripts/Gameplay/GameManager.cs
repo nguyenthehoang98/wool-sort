@@ -178,7 +178,7 @@ namespace _Game.Scripts.Gameplay
             YarnRopeController.Instance.ClearAllRopes();
 
             // --- 5) Sau đó khởi tạo UI
-            GameUIController.Instance.InitUI(currentLevel, countYarnRemain);
+            GameUIController.Instance.InitUI(currentLevel);
 
             maxScale = targetLevelTransform.GetComponent<LeanConstrainScale>().MaximumScale.x;
             currentZoomThresholdIndex = 0;
@@ -317,7 +317,7 @@ namespace _Game.Scripts.Gameplay
             if (isGameOver)
                 return;
 
-            UpdateCountYarnRemain();
+            countYarnRemain--;
 
             // gọi Auto-zoom mỗi khi click clear piece
             if (currentLevel != 1)
@@ -325,12 +325,6 @@ namespace _Game.Scripts.Gameplay
                 CheckAutoZoomAndReposition();
             }
 
-        }
-
-        public void UpdateCountYarnRemain()
-        {
-            countYarnRemain--;
-            GameUIController.Instance.UpdatePartCounter(countYarnRemain);
         }
 
         private void CheckAutoZoomAndReposition()
@@ -985,11 +979,6 @@ namespace _Game.Scripts.Gameplay
         public int GetCountYarnRemain()
         {
             return countYarnRemain;
-        }
-
-        public int GetCountYarnTotal()
-        {
-            return currentLevelHolder.totalYarnPartCount;
         }
 
     }

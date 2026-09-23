@@ -35,9 +35,6 @@ namespace _Game.Scripts.Gameplay
         [Header("Slider")][SerializeField] private ScaleSliderSync scaleSlider;
 
         [Header("Level Info")]
-        [SerializeField] private GameObject yarnRemainContainer;
-        [SerializeField] private TextMeshProUGUI txtYarnRemain;
-
         [SerializeField] private TextMeshProUGUI txtLevel;
 
         private bool isLockClick;
@@ -66,13 +63,12 @@ namespace _Game.Scripts.Gameplay
         }
 
         // Mỗi khi load level thì phải khởi tạo lại 1 số thành phần UI theo lv
-        public void InitUI(int lv, int yarnStart)
+        public void InitUI(int lv)
         {
             HideResultPopup();
             ResetData();
 
             scaleSlider.SetTargetScale(GameManager.Instance.GetTargetLevel());
-            UpdatePartCounter(yarnStart);
             //thumbnailController.SetupThumbnails(lv);
 
             txtLevel.gameObject.SetActive(true);
@@ -175,13 +171,6 @@ namespace _Game.Scripts.Gameplay
             var img = go.GetComponent<Image>();
             img.color = Color.red;
         }
-
-        public void UpdatePartCounter(int value)
-        {
-            var totalYarn = GameManager.Instance.GetCountYarnTotal();
-            txtYarnRemain.text = (totalYarn - value) + " / " + totalYarn;
-        }
-
 
         #region Win/Lose
 
