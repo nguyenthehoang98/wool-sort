@@ -6,15 +6,18 @@ Bạn là coding agent triển khai redesign Unity/C#. Đọc các file trong th
 
 ## Evidence priority
 
-1. Source/asset project hiện tại tại `D:/Projects/wool-sort`.
-2. `docs/00-current-state.md` và các feature docs.
-3. File Word chỉ là bối cảnh, không phải technical source of truth.
+1. Target project và acceptance contract của task.
+2. Reference/asset project tại `C:/Users/Admin/Documents/Projects/wool-sort` để xác minh hành vi hiện tại.
+3. `docs/00-current-state.md` và các feature docs.
+4. File Word chỉ là bối cảnh, không phải technical source of truth.
+
+Reference chỉ để tham khảo và re-implement theo contract; không copy nguyên code hoặc kiến trúc lỗi sang target.
 
 Nếu phát hiện mâu thuẫn: dừng phần implementation liên quan, ghi rõ mâu thuẫn, không đoán silent.
 
 ## Hard constraints
 
-- Không sửa `D:/Projects/wool-sort` trong task tạo tài liệu này.
+- Không sửa `C:/Users/Admin/Documents/Projects/wool-sort` trong task tạo tài liệu hoặc triển khai reference mapping.
 - Không commit/copy secret, keystore, license key, receipt hoặc service config vào docs.
 - Không thêm backend, multiplayer, DI framework, event bus mới, Addressables hoặc hệ thống AB test nếu task không yêu cầu.
 - Core gameplay phải chạy khi ad/IAP/analytics/localization service lỗi.
@@ -37,6 +40,8 @@ Nếu phát hiện mâu thuẫn: dừng phần implementation liên quan, ghi r�
 | QA | `10-acceptance-tests.md` |
 
 ## Implementation protocol
+
+Thực thi theo backlog [`../tasks/todo.md`](../tasks/todo.md) và ghi kết quả từng ngày vào [`../docs/weekly-worklog.md`](../docs/weekly-worklog.md). Không đánh dấu task hoàn thành nếu chưa có acceptance/evidence.
 
 1. Đọc contract feature và source caller/callee liên quan.
 2. Viết/đổi test nhỏ nhất cho rule.

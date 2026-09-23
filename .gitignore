@@ -22,3 +22,16 @@
 *.unityproj
 *.sln
 *.suo
+game/Library
+game/Temp
+game/Logs
+game/UserSettings
+
+# Reference project credentials/config generated outside source control
+game/Assets/liences_key.txt
+game/Assets/liences_key.txt.meta
+game/Assets/google-services.json
+game/Assets/google-services.json.meta
+game/Assets/StreamingAssets/google-services-desktop.json
+game/Assets/StreamingAssets/google-services-desktop.json.meta
+game/Assets/Plugins/Android/FirebaseApp.androidlib/res/values/google-services.xml

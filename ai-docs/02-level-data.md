@@ -64,6 +64,6 @@ Create an Editor/build validator that reports, not silently repairs:
 
 ## Current snapshot warnings
 
-- Project version is Unity `6000.3.21f1`; old Word brief says `2022.3.50f1`.
+- Reference version is Unity `2022.3.50f1`; target version is Unity `6000.3.21f1`. Do not open the target with another Unity version.
 - GeneralConfig has 300 definitions and 88 order entries.
 - Asset folders contain more level artifacts than the current order; unreferenced assets are not automatically deleted.

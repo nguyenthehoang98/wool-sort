@@ -1,8 +1,9 @@
-# 00 — Phân tích trạng thái hiện tại
+# 00 — Phân tích reference và trạng thái target
 
 ## Snapshot đã đọc
 
-- Project Unity: `6000.3.21f1` trong `ProjectSettings/ProjectVersion.txt`.
+- Reference Unity: `2022.3.50f1`; target Unity: `6000.3.21f1` trong `game/ProjectSettings/ProjectVersion.txt`. Reference chỉ dùng để đối chiếu, không copy code.
+- Target hiện là Unity template trống tại `game/`; các scene, script và số liệu bên dưới là snapshot của reference, chưa phải trạng thái đã có trong target.
 - Build scenes: `EntryScene`, `Home`, `Gameplay`.
 - Core gameplay nằm trong `Assets/_Game/Scripts`.
 - 156 C# file trong `Assets/_Game`; có thêm SDK/package lớn bên ngoài.
@@ -13,13 +14,13 @@
 - Booster: `AddSlot`, `Clean`, `MagicBox`.
 - Tài nguyên: coin, heart, infinite heart, booster inventory, remove ads.
 
-## Luồng scene
+## Luồng scene của reference
 
 1. `EntryScene`: load `GameData`, heart, config, SDK, audio; sau loading chuyển vào `Gameplay` nếu level = 1, ngược lại vào `Home`.
 2. `Home`: danh sách các level gần level hiện tại, shop/menu, daily reward và nút play.
 3. `Gameplay`: load prefab `Resources/Levels/Level{realLevel}`, khởi tạo board, box, waiting area, HUD và tutorial.
 
-## Kiến trúc đang có
+## Kiến trúc đang có trong reference
 
 - Nhiều singleton runtime: `GameManager`, `BoxManager`, `SlotManager`, `WaitingAreaManager`, `BoosterManager`, `YarnRopeController`, `GameData`.
 - `GameManager` đang giữ cả level lifecycle, dữ liệu YarnPart, thắng/thua, chọn màu box, tutorial và analytics.
@@ -51,7 +52,7 @@
 
 ## Mâu thuẫn cần chốt
 
-Tài liệu Word ghi Unity `2022.3.50f1`, còn project hiện tại ghi Unity `6000.3.21f1`. Redesign phải lấy `ProjectVersion.txt` làm nguồn kỹ thuật; chỉ dùng tài liệu Word cho bối cảnh đồ án.
+Reference project chạy Unity 2022, còn target `puzzle-game/game` chạy Unity `6000.3.21f1`. Không mở target bằng version khác; mọi khác biệt API/package phải được kiểm tra theo Unity 6.
 
 ## Nguyên tắc redesign
 

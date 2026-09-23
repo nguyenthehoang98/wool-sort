@@ -1,14 +1,15 @@
 # Wool Sort Master — tài liệu thiết kế lại
 
-Bộ tài liệu này được tạo từ việc đọc source tại `D:/Projects/wool-sort` và dùng để thiết kế lại game bằng AI.
+Bộ tài liệu này được tạo từ việc đọc reference project tại `C:/Users/Admin/Documents/Projects/wool-sort` và dùng để thiết kế lại game bằng AI. Reference chỉ dùng để tham khảo hành vi/asset/data; không copy nguyên code.
 
 ## Cách đọc
 
 - `gamedesign/`: tài liệu thiết kế game dành cho product/design/QA, có bản DOCX và hình ảnh.
 - `docs/`: bản phân tích và thiết kế hệ thống dành cho người đọc kỹ thuật.
 - `ai-docs/`: hợp đồng dành cho AI — dữ kiện có thể kiểm chứng, state machine, interface, acceptance criteria và thứ tự triển khai.
+- `features/`: tóm tắt từng feature sau khi làm: luồng xử lý, file/class, placeholder/reskin và bằng chứng QA.
 - Đọc [`00-current-state.md`](00-current-state.md) trước để hiểu giới hạn của bản hiện tại.
-- Khi triển khai, dùng [`../ai-docs/README.md`](../ai-docs/README.md) làm luật ưu tiên; không suy diễn tính năng không có trong tài liệu.
+- Khi triển khai, dùng [`../ai-docs/README.md`](../ai-docs/README.md) làm luật ưu tiên; backlog ở [`../tasks/todo.md`](../tasks/todo.md), worklog theo ngày ở [`weekly-worklog.md`](weekly-worklog.md); không suy diễn tính năng không có trong tài liệu.
 
 ## Phạm vi redesign
 
@@ -36,4 +37,4 @@ Không nằm trong phạm vi mặc định: backend riêng, multiplayer, xếp h
 
 ## Ghi chú về nguồn
 
-Đây là tài liệu phân tích snapshot, không phải cam kết rằng mọi asset đều đang được dùng runtime. Khi source, scene và tài liệu Word mâu thuẫn, ưu tiên source/asset đang mở được trong project; mọi điểm chưa xác minh được đánh dấu rõ trong tài liệu.
+Đây là tài liệu phân tích snapshot, không phải cam kết rằng mọi asset đều đang được dùng runtime. Khi target project, reference scene và tài liệu Word mâu thuẫn, ưu tiên target/contract của task; dùng reference để xác minh hành vi hiện tại và đánh dấu rõ điểm khác biệt. Không sửa reference project trong quá trình làm tài liệu hoặc triển khai.

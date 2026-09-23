@@ -1,5 +1,9 @@
 # Source inventory — evidence map
 
+Reference project: `C:/Users/Admin/Documents/Projects/wool-sort`.
+
+Inventory này ghi nhận evidence để phân tích; không đồng nghĩa được copy nguyên code. Mọi thay đổi phải thực hiện trên target project sau khi target được xác nhận.
+
 ## Scenes/build
 
 - `Assets/Scenes/EntryScene.unity`

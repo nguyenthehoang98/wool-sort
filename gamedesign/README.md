@@ -8,7 +8,7 @@ Mục tiêu là mô tả game theo góc nhìn sản phẩm: người chơi làm 
 
 - `Wool-Sort-Game-Design-Document.docx`: bản Word có hình ảnh tham khảo từ project hiện tại.
 - `Wool-Sort-Game-Design-Document.md`: bản text dễ diff/cập nhật bằng Git hoặc AI.
-- `assets/screenshots/`: screenshot hiện có được trích từ `D:/Projects/wool-sort/Assets/_Game/Previews`.
+- `assets/screenshots/`: screenshot hiện có được trích từ reference `C:/Users/Admin/Documents/Projects/wool-sort/Assets/_Game/Previews`.
 
 ## Các feature
 

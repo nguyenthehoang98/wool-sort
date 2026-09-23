@@ -7,15 +7,19 @@ name: acceptance-suite
 
 ## Core resolver
 
-- [ ] Tap compatible piece fills matching box slot before waiting slot.
-- [ ] Box selection prefers the box with the greatest current fill count.
-- [ ] Waiting fallback is stable left-to-right.
-- [ ] Wrong color/no slot is a no-op.
-- [ ] Full box rejects input.
-- [ ] Piece can be selected once only.
-- [ ] Inner layer appears only according to layer state.
-- [ ] Win emits once after pieces and pending animations resolve.
-- [ ] Lose emits once when waiting is full and no legal resolution remains.
+- [x] Tap compatible piece fills matching box slot before waiting slot.
+- [x] Box selection prefers the box with the greatest current fill count.
+- [x] Waiting fallback is stable left-to-right.
+- [x] Wrong color/no slot is a no-op.
+- [x] Full box rejects input.
+- [x] Piece can be selected once only.
+- [x] Inner layer appears only according to layer state.
+- [x] Win emits once after pieces and pending animations resolve.
+- [x] Lose emits once when waiting is full and no legal resolution remains.
+
+Evidence: `game/Assets/_Game/Tests/PuzzleResolverTests.cs`; Unity 6 EditMode evidence `docs/evidence/w1-editmode-tests.md` — 16/16 passed. Scene/Application integration remains unverified.
+
+Detailed IDs `CORE-01` through `CORE-16` for the core resolver are defined in [`../docs/week1-core-contract.md`](../docs/week1-core-contract.md); this checklist remains the cross-feature acceptance summary.
 
 ## Level content
 
@@ -54,7 +58,7 @@ name: acceptance-suite
 
 ## Runtime smoke checklist
 
-- [ ] Build in current Unity version from `ProjectVersion.txt`.
+- [ ] Build with Unity `6000.3.21f1`; target `ProjectVersion.txt` matches and the target is not opened with another Unity version.
 - [ ] Test first level on Android device.
 - [ ] Test app pause/resume during dissolve, booster, ad and purchase.
 - [ ] Test kill/relaunch during reward grant.
