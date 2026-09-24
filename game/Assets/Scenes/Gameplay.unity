@@ -603,15 +603,16 @@ MonoBehaviour:
       m_Calls: []
   m_text: LEVEL {[PARAM_0]}
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 201d8ba94316be146849479b2ec8951d, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 1fb04df0de5735d49a937f19af1c9d26, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 057e742e8563fff48bbb3888819d17df, type: 2}
+  m_sharedMaterial: {fileID: 2536004628413606107, guid: 057e742e8563fff48bbb3888819d17df,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

@@ -216,7 +216,7 @@ Shader "ToonyColor"
 /*ASEBEGIN
 Version=18800
 1920;0;1920;1011;-1921.109;-370.8536;1.566354;True;False
-Node;AmplifyShaderEditor.SamplerNode;234;116.5258,703.6472;Inherit;True;Property;_Texture;Texture;0;1;[Header];Create;True;1;BASE COLOR;0;0;False;0;False;-1;None;3fbcf9992604fa64a9872a3a1e02277f;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;234;116.5258,703.6472;Inherit;True;Property;_Texture;Texture;0;1;[Header];Create;True;1;BASE COLOR;0;0;False;0;False;-1;None;92f32aeba52c73a449408047847ac333;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;650;136.5099,1332.013;Inherit;False;Property;_ColorTint;Color Tint;3;0;Create;True;0;0;0;False;0;False;1,1,1,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SamplerNode;648;99.86739,919.1755;Inherit;True;Property;_ColorMask;Color Mask;8;0;Create;True;0;0;0;False;0;False;-1;None;95aa77b8a6ff08143839410177203dd4;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;646;463.459,785.4688;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
