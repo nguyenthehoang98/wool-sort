@@ -18,7 +18,7 @@ namespace _Game.Scripts.Gameplay
         [SerializeField] private AnimationClip changeClip;
 
         [Header("Mesh")]
-        [SerializeField] private MeshRenderer basketMesh;
+        [SerializeField] private MeshRenderer[] basketMeshes;
 
         [Header("Target Rope")]
         [SerializeField] private Transform targetRope;
@@ -139,7 +139,14 @@ private YarnColor boxColor;
         private void ApplyColor(YarnColor color)
         {
             var mat = YarnColorManager.Instance.GetBasketMaterial(color);
-            basketMesh.material = mat;
+            if (basketMeshes == null)
+                return;
+
+            foreach (var basket in basketMeshes)
+            {
+                if (basket != null)
+                    basket.material = mat;
+            }
         }
 
         private void PlayBounceEffect()

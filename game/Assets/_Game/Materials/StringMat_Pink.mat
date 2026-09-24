@@ -158,3 +158,4 @@ Material:
     - _PaintLayer: {r: 1, g: 0.9977401, b: 0.9669811, a: 1}
     - _ShadowColor: {r: 0.83137256, g: 0.15294118, b: 0.48235294, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

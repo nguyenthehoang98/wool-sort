@@ -20,6 +20,52 @@ public sealed class ModelAssetExporterWindow : EditorWindow
         GetWindow<ModelAssetExporterWindow>("Model Exporter");
     }
 
+    [MenuItem("Assets/Export Mesh", false, 2000)]
+    private static void ExportSelectedMesh()
+    {
+        var mesh = Selection.activeObject as Mesh;
+        if (mesh == null)
+            return;
+
+        var sourcePath = AssetDatabase.GetAssetPath(mesh);
+        var directory = string.IsNullOrEmpty(sourcePath)
+            ? string.Empty
+            : Path.GetDirectoryName(Path.GetFullPath(sourcePath));
+        var path = EditorUtility.SaveFilePanel("Export mesh", directory, mesh.name, "fbx");
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        var exportObject = new GameObject(mesh.name)
+        {
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        exportObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+        exportObject.AddComponent<MeshRenderer>();
+
+        try
+        {
+            var exportedPath = ModelExporter.ExportObject(path, exportObject);
+            if (string.IsNullOrEmpty(exportedPath) || !File.Exists(exportedPath))
+                throw new IOException("The FBX exporter did not create a file.");
+
+            Debug.Log($"Mesh exported to {exportedPath}", mesh);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception, mesh);
+        }
+        finally
+        {
+            Object.DestroyImmediate(exportObject);
+        }
+    }
+
+    [MenuItem("Assets/Export Mesh", true)]
+    private static bool CanExportSelectedMesh()
+    {
+        return Selection.activeObject is Mesh;
+    }
+
     private void CreateGUI()
     {
         rootVisualElement.Add(new Label("Export a Unity model asset to OBJ or FBX."));
