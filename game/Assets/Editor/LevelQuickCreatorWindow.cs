@@ -14,6 +14,7 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
     private const string TemplatePath = "Assets/Resources/Levels/Level1.prefab";
     private const string LevelsFolder = "Assets/Resources/Levels";
     private const string ColorDatabasePath = "Assets/_Game/Configs/YarnColorDatabase.asset";
+    private const float TargetModelMaxSize = 6.5698f; // Average max bounds of Backup/Level1 and Backup/Level3.
 
     private readonly List<MeshPartChoice> parts = new List<MeshPartChoice>();
     private GameObject modelAsset;
@@ -190,12 +191,18 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
             while (root.transform.childCount > 0)
                 UnityEngine.Object.DestroyImmediate(root.transform.GetChild(0).gameObject);
 
-            var modelInstance = PrefabUtility.InstantiatePrefab(modelAsset, root.transform) as GameObject;
+            var modelRoot = new GameObject("ModelRoot").transform;
+            modelRoot.SetParent(root.transform, false);
+            modelRoot.localPosition = localPosition;
+            modelRoot.localRotation = localRotation;
+
+            var modelInstance = PrefabUtility.InstantiatePrefab(modelAsset, modelRoot) as GameObject;
             if (modelInstance == null)
                 throw new InvalidOperationException("Không thể instantiate model đã chọn.");
-            modelInstance.transform.localPosition = localPosition;
-            modelInstance.transform.localRotation = localRotation;
+            modelInstance.transform.localPosition = Vector3.zero;
+            modelInstance.transform.localRotation = Quaternion.identity;
             modelInstance.transform.localScale = localScale;
+            modelRoot.localScale = Vector3.one * (TargetModelMaxSize / GetMaxRendererBoundsSize(modelInstance));
             root.name = name;
 
             var createdParts = new List<YarnPart>();
@@ -262,6 +269,24 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
             if (root != null)
                 PrefabUtility.UnloadPrefabContents(root);
         }
+    }
+
+    private static float GetMaxRendererBoundsSize(GameObject model)
+    {
+        var renderers = model.GetComponentsInChildren<Renderer>(true)
+            .Where(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy)
+            .ToArray();
+        if (renderers.Length == 0)
+            throw new InvalidOperationException("Model không có Renderer đang hoạt động.");
+
+        var bounds = renderers[0].bounds;
+        for (var i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+
+        var size = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+        if (size <= Mathf.Epsilon)
+            throw new InvalidOperationException("Không tính được kích thước Renderer của model.");
+        return size;
     }
 
     private string GetNextLevelName()
