@@ -1,0 +1,5 @@
+{
+  "name": "ResultPopupProgressionTests",
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

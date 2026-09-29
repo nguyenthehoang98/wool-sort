@@ -216,7 +216,11 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
                     throw new InvalidOperationException($"Mesh hoặc material màu không hợp lệ: {choice.path} ({choice.color}).");
 
                 target.gameObject.layer = yarnLayer;
-                var collider = target.GetComponent<MeshCollider>() ?? target.gameObject.AddComponent<MeshCollider>();
+                var collider = target.GetComponent<MeshCollider>();
+                if (collider == null)
+                    collider = target.gameObject.AddComponent<MeshCollider>();
+                if (collider == null)
+                    throw new InvalidOperationException($"Không thể tạo MeshCollider cho mesh: {choice.path}.");
                 collider.sharedMesh = filter.sharedMesh;
                 collider.convex = false;
 

@@ -47,6 +47,7 @@ namespace _Game.Scripts.Gameplay
         private TextMeshProUGUI resultActionLabel;
         private Button resultActionButton;
         private bool resultPopupShown;
+        private bool resultWon;
 
         private void Awake()
         {
@@ -237,6 +238,7 @@ namespace _Game.Scripts.Gameplay
                 return;
 
             resultPopupShown = true;
+            resultWon = won;
             isLockClick = true;
             boardTransform.localScale = Vector3.zero;
             resultTitle.text = won ? "YOU WIN" : "LEVEL FAILED";
@@ -259,7 +261,10 @@ namespace _Game.Scripts.Gameplay
                 resultActionButton.interactable = false;
 
             HideResultPopup();
-            GameManager.Instance.LoadLevel();
+            if (resultWon)
+                GameManager.Instance.LoadNextLevel();
+            else
+                GameManager.Instance.LoadLevel();
         }
 
         private void HideResultPopup()

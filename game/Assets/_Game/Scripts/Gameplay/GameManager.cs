@@ -120,18 +120,20 @@ namespace _Game.Scripts.Gameplay
         public void LoadLevel()
         {
             ClearDecorationRoot();
-            currentLevel = 1;
-            realCurrentLevel = 3;
+            if (currentLevel < 1)
+                currentLevel = 1;
+            realCurrentLevel = currentLevel;
 
             if (currentLevelHolder != null)
             {
                 Destroy(currentLevelHolder.gameObject);
             }
 
-            var levelPrefab = Resources.Load<GameObject>("Levels/Level3");
+            var levelPath = $"Levels/Level{realCurrentLevel}";
+            var levelPrefab = Resources.Load<GameObject>(levelPath);
             if (levelPrefab == null)
             {
-                Debug.LogError("Missing Resources/Levels/Level3.prefab");
+                Debug.LogError($"Missing Resources/{levelPath}.prefab");
                 return;
             }
             var tempLevel = Instantiate(levelPrefab);
@@ -187,6 +189,16 @@ namespace _Game.Scripts.Gameplay
             GameUIController.Instance.SetGamePlayObjectPosition();
 
             StartCoroutine(PlayStartLevelSequence());
+        }
+
+        public void LoadNextLevel()
+        {
+            var nextLevel = currentLevel + 1;
+            if (Resources.Load<GameObject>($"Levels/Level{nextLevel}") == null)
+                nextLevel = 1;
+
+            currentLevel = nextLevel;
+            LoadLevel();
         }
 
         private void InitEmptyScreen()
