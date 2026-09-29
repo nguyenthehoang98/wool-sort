@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -203,7 +203,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -261,7 +261,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -338,7 +338,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -396,7 +396,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -473,7 +473,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -531,7 +531,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -608,7 +608,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: b99ad66cdceaadb409d4094c475283e6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -666,7 +666,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 12
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -743,7 +743,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -801,7 +801,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -878,7 +878,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -936,7 +936,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1013,7 +1013,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1071,10 +1071,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 1
   innerColorTypes: 00000000
-  innerFixedColors: 04000000
+  innerFixedColors: 03000000
   ancestor: {fileID: 5569487081876262957}
   rootPart: {fileID: 5569487081876262957}
   childPart: {fileID: 0}
@@ -1180,7 +1180,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1238,7 +1238,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1315,7 +1315,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1373,7 +1373,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1450,7 +1450,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1508,7 +1508,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1585,7 +1585,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 641462c13ac421d4ea56fda4f602a7e7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1643,7 +1643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 8
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1720,7 +1720,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1778,7 +1778,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -1855,7 +1855,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1913,7 +1913,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2021,7 +2021,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2079,7 +2079,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2156,7 +2156,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2214,7 +2214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2291,7 +2291,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2349,7 +2349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2426,7 +2426,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 78077ff54f36cf645bf1513897102ad4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2484,7 +2484,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 11
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2561,7 +2561,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2619,7 +2619,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2696,7 +2696,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2754,7 +2754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2831,7 +2831,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 0f7f839fdf636544ab2f06de04b9d235, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2889,7 +2889,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 0
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -2966,7 +2966,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3024,7 +3024,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -3181,7 +3181,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3239,7 +3239,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -3316,7 +3316,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3374,7 +3374,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -3451,7 +3451,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3509,7 +3509,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -3586,7 +3586,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3644,7 +3644,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -3903,7 +3903,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 0f7f839fdf636544ab2f06de04b9d235, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3961,7 +3961,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 0
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4038,7 +4038,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4096,7 +4096,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4173,7 +4173,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4231,7 +4231,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4308,7 +4308,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4366,7 +4366,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4443,7 +4443,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4501,7 +4501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4578,7 +4578,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 6f545d0041a0b544098d88392763a197, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4636,7 +4636,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 20
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4713,7 +4713,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4771,7 +4771,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4848,7 +4848,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4906,7 +4906,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -4983,7 +4983,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5041,7 +5041,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5118,7 +5118,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5176,7 +5176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5253,7 +5253,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5311,7 +5311,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5388,7 +5388,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: b99ad66cdceaadb409d4094c475283e6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5446,7 +5446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 12
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5523,7 +5523,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 71634748d8dc9994e80ada079f25d324, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5581,10 +5581,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 15
   totalInnerCount: 1
   innerColorTypes: 00000000
-  innerFixedColors: 04000000
+  innerFixedColors: 0f000000
   ancestor: {fileID: 2267749694438361932}
   rootPart: {fileID: 2267749694438361932}
   childPart: {fileID: 0}
@@ -5658,7 +5658,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5716,7 +5716,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5793,7 +5793,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5851,7 +5851,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -5960,7 +5960,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 78077ff54f36cf645bf1513897102ad4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6018,7 +6018,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 11
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6095,7 +6095,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6153,7 +6153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6230,7 +6230,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 78077ff54f36cf645bf1513897102ad4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6288,7 +6288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 11
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6365,7 +6365,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ebff68f5167f7224cbf5398d3a560665, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6423,7 +6423,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 3
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6500,7 +6500,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6558,7 +6558,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6635,7 +6635,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: 71634748d8dc9994e80ada079f25d324, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6693,7 +6693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 15
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
@@ -6770,7 +6770,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c349695104b658442aba54ee110e9622, type: 2}
+  - {fileID: 2100000, guid: ab1fdfdcffdcea94aa689b921fb9a816, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6828,7 +6828,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 4
+  initColor: 9
   totalInnerCount: 0
   innerColorTypes: 
   innerFixedColors: 
