@@ -1,0 +1,183 @@
+Color Usage Report - CHINH XAC theo YarnPart + Material
+======================================================
+Tong so level: 12
+Tong so YarnPart (outer): 608
+Tong so lan xuat hien (bao gom inner layers = sum 1+totalInnerCount): 682
+Tong so luot mau duoc dem (outer + fixed-inner + randomColorEntries): 682
+Ghi chu: % mau = so lan mau do xuat hien / tong so luot mau * 100
+
+=== TONG HOP TOAN BO LEVELS ===
+Mau 12: Orange - So luot: 241 | Ti le vs tong mau: 35.34% | Ti le vs tong spawn: 35.34%
+Mau 7: Forest - So luot: 64 | Ti le vs tong mau: 9.38% | Ti le vs tong spawn: 9.38%
+Mau 20: Yellow - So luot: 56 | Ti le vs tong mau: 8.21% | Ti le vs tong spawn: 8.21%
+Mau 11: Magenta - So luot: 55 | Ti le vs tong mau: 8.06% | Ti le vs tong spawn: 8.06%
+Mau 3: Coral - So luot: 52 | Ti le vs tong mau: 7.62% | Ti le vs tong spawn: 7.62%
+Mau 9: Green - So luot: 44 | Ti le vs tong mau: 6.45% | Ti le vs tong spawn: 6.45%
+Mau 8: Gray - So luot: 30 | Ti le vs tong mau: 4.40% | Ti le vs tong spawn: 4.40%
+Mau 0: Blue - So luot: 27 | Ti le vs tong mau: 3.96% | Ti le vs tong spawn: 3.96%
+Mau 16: Sky - So luot: 22 | Ti le vs tong mau: 3.23% | Ti le vs tong spawn: 3.23%
+Mau 15: Purple - So luot: 18 | Ti le vs tong mau: 2.64% | Ti le vs tong spawn: 2.64%
+Mau 4: Cream - So luot: 12 | Ti le vs tong mau: 1.76% | Ti le vs tong spawn: 1.76%
+Mau 13: Pink - So luot: 12 | Ti le vs tong mau: 1.76% | Ti le vs tong spawn: 1.76%
+Mau 5: Crimson - So luot: 9 | Ti le vs tong mau: 1.32% | Ti le vs tong spawn: 1.32%
+Mau 1: Brown - So luot: 8 | Ti le vs tong mau: 1.17% | Ti le vs tong spawn: 1.17%
+Mau 10: Lime - So luot: 7 | Ti le vs tong mau: 1.03% | Ti le vs tong spawn: 1.03%
+Mau 17: Snow - So luot: 7 | Ti le vs tong mau: 1.03% | Ti le vs tong spawn: 1.03%
+Mau 19: Teal - So luot: 6 | Ti le vs tong mau: 0.88% | Ti le vs tong spawn: 0.88%
+Mau 6: Deep - So luot: 5 | Ti le vs tong mau: 0.73% | Ti le vs tong spawn: 0.73%
+Mau 14: Plum - So luot: 4 | Ti le vs tong mau: 0.59% | Ti le vs tong spawn: 0.59%
+Mau 18: Steel - So luot: 3 | Ti le vs tong mau: 0.44% | Ti le vs tong spawn: 0.44%
+
+--- Level1 ---
+  YarnPart outer: 10 | Tong spawn (1+inner): 12 | Tong luot mau: 12
+    Mau 3: Coral - 3 lan | 25.00% trong level | 0.44% toan bo
+    Mau 4: Cream - 3 lan | 25.00% trong level | 0.44% toan bo
+    Mau 20: Yellow - 3 lan | 25.00% trong level | 0.44% toan bo
+    Mau 9: Green - 3 lan | 25.00% trong level | 0.44% toan bo
+  [Holder debug] colorCountEntries: Coral:3, Cream:3, Yellow:3, Green:3
+
+--- Level1 ---
+  YarnPart outer: 48 | Tong spawn (1+inner): 50 | Tong luot mau: 50
+    Mau 9: Green - 31 lan | 62.00% trong level | 4.55% toan bo
+    Mau 3: Coral - 6 lan | 12.00% trong level | 0.88% toan bo
+    Mau 11: Magenta - 3 lan | 6.00% trong level | 0.44% toan bo
+    Mau 0: Blue - 3 lan | 6.00% trong level | 0.44% toan bo
+    Mau 12: Orange - 2 lan | 4.00% trong level | 0.29% toan bo
+    Mau 15: Purple - 2 lan | 4.00% trong level | 0.29% toan bo
+    Mau 8: Gray - 2 lan | 4.00% trong level | 0.29% toan bo
+    Mau 20: Yellow - 1 lan | 2.00% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Green:31, Coral:6, Orange:2, Magenta:3, Blue:3, Yellow:1, Purple:2, Gray:2
+
+--- Level10 ---
+  YarnPart outer: 42 | Tong spawn (1+inner): 54 | Tong luot mau: 54
+    Mau 8: Gray - 22 lan | 40.74% trong level | 3.23% toan bo
+    Mau 20: Yellow - 8 lan | 14.81% trong level | 1.17% toan bo
+    Mau 12: Orange - 7 lan | 12.96% trong level | 1.03% toan bo
+    Mau 4: Cream - 4 lan | 7.41% trong level | 0.59% toan bo
+    Mau 1: Brown - 3 lan | 5.56% trong level | 0.44% toan bo
+    Mau 3: Coral - 2 lan | 3.70% trong level | 0.29% toan bo
+    Mau 14: Plum - 2 lan | 3.70% trong level | 0.29% toan bo
+    Mau 0: Blue - 2 lan | 3.70% trong level | 0.29% toan bo
+    Mau 19: Teal - 2 lan | 3.70% trong level | 0.29% toan bo
+    Mau 5: Crimson - 1 lan | 1.85% trong level | 0.15% toan bo
+    Mau 6: Deep - 1 lan | 1.85% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Brown:3, Yellow:8, Cream:4, Orange:7, Gray:22, Coral:2, Plum:2, Blue:2, Teal:2, Crimson:1, Deep:1
+
+--- Level2 ---
+  YarnPart outer: 57 | Tong spawn (1+inner): 61 | Tong luot mau: 61
+    Mau 0: Blue - 15 lan | 24.59% trong level | 2.20% toan bo
+    Mau 7: Forest - 14 lan | 22.95% trong level | 2.05% toan bo
+    Mau 12: Orange - 12 lan | 19.67% trong level | 1.76% toan bo
+    Mau 9: Green - 5 lan | 8.20% trong level | 0.73% toan bo
+    Mau 3: Coral - 4 lan | 6.56% trong level | 0.59% toan bo
+    Mau 20: Yellow - 3 lan | 4.92% trong level | 0.44% toan bo
+    Mau 16: Sky - 3 lan | 4.92% trong level | 0.44% toan bo
+    Mau 1: Brown - 2 lan | 3.28% trong level | 0.29% toan bo
+    Mau 10: Lime - 1 lan | 1.64% trong level | 0.15% toan bo
+    Mau 15: Purple - 1 lan | 1.64% trong level | 0.15% toan bo
+    Mau 17: Snow - 1 lan | 1.64% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Yellow:3, Blue:15, Forest:14, Orange:12, Lime:1, Sky:3, Coral:4, Green:5, Purple:1, Brown:2, Snow:1
+
+--- Level3 ---
+  YarnPart outer: 10 | Tong spawn (1+inner): 12 | Tong luot mau: 12
+    Mau 13: Pink - 6 lan | 50.00% trong level | 0.88% toan bo
+    Mau 20: Yellow - 3 lan | 25.00% trong level | 0.44% toan bo
+    Mau 10: Lime - 3 lan | 25.00% trong level | 0.44% toan bo
+  [Holder debug] colorCountEntries: Pink:6, Yellow:3, Lime:3
+
+--- Level3 ---
+  YarnPart outer: 75 | Tong spawn (1+inner): 81 | Tong luot mau: 81
+    Mau 12: Orange - 61 lan | 75.31% trong level | 8.94% toan bo
+    Mau 20: Yellow - 13 lan | 16.05% trong level | 1.91% toan bo
+    Mau 5: Crimson - 2 lan | 2.47% trong level | 0.29% toan bo
+    Mau 13: Pink - 2 lan | 2.47% trong level | 0.29% toan bo
+    Mau 4: Cream - 1 lan | 1.23% trong level | 0.15% toan bo
+    Mau 1: Brown - 1 lan | 1.23% trong level | 0.15% toan bo
+    Mau 0: Blue - 1 lan | 1.23% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Orange:61, Yellow:13, Cream:1, Crimson:2, Pink:2, Brown:1, Blue:1
+
+--- Level4 ---
+  YarnPart outer: 66 | Tong spawn (1+inner): 74 | Tong luot mau: 74
+    Mau 7: Forest - 33 lan | 44.59% trong level | 4.84% toan bo
+    Mau 16: Sky - 14 lan | 18.92% trong level | 2.05% toan bo
+    Mau 20: Yellow - 12 lan | 16.22% trong level | 1.76% toan bo
+    Mau 3: Coral - 5 lan | 6.76% trong level | 0.73% toan bo
+    Mau 17: Snow - 2 lan | 2.70% trong level | 0.29% toan bo
+    Mau 19: Teal - 2 lan | 2.70% trong level | 0.29% toan bo
+    Mau 6: Deep - 2 lan | 2.70% trong level | 0.29% toan bo
+    Mau 12: Orange - 1 lan | 1.35% trong level | 0.15% toan bo
+    Mau 13: Pink - 1 lan | 1.35% trong level | 0.15% toan bo
+    Mau 14: Plum - 1 lan | 1.35% trong level | 0.15% toan bo
+    Mau 10: Lime - 1 lan | 1.35% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Yellow:12, Forest:33, Sky:14, Coral:5, Orange:1, Pink:1, Snow:2, Teal:2, Deep:2, Plum:1, Lime:1
+
+--- Level5 ---
+  YarnPart outer: 60 | Tong spawn (1+inner): 70 | Tong luot mau: 70
+    Mau 12: Orange - 29 lan | 41.43% trong level | 4.25% toan bo
+    Mau 3: Coral - 17 lan | 24.29% trong level | 2.49% toan bo
+    Mau 7: Forest - 10 lan | 14.29% trong level | 1.47% toan bo
+    Mau 17: Snow - 2 lan | 2.86% trong level | 0.29% toan bo
+    Mau 10: Lime - 2 lan | 2.86% trong level | 0.29% toan bo
+    Mau 6: Deep - 2 lan | 2.86% trong level | 0.29% toan bo
+    Mau 1: Brown - 2 lan | 2.86% trong level | 0.29% toan bo
+    Mau 0: Blue - 2 lan | 2.86% trong level | 0.29% toan bo
+    Mau 16: Sky - 1 lan | 1.43% trong level | 0.15% toan bo
+    Mau 13: Pink - 1 lan | 1.43% trong level | 0.15% toan bo
+    Mau 20: Yellow - 1 lan | 1.43% trong level | 0.15% toan bo
+    Mau 14: Plum - 1 lan | 1.43% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Orange:29, Coral:17, Sky:1, Forest:10, Pink:1, Yellow:1, Snow:2, Lime:2, Deep:2, Brown:2, Blue:2, Plum:1
+
+--- Level6 ---
+  YarnPart outer: 72 | Tong spawn (1+inner): 76 | Tong luot mau: 76
+    Mau 11: Magenta - 52 lan | 68.42% trong level | 7.62% toan bo
+    Mau 12: Orange - 7 lan | 9.21% trong level | 1.03% toan bo
+    Mau 3: Coral - 5 lan | 6.58% trong level | 0.73% toan bo
+    Mau 20: Yellow - 4 lan | 5.26% trong level | 0.59% toan bo
+    Mau 13: Pink - 2 lan | 2.63% trong level | 0.29% toan bo
+    Mau 9: Green - 1 lan | 1.32% trong level | 0.15% toan bo
+    Mau 16: Sky - 1 lan | 1.32% trong level | 0.15% toan bo
+    Mau 7: Forest - 1 lan | 1.32% trong level | 0.15% toan bo
+    Mau 15: Purple - 1 lan | 1.32% trong level | 0.15% toan bo
+    Mau 4: Cream - 1 lan | 1.32% trong level | 0.15% toan bo
+    Mau 0: Blue - 1 lan | 1.32% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Magenta:52, Coral:5, Green:1, Sky:1, Forest:1, Purple:1, Yellow:4, Orange:7, Cream:1, Pink:2, Blue:1
+
+--- Level7 ---
+  YarnPart outer: 51 | Tong spawn (1+inner): 57 | Tong luot mau: 57
+    Mau 12: Orange - 31 lan | 54.39% trong level | 4.55% toan bo
+    Mau 3: Coral - 10 lan | 17.54% trong level | 1.47% toan bo
+    Mau 4: Cream - 3 lan | 5.26% trong level | 0.44% toan bo
+    Mau 8: Gray - 2 lan | 3.51% trong level | 0.29% toan bo
+    Mau 5: Crimson - 2 lan | 3.51% trong level | 0.29% toan bo
+    Mau 9: Green - 2 lan | 3.51% trong level | 0.29% toan bo
+    Mau 17: Snow - 2 lan | 3.51% trong level | 0.29% toan bo
+    Mau 15: Purple - 2 lan | 3.51% trong level | 0.29% toan bo
+    Mau 20: Yellow - 1 lan | 1.75% trong level | 0.15% toan bo
+    Mau 16: Sky - 1 lan | 1.75% trong level | 0.15% toan bo
+    Mau 18: Steel - 1 lan | 1.75% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Orange:31, Coral:10, Gray:2, Crimson:2, Cream:3, Yellow:1, Green:2, Sky:1, Snow:2, Purple:2, Steel:1
+
+--- Level8 ---
+  YarnPart outer: 45 | Tong spawn (1+inner): 53 | Tong luot mau: 53
+    Mau 12: Orange - 19 lan | 35.85% trong level | 2.79% toan bo
+    Mau 15: Purple - 12 lan | 22.64% trong level | 1.76% toan bo
+    Mau 7: Forest - 6 lan | 11.32% trong level | 0.88% toan bo
+    Mau 20: Yellow - 5 lan | 9.43% trong level | 0.73% toan bo
+    Mau 8: Gray - 3 lan | 5.66% trong level | 0.44% toan bo
+    Mau 0: Blue - 2 lan | 3.77% trong level | 0.29% toan bo
+    Mau 5: Crimson - 2 lan | 3.77% trong level | 0.29% toan bo
+    Mau 18: Steel - 2 lan | 3.77% trong level | 0.29% toan bo
+    Mau 16: Sky - 2 lan | 3.77% trong level | 0.29% toan bo
+  [Holder debug] colorCountEntries: Orange:19, Purple:12, Forest:6, Gray:3, Yellow:5, Blue:2, Crimson:2, Steel:2, Sky:2
+
+--- Level9 ---
+  YarnPart outer: 72 | Tong spawn (1+inner): 82 | Tong luot mau: 82
+    Mau 12: Orange - 72 lan | 87.80% trong level | 10.56% toan bo
+    Mau 20: Yellow - 2 lan | 2.44% trong level | 0.29% toan bo
+    Mau 19: Teal - 2 lan | 2.44% trong level | 0.29% toan bo
+    Mau 5: Crimson - 2 lan | 2.44% trong level | 0.29% toan bo
+    Mau 9: Green - 2 lan | 2.44% trong level | 0.29% toan bo
+    Mau 8: Gray - 1 lan | 1.22% trong level | 0.15% toan bo
+    Mau 0: Blue - 1 lan | 1.22% trong level | 0.15% toan bo
+  [Holder debug] colorCountEntries: Orange:72, Yellow:2, Teal:2, Crimson:2, Green:2, Gray:1, Blue:1
+

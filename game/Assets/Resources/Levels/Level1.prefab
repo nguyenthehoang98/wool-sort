@@ -3766,12 +3766,22 @@ MonoBehaviour:
   - layerIndex: 2
     count: 2
   colorCountEntries:
-  - color: 4
-    count: 48
-  - color: 8
-    count: 1
+  - color: 9
+    count: 31
+  - color: 3
+    count: 6
+  - color: 12
+    count: 2
+  - color: 11
+    count: 3
   - color: 0
+    count: 3
+  - color: 20
     count: 1
+  - color: 15
+    count: 2
+  - color: 8
+    count: 2
 --- !u!114 &1675540269394338213
 MonoBehaviour:
   m_ObjectHideFlags: 0
