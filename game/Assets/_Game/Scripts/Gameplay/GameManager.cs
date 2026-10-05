@@ -139,7 +139,8 @@ namespace _Game.Scripts.Gameplay
             var tempLevel = Instantiate(levelPrefab);
             GameUIController.Instance.PositionLevelContainer(tempLevel);
             currentLevelHolder = tempLevel.GetComponent<LevelYarnInfoHolder>();
-            JamImage.Instance?.Initialize(currentLevelHolder.colorCountEntries);
+            var levelNameForImage = $"Level{realCurrentLevel}";
+            JamImage.Instance?.Initialize(currentLevelHolder.colorCountEntries, levelNameForImage);
             targetLevelTransform = currentLevelHolder.transform;
             targetModelTransform = targetLevelTransform.GetChild(0);
 

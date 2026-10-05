@@ -42,13 +42,25 @@ namespace _Game.Scripts
             colorTexture ??= GetComponentInChildren<SpriteRenderer>();
         }
 
-        public void Initialize(IReadOnlyList<ColorCountEntry> levelColors)
+        public void Initialize(IReadOnlyList<ColorCountEntry> levelColors, string levelName = null)
         {
-            targetTexture = Resources.Load<Texture2D>("Image3");
-            if (targetTexture == null || targetTexture.width != GridSize * SourceBlockSize || colorTexture == null)
+            // Load theo level: Resources/Images/{levelName} - LOI NEU KO TIM THAY
+            if (!string.IsNullOrEmpty(levelName))
             {
-                Debug.LogWarning("JamImage: missing 784x784 Resources/Image3.png or board color texture.");
+                targetTexture = Resources.Load<Texture2D>($"Images/{levelName}");
+                if (targetTexture == null) targetTexture = Resources.Load<Texture2D>($"Images/Level_{levelName}");
+                if (targetTexture == null) targetTexture = Resources.Load<Texture2D>($"LevelImages/{levelName}");
+            }
+            // KHONG CO THEO DÕNG IMAGE3 - LOI NEU KO TIM THAY
+            if (targetTexture == null || colorTexture == null)
+            {
+                Debug.LogError($"JamImage: missing texture for level {levelName}. Please add Resources/Images/{levelName}.png.");
                 return;
+            }
+            // Ho tro anh size bat ky - khong check cung 784 nua, se sample theo ti le
+            if (targetTexture.width != GridSize * SourceBlockSize)
+            {
+                Debug.Log($"JamImage: {levelName} texture {targetTexture.width}x{targetTexture.height} != {GridSize*SourceBlockSize}, se sample theo ti le bilinear.");
             }
 
             if (runtimeSprite != null)
@@ -158,9 +170,10 @@ namespace _Game.Scripts
             {
                 var index = cell.y * GridSize + cell.x;
                 MovePointerTo(cell.x, cell.y);
-                runtimePixels[index] = targetTexture.GetPixel(
-                    cell.x * SourceBlockSize + SourceBlockSize / 2,
-                    cell.y * SourceBlockSize + SourceBlockSize / 2);
+                // Sample theo ti le de ho tro anh size bat ky (36x36, 512x512...)
+                int sx = Mathf.Clamp(Mathf.RoundToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                int sy = Mathf.Clamp(Mathf.RoundToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                runtimePixels[index] = targetTexture.GetPixel(sx, sy);
                 revealedCells[index] = true;
                 runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
                 runtimeTexture.Apply(false, false);
@@ -204,8 +217,9 @@ namespace _Game.Scripts
             {
                 for (var cellX = 0; cellX < GridSize; cellX++)
                 {
-                    var sample = targetTexture.GetPixel(cellX * SourceBlockSize + SourceBlockSize / 2,
-                        cellY * SourceBlockSize + SourceBlockSize / 2);
+                    int sx = Mathf.Clamp(Mathf.RoundToInt((cellX + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                    int sy = Mathf.Clamp(Mathf.RoundToInt((cellY + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                    var sample = targetTexture.GetPixel(sx, sy);
                     cellOwners.Add(FindClosestColor(sample, availableColors));
                 }
             }
