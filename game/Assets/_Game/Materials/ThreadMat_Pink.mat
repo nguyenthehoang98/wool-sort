@@ -113,7 +113,7 @@ Material:
     - _AOSHADOW: 0.5
     - _Aostrength: 0
     - _BumpScale: 1
-    - _Cutoff: 0.5
+    - _Cutoff: 0
     - _DetailNormalMapScale: 1
     - _Dissolve: 1
     - _DstBlend: 0
