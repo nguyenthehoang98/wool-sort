@@ -53,6 +53,16 @@ namespace _Game.Scripts.Gameplay
         MaterialPropertyBlock mpb;
         static readonly int ProgressID = Shader.PropertyToID("_Dissolve");
         static readonly int CutoffID = Shader.PropertyToID("_Cutoff");
+        static readonly int WipeAxisID = Shader.PropertyToID("_WipeAxis");
+        static readonly int WipeMinID = Shader.PropertyToID("_WipeMin");
+        static readonly int WipeMaxID = Shader.PropertyToID("_WipeMax");
+
+        // Wipe dissolve theo TRỤC CAO NHẤT của mesh (object space, shader
+        // YarnDissolve riêng): tự đo bounds từng mesh trong Awake nên model
+        // nào cũng wipe hết đúng thời gian, hướng nhìn rõ nhất.
+        float wipeAxis = 1f;
+        float wipeMin = 0f;
+        float wipeMax = 1f;
 
         // Struct để track threshold mỗi decoration
         struct DecoInfo { public YarnDecoration deco; public float threshold; }
@@ -84,10 +94,26 @@ namespace _Game.Scripts.Gameplay
             yarnPartLayerMask = 1 << LayerMask.NameToLayer("YarnPart");
 
             meshRenderer = GetComponent<MeshRenderer>();
+            // Tự đo trục cao nhất của mesh (kể cả part clone từ Instantiate)
+            var meshFilter = GetComponent<MeshFilter>();
+            var sharedMesh = meshFilter != null ? meshFilter.sharedMesh : null;
+            if (sharedMesh != null)
+            {
+                Vector3 size = sharedMesh.bounds.size;
+                Vector3 min = sharedMesh.bounds.min;
+                Vector3 max = sharedMesh.bounds.max;
+                if (size.y >= size.x && size.y >= size.z) { wipeAxis = 1f; wipeMin = min.y; wipeMax = max.y; }
+                else if (size.x >= size.z) { wipeAxis = 0f; wipeMin = min.x; wipeMax = max.x; }
+                else { wipeAxis = 2f; wipeMin = min.z; wipeMax = max.z; }
+                if (wipeMax - wipeMin < 0.0001f) { wipeAxis = 1f; wipeMin = 0f; wipeMax = 1f; }
+            }
             mpb = new MaterialPropertyBlock();
             meshRenderer.GetPropertyBlock(mpb);
             mpb.SetFloat(ProgressID, 1f);
             mpb.SetFloat(CutoffID, 0f);
+            mpb.SetFloat(WipeAxisID, wipeAxis);
+            mpb.SetFloat(WipeMinID, wipeMin);
+            mpb.SetFloat(WipeMaxID, wipeMax);
             meshRenderer.SetPropertyBlock(mpb);
 
             // Nếu chưa assign decorations, tự tìm tất cả YarnDecoration con
