@@ -20,16 +20,16 @@ public static class YarnDissolveTools
     private const string MaterialsFolder = "Assets/_Game/Materials";
     private const string LevelsFolder = "Assets/Resources/Levels";
 
-    [MenuItem("Tools/Wool Sort/Migrate ThreadMats to YarnDissolve", false, 14)]
+    [MenuItem("Tools/Puzzle/Chuyển ThreadMat sang YarnDissolve", false, 14)]
     private static void MigrateThreadMats()
     {
         var shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
         if (shader == null)
         {
-            EditorUtility.DisplayDialog("Migrate", "Không thấy shader: " + ShaderPath, "OK");
+            EditorUtility.DisplayDialog("Chuyển shader", "Không thấy shader: " + ShaderPath, "OK");
             return;
         }
-        if (!EditorUtility.DisplayDialog("Migrate ThreadMats?",
+            if (!EditorUtility.DisplayDialog("Chuyển ThreadMat?",
             "Chuyển mọi ThreadMat_*.mat sang shader WoolSort/YarnDissolve.\n" +
             "Màu/texture (tên property giống nhau) được giữ lại.\n" +
             "Muốn về cũ thì git checkout lại thư mục Materials.",
@@ -58,10 +58,10 @@ public static class YarnDissolveTools
         AssetDatabase.Refresh();
         string report = $"Đã migrate {ok} ThreadMat sang YarnDissolve.\n" + sb;
         Debug.Log(report);
-        EditorUtility.DisplayDialog("Migrate", $"Đã migrate {ok} material. Xem Console để chi tiết.", "OK");
+        EditorUtility.DisplayDialog("Chuyển shader", $"Đã chuyển {ok} material. Xem Console để chi tiết.", "OK");
     }
 
-    [MenuItem("Tools/Wool Sort/Scan Yarn Mesh Axes", false, 15)]
+    [MenuItem("Tools/Puzzle/Quét trục mesh len", false, 15)]
     private static void ScanMeshAxes()
     {
         var levelPaths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
@@ -99,7 +99,7 @@ public static class YarnDissolveTools
             ? "OK: không có mesh suy biến."
             : $"CẢNH BÁO: {degenerate} mesh suy biến (rỗng/phẳng) — wipe trên đó sẽ pop, cần artist sửa mesh.");
         Debug.Log(sb.ToString());
-        EditorUtility.DisplayDialog("Scan Mesh Axes",
+        EditorUtility.DisplayDialog("Quét trục mesh",
             degenerate == 0 ? "Mọi mesh đều có trục wipe hợp lệ. Xem Console để chi tiết."
             : $"{degenerate} mesh suy biến! Xem Console để chi tiết.", "OK");
     }

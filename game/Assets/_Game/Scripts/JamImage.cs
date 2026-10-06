@@ -21,6 +21,7 @@ namespace _Game.Scripts
         private readonly List<YarnColor> cellOwners = new();
         private readonly Dictionary<YarnColor, int> colorCounts = new();
         private Texture2D targetTexture;
+        private LevelColorMatrix activeMatrix;
         private Texture2D runtimeTexture;
         private Sprite runtimeSprite;
         private Color[] runtimePixels;
@@ -51,14 +52,19 @@ namespace _Game.Scripts
                 if (targetTexture == null) targetTexture = Resources.Load<Texture2D>($"Images/Level_{levelName}");
                 if (targetTexture == null) targetTexture = Resources.Load<Texture2D>($"LevelImages/{levelName}");
             }
+            // Ma trận color ID đã extract: đủ để chia ô + hiển thị,
+            // không cần texture gốc (cho phép dời ảnh ra khỏi Resources).
+            // Load 1 lần, dùng chung cho cả chia ô lẫn reveal bên dưới.
+            var matrix = TryLoadColorMatrix(levelName);
+            activeMatrix = (matrix != null && matrix.HasDisplayColors) ? matrix : null;
             // KHONG CO THEO DÕNG IMAGE3 - LOI NEU KO TIM THAY
-            if (targetTexture == null || colorTexture == null)
+            if ((targetTexture == null && activeMatrix == null) || colorTexture == null)
             {
-                Debug.LogError($"JamImage: missing texture for level {levelName}. Please add Resources/Images/{levelName}.png.");
+                Debug.LogError($"JamImage: missing texture for level {levelName}. Please add Resources/Images/{levelName}.png or a LevelColorMatrix with display colors.");
                 return;
             }
             // Ho tro anh size bat ky - khong check cung 784 nua, se sample theo ti le
-            if (targetTexture.width != GridSize * SourceBlockSize)
+            if (targetTexture != null && targetTexture.width != GridSize * SourceBlockSize)
             {
                 Debug.Log($"JamImage: {levelName} texture {targetTexture.width}x{targetTexture.height} != {GridSize*SourceBlockSize}, se sample theo ti le bilinear.");
             }
@@ -86,7 +92,14 @@ namespace _Game.Scripts
             colorTexture.sprite = runtimeSprite;
             colorTexture.color = Color.white;
 
-            BuildCellOwners(levelColors);
+            // Ưu tiên đọc ma trận color ID đã extract:
+            // chia ô theo màu len chuẩn, không phụ thuộc texture lúc chạy.
+            // (matrix đã load ở trên; activeMatrix != null nghĩa là có cả màu hiển thị.)
+            var ownersMatrix = activeMatrix ?? TryLoadColorMatrix(levelName);
+            if (ownersMatrix != null)
+                BuildCellOwnersFromMatrix(ownersMatrix, levelColors);
+            else
+                BuildCellOwners(levelColors);
             colorCounts.Clear();
             if (levelColors != null)
             {
@@ -106,7 +119,7 @@ namespace _Game.Scripts
 
         public bool Print(YarnColor color, float timePerPixel)
         {
-            if (!initialized || runtimePixels == null || targetTexture == null)
+            if (!initialized || runtimePixels == null || (targetTexture == null && activeMatrix == null))
                 return false;
 
             var cells = BuildNextRevealCells(color, true);
@@ -170,10 +183,18 @@ namespace _Game.Scripts
             {
                 var index = cell.y * GridSize + cell.x;
                 MovePointerTo(cell.x, cell.y);
-                // Sample theo ti le de ho tro anh size bat ky (36x36, 512x512...)
-                int sx = Mathf.Clamp(Mathf.RoundToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
-                int sy = Mathf.Clamp(Mathf.RoundToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
-                runtimePixels[index] = targetTexture.GetPixel(sx, sy);
+                // Ưu tiên màu hiển thị đã bake trong matrix (ảnh gốc có thể đã dời đi).
+                if (activeMatrix != null)
+                {
+                    runtimePixels[index] = activeMatrix.GetDisplayColor(cell.x, cell.y);
+                }
+                else
+                {
+                    // Sample theo ti le de ho tro anh size bat ky (36x36, 512x512...)
+                    int sx = Mathf.Clamp(Mathf.RoundToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                    int sy = Mathf.Clamp(Mathf.RoundToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                    runtimePixels[index] = targetTexture.GetPixel(sx, sy);
+                }
                 revealedCells[index] = true;
                 runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
                 runtimeTexture.Apply(false, false);
@@ -244,6 +265,57 @@ namespace _Game.Scripts
             }
 
             return bestColor;
+        }
+
+        private static LevelColorMatrix TryLoadColorMatrix(string levelName)
+        {
+            if (string.IsNullOrEmpty(levelName)) return null;
+            var matrix = Resources.Load<LevelColorMatrix>($"LevelColorMatrix/{levelName}");
+            if (matrix == null) matrix = Resources.Load<LevelColorMatrix>($"LevelColorMatrix/Level_{levelName}");
+            if (matrix != null && !matrix.IsValid)
+            {
+                Debug.LogError($"JamImage: file matrix {matrix.name} hỏng (grid {matrix.gridSize}, {matrix.TotalCellCount} ô) — extract lại rồi chạy.");
+                return null;
+            }
+            if (matrix != null)
+                Debug.Log($"JamImage: dùng matrix color ID {matrix.name} thay vì đọc trực tiếp ảnh.");
+            return matrix;
+        }
+
+        /// <summary>
+        /// Chia ô theo file matrix. Ô nào ghi màu không còn trong level
+        /// (level sửa sau khi extract) thì map về màu gần nhất còn dùng.
+        /// </summary>
+        private void BuildCellOwnersFromMatrix(LevelColorMatrix matrix, IReadOnlyList<ColorCountEntry> levelColors)
+        {
+            cellOwners.Clear();
+            var availableColors = new List<YarnColor>();
+            if (levelColors != null)
+            {
+                foreach (var entry in levelColors)
+                {
+                    if (entry.count > 0 && !availableColors.Contains(entry.color))
+                        availableColors.Add(entry.color);
+                }
+            }
+
+            if (availableColors.Count == 0)
+            {
+                availableColors.Add(YarnColor.Lime);
+                availableColors.Add(YarnColor.Yellow);
+                availableColors.Add(YarnColor.Pink);
+            }
+
+            for (var cellY = 0; cellY < GridSize; cellY++)
+            {
+                for (var cellX = 0; cellX < GridSize; cellX++)
+                {
+                    var owner = matrix.GetColorId(cellX, cellY);
+                    if (!availableColors.Contains(owner))
+                        owner = FindClosestColor(GetColor(owner), availableColors);
+                    cellOwners.Add(owner);
+                }
+            }
         }
 
         private static readonly Dictionary<YarnColor, Color> ColorCache = new();

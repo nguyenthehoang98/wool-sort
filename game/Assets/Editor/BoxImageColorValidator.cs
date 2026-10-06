@@ -14,8 +14,8 @@ using UnityEngine;
 /// - Holder count có khớp part thật (tránh stale sau khi sửa prefab)?
 /// - Tổng số sợi có chia hết cho 3 (1 box = 3 sợi)?
 /// - Ảnh Resources/Images/{Level} có tồn tại + chia đủ ô cho mọi màu?
-/// Mở window: Tools / Wool Sort / Validate Box Image Colors
-/// Quét nhanh: Tools / Wool Sort / Scan All Levels (Box Image Colors)
+    /// Mở window: Tools / Puzzle / Kiểm tra màu box-ảnh
+    /// Quét nhanh: Tools / Puzzle / Quét tất cả level
 /// </summary>
 public sealed class BoxImageColorValidator : EditorWindow
 {
@@ -27,14 +27,14 @@ public sealed class BoxImageColorValidator : EditorWindow
     private int okLevelCount;
     private int errorLevelCount;
 
-    [MenuItem("Tools/Wool Sort/Validate Box Image Colors", false, 10)]
+    [MenuItem("Tools/Puzzle/Kiểm tra màu box-ảnh", false, 10)]
     private static void Open()
     {
-        var w = GetWindow<BoxImageColorValidator>("Box Image Colors");
+            var w = GetWindow<BoxImageColorValidator>("Kiểm tra màu box-ảnh");
         w.RefreshAll();
     }
 
-    [MenuItem("Tools/Wool Sort/Scan All Levels (Box Image Colors)", false, 11)]
+    [MenuItem("Tools/Puzzle/Quét tất cả level", false, 11)]
     private static void ScanAllMenu()
     {
         string result = ScanAllLevels(out _, out _);
@@ -44,7 +44,7 @@ public sealed class BoxImageColorValidator : EditorWindow
                 Debug.LogError("[BoxImageColor] " + line);
         }
         Debug.Log("[BoxImageColor] Quét xong.\n" + result);
-        EditorUtility.DisplayDialog("Scan Box Image Colors",
+            EditorUtility.DisplayDialog("Quét tất cả level",
             string.Join("\n", result.Split('\n').Take(12)) + "\n\nXem Console để click tới từng asset lỗi.", "OK");
     }
 
@@ -256,19 +256,49 @@ public sealed class BoxImageColorValidator : EditorWindow
                 errs.Add($"Màu {kv.Key} ({kv.Value} sợi) thiếu slot material — vòng/dây sai màu.");
         }
 
-        // Ảnh: GameManager load Resources/Images/{LevelN} (có fallback Level_ / LevelImages)
+        // Ma trận color ID: runtime JamImage ưu tiên đọc file này thay vì ảnh trực tiếp.
+        // Cần real (đếm từ prefab) để đối chiếu, nên tính ở đây thay vì dùng holder stale.
+        var realForMatrix = new Dictionary<YarnColor, int>();
+        foreach (var p in parts) { if (!realForMatrix.ContainsKey(p.initColor)) realForMatrix[p.initColor] = 0; realForMatrix[p.initColor]++; }
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"Assets/Resources/LevelColorMatrix/{levelName}.asset");
+        bool matrixOk = matrix != null && matrix.IsValid;
+        bool matrixDisplay = matrixOk && matrix.HasDisplayColors;
+
+        // Ảnh: chỉ bắt buộc khi chưa có ma trận đủ màu hiển thị (cho phép dời ảnh khỏi Resources).
         Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.png");
         if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.jpg");
         if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/Level_{levelName}.png");
         if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/LevelImages/{levelName}.png");
-        if (tex == null)
+        if (tex == null && !matrixDisplay)
         {
             errs.Add($"Thiếu ảnh Resources/Images/{levelName}.png (JamImage.Initialize sẽ báo missing texture, in ảnh rỗng).");
             return errs;
         }
 
-        // Mô phỏng BuildCellOwners 28x28 của JamImage để báo màu bị gom sai ô
-        errs.AddRange(SimulateCellOwners(levelName, tex, holder, parts, db));
+        if (matrix == null)
+        {
+            errs.Add("Chưa có ma trận color ID Assets/Resources/LevelColorMatrix/" + levelName + ".asset — chạy Tools/Puzzle/Extract ảnh thành ma trận màu (runtime đang đọc ảnh trực tiếp, dễ sai màu).");
+        }
+        else if (!matrixOk)
+        {
+            errs.Add($"Ma trận color ID {levelName} hỏng (grid {matrix.gridSize}, {matrix.TotalCellCount} ô) — extract lại.");
+        }
+        else
+        {
+            var matrixColors = matrix.GetColors();
+            foreach (var c in matrixColors)
+                if (!realForMatrix.ContainsKey(c))
+                    errs.Add($"Ma trận có màu {c} ({matrix.GetCellCount(c)} ô) nhưng level không có sợi nào màu đó — extract lại sau khi sửa level.");
+            foreach (var kv in realForMatrix)
+                if (!matrixColors.Contains(kv.Key))
+                    errs.Add($"Màu {kv.Key} ({kv.Value} sợi) không có trong ma trận — bắn lên sẽ rỗng, extract lại ảnh.");
+            if (!matrixDisplay)
+                errs.Add($"Ma trận {levelName} thiếu màu hiển thị từng ô — extract lại để dời ảnh khỏi Resources.");
+        }
+
+        // Mô phỏng BuildCellOwners 28x28 của JamImage để báo màu bị gom sai ô (cần ảnh gốc)
+        if (tex != null)
+            errs.AddRange(SimulateCellOwners(levelName, tex, holder, parts, db));
         return errs;
     }
 
