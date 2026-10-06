@@ -52,6 +52,7 @@ namespace _Game.Scripts.Gameplay
         MeshRenderer meshRenderer;
         MaterialPropertyBlock mpb;
         static readonly int ProgressID = Shader.PropertyToID("_Dissolve");
+        static readonly int CutoffID = Shader.PropertyToID("_Cutoff");
 
         // Struct để track threshold mỗi decoration
         struct DecoInfo { public YarnDecoration deco; public float threshold; }
@@ -86,6 +87,7 @@ namespace _Game.Scripts.Gameplay
             mpb = new MaterialPropertyBlock();
             meshRenderer.GetPropertyBlock(mpb);
             mpb.SetFloat(ProgressID, 1f);
+            mpb.SetFloat(CutoffID, 0f);
             meshRenderer.SetPropertyBlock(mpb);
 
             // Nếu chưa assign decorations, tự tìm tất cả YarnDecoration con
@@ -313,6 +315,7 @@ namespace _Game.Scripts.Gameplay
                 t += Time.deltaTime;
                 float progress = Mathf.Clamp01(1f - t / dissolveDuration);
                 mpb.SetFloat(ProgressID, progress);
+                mpb.SetFloat(CutoffID, 1f - progress);
                 meshRenderer.SetPropertyBlock(mpb);
                 DissolveProgress = progress;
 
@@ -343,6 +346,7 @@ namespace _Game.Scripts.Gameplay
 
             // Ẩn hết phần len
             mpb.SetFloat(ProgressID, 0f);
+            mpb.SetFloat(CutoffID, 1f);
             meshRenderer.SetPropertyBlock(mpb);
             DissolveProgress = 0;
 
@@ -372,12 +376,21 @@ namespace _Game.Scripts.Gameplay
         private void ApplyColor(YarnColor color)
         {
             if (_renderer == null) _renderer = GetComponent<MeshRenderer>();
-            if (_currentColor == color) return;
 
             _currentColor = color;
             var mat = YarnColorManager.Instance.GetYarnMaterial(color);
-            if (mat != null)
-                _renderer.material = mat;
+            if (mat == null)
+            {
+                // Không có material dissolve-capable -> SetFillAmount(_Dissolve/_Cutoff)
+                // sẽ thành no-op thầm lặng, model không bao giờ tan dần!
+                Debug.LogWarning($"YarnPart {name}: thiếu yarn material cho màu {color} — dissolve sẽ không hiển thị!", this);
+                return;
+            }
+            // Luôn gán (kể cả trùng màu): renderer phải dùng đúng ThreadMat có
+            // _Dissolve/_Cutoff. Bản cũ return sớm khi _currentColor == color
+            // (mặc định đã là Blue) khiến part Blue giữ material prefab
+            // không-dissolve -> bấm không bao giờ thấy tan dần.
+            _renderer.material = mat;
         }
 
         public void SetTransparent()
