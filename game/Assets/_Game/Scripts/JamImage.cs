@@ -246,20 +246,72 @@ namespace _Game.Scripts
             return bestColor;
         }
 
+        private static readonly Dictionary<YarnColor, Color> ColorCache = new();
+
         private static Color GetColor(YarnColor color)
         {
-            // ThreadMat_* uses _MainColor/_DarkThreadColor, not Unity's _Color property.
-            // Keep this lookup local so image setup cannot spam shader-property errors.
-            return color switch
+            if (ColorCache.TryGetValue(color, out var cached))
+                return cached;
+
+            // Ưu tiên đọc _MainColor từ ThreadMat_* trong Database để đủ 21 màu.
+            // ThreadMat_* dùng _MainColor/_DarkThreadColor, không phải _Color của Unity.
+            try
             {
+                var mgr = Gameplay.YarnColorManager.Instance;
+                var mat = mgr != null ? mgr.GetYarnMaterial(color) : null;
+                if (mat != null)
+                {
+                    if (mat.HasProperty("_MainColor"))
+                    {
+                        var c = mat.GetColor("_MainColor");
+                        ColorCache[color] = c;
+                        return c;
+                    }
+                    if (mat.HasProperty("_Color"))
+                    {
+                        var c = mat.GetColor("_Color");
+                        ColorCache[color] = c;
+                        return c;
+                    }
+                }
+            }
+            catch
+            {
+                // rớt xuống fallback cứng bên dưới
+            }
+
+            var fallback = color switch
+            {
+                YarnColor.Blue => new Color(0.033f, 0.57f, 1f),
+                YarnColor.Brown => new Color(0.48f, 0.30f, 0.18f),
+                YarnColor.Charcoal => new Color(0.20f, 0.20f, 0.22f),
                 YarnColor.Coral => new Color(0.9725f, 0.2745f, 0.2863f),
                 YarnColor.Cream => new Color(1f, 0.9176f, 0.7412f),
+                YarnColor.Crimson => new Color(0.75f, 0.10f, 0.20f),
+                YarnColor.Deep => new Color(0.10f, 0.15f, 0.35f),
+                YarnColor.Forest => new Color(0.13f, 0.42f, 0.23f),
+                YarnColor.Gray => new Color(0.55f, 0.55f, 0.55f),
                 YarnColor.Green => new Color(0.4235f, 0.7843f, 0.2196f),
                 YarnColor.Lime => new Color(0.6196f, 0.7922f, 0.1529f),
-                YarnColor.Yellow => new Color(0.9608f, 0.8157f, 0.1451f),
+                YarnColor.Magenta => new Color(0.90f, 0.15f, 0.70f),
+                YarnColor.Orange => new Color(1f, 0.55f, 0.10f),
                 YarnColor.Pink => new Color(0.9686f, 0.3294f, 0.6431f),
+                YarnColor.Plum => new Color(0.55f, 0.25f, 0.45f),
+                YarnColor.Purple => new Color(0.55f, 0.25f, 0.85f),
+                YarnColor.Sky => new Color(0.45f, 0.75f, 1f),
+                YarnColor.Snow => new Color(0.96f, 0.96f, 0.98f),
+                YarnColor.Steel => new Color(0.55f, 0.62f, 0.70f),
+                YarnColor.Teal => new Color(0.10f, 0.65f, 0.65f),
+                YarnColor.Yellow => new Color(0.9608f, 0.8157f, 0.1451f),
                 _ => Color.white
             };
+            ColorCache[color] = fallback;
+            return fallback;
+        }
+
+        public static void ClearColorCache()
+        {
+            ColorCache.Clear();
         }
 
         private void OnDestroy()

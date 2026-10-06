@@ -74,7 +74,8 @@ namespace _Game.Scripts
         // Gọi lại khi cần
         private void EnsureLookup()
         {
-            if (_matToColor == null || _colorToMat == null)
+            if (_matToColor == null || _colorToMat == null
+                || _colorToMatBasket == null || _colorToMatSlotString == null)
                 BuildLookup();
         }
 
@@ -86,27 +87,36 @@ namespace _Game.Scripts
             _colorToMatBasket = new Dictionary<YarnColor, Material>();
             _colorToMatSlotString = new Dictionary<YarnColor, Material>();
             
-            foreach (var p in colorMaterialPairs)
+            if (colorMaterialPairs != null)
             {
-                if (p.material == null) continue;
-                // add or overwrite
-                _colorToMat[p.color] = p.material;
-                if (!_matToColor.ContainsKey(p.material))
-                    _matToColor.Add(p.material, p.color);
+                foreach (var p in colorMaterialPairs)
+                {
+                    if (p.material == null) continue;
+                    // add or overwrite
+                    _colorToMat[p.color] = p.material;
+                    if (!_matToColor.ContainsKey(p.material))
+                        _matToColor.Add(p.material, p.color);
+                }
             }
 
-            foreach (var p in basketColorMaterialPairs)
+            if (basketColorMaterialPairs != null)
             {
-                if (p.material == null) continue;
-                // add or overwrite
-                _colorToMatBasket[p.color] = p.material;
+                foreach (var p in basketColorMaterialPairs)
+                {
+                    if (p.material == null) continue;
+                    // add or overwrite
+                    _colorToMatBasket[p.color] = p.material;
+                }
             }
 
-            foreach (var p in slotStringColorMaterialPairs)
+            if (slotStringColorMaterialPairs != null)
             {
-                if (p.material == null) continue;
-                // add or overwrite
-                _colorToMatSlotString[p.color] = p.material;
+                foreach (var p in slotStringColorMaterialPairs)
+                {
+                    if (p.material == null) continue;
+                    // add or overwrite
+                    _colorToMatSlotString[p.color] = p.material;
+                }
             }
         }
 
@@ -133,12 +143,16 @@ namespace _Game.Scripts
         
         public Material GetMaterialBasket(YarnColor color)
         {
+            EnsureLookup();
+            if (_colorToMatBasket == null) return null;
             _colorToMatBasket.TryGetValue(color, out var mat);
             return mat;
         }
 
         public Material GetMaterialSlotString(YarnColor color)
         {
+            EnsureLookup();
+            if (_colorToMatSlotString == null) return null;
             _colorToMatSlotString.TryGetValue(color, out var mat);
             return mat;
         }

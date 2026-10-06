@@ -4274,15 +4274,21 @@ MonoBehaviour:
   - layerIndex: 2
     count: 12
   colorCountEntries:
-  - color: 13
-    count: 42
+  - color: 1
+    count: 3
+  - color: 20
+    count: 8
+  - color: 4
+    count: 4
+  - color: 12
+    count: 7
+  - color: 8
+    count: 22
+  - color: 3
+    count: 2
   - color: 14
     count: 2
-  - color: 8
-    count: 2
   - color: 0
-    count: 2
-  - color: 1
     count: 2
   - color: 19
     count: 2

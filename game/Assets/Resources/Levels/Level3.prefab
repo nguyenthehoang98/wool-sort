@@ -3519,8 +3519,12 @@ MonoBehaviour:
   - layerIndex: 2
     count: 6
   colorCountEntries:
+  - color: 12
+    count: 61
   - color: 20
-    count: 75
+    count: 13
+  - color: 4
+    count: 1
   - color: 5
     count: 2
   - color: 13

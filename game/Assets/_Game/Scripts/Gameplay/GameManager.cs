@@ -776,11 +776,18 @@ namespace _Game.Scripts.Gameplay
                     break;
             }
 
-            // 5) Đảm bảo ít nhất 3 màu
+            // 5) Đảm bảo ít nhất 3 màu và màu đó có basket material
+            // (tránh box sinh ra rổ trắng/dây sai màu khi bắn lên ảnh)
+            pool = pool.Where(c => YarnColorManager.Instance.GetBasketMaterial(c) != null).ToList();
+
             if (pool.Count < 3)
             {
-                // Lấy 3 màu có sum3 nhỏ nhất từ sorted
-                pool = sorted.Take(Mathf.Min(3, total)).ToList();
+                // Fallback: lấy 3 màu có sum3 nhỏ nhất từ sorted (ưu tiên màu có material)
+                var validSorted = sorted.Where(c => YarnColorManager.Instance.GetBasketMaterial(c) != null).ToList();
+                if (validSorted.Count >= 3)
+                    pool = validSorted.Take(3).ToList();
+                else
+                    pool = sorted.Take(Mathf.Min(3, total)).ToList();
                 Debug.Log($"[ChooseNextBoxColor] Fallback ensure ≥3 colors: pool now = [{string.Join(",", pool)}]");
             }
 

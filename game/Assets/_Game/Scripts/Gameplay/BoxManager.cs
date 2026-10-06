@@ -439,6 +439,27 @@ namespace _Game.Scripts.Gameplay
             if (boxInfo == null)
                 return;
 
+            // Validate: 3 sợi trong box phải cùng màu logic với BoxColor,
+            // nếu không ảnh sẽ tô sai ô.
+            var filledColors = boxInfo.Slots
+                .Where(s => s != null && s.IsFilled)
+                .Select(s => s.FilledColor)
+                .Distinct()
+                .ToList();
+            if (filledColors.Count > 1)
+            {
+                Debug.LogError($"PrintImage: box lẫn {filledColors.Count} màu [{string.Join(",", filledColors)}] nhưng BoxColor={boxInfo.BoxColor} — ảnh sẽ tô sai!", boxInfo);
+            }
+            else if (filledColors.Count == 1 && filledColors[0] != boxInfo.BoxColor
+                && boxInfo.BoxColor != YarnColor.Rainbow)
+            {
+                Debug.LogError($"PrintImage: slot màu {filledColors[0]} nhưng BoxColor={boxInfo.BoxColor} — ảnh sẽ tô sai ô!", boxInfo);
+            }
+            if (boxInfo.BoxColor == YarnColor.Rainbow)
+            {
+                Debug.LogError("PrintImage: BoxColor=Rainbow không có dữ liệu bake ảnh — kiểm tra luồng Magic Box!", boxInfo);
+            }
+
             // Match ref: each completed box reveals only its next pixel batch.
             var image = JamImage.Instance;
             var pixelCount = image?.GetNextPixelCount(boxInfo.BoxColor) ?? 0;
@@ -449,6 +470,7 @@ namespace _Game.Scripts.Gameplay
             }
             else
             {
+                Debug.LogError($"PrintImage: màu {boxInfo.BoxColor} không lấy được ô ảnh nào (thiếu texture Resources/Images hoặc lệch colorCountEntries)!", boxInfo);
                 currentWaitOfTime = 1f;
             }
 

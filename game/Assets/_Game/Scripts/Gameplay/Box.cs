@@ -139,6 +139,11 @@ private YarnColor boxColor;
         private void ApplyColor(YarnColor color)
         {
             var mat = YarnColorManager.Instance.GetBasketMaterial(color);
+            if (mat == null)
+            {
+                Debug.LogWarning($"Box: thiếu basket material cho màu {color} — rổ sẽ sai màu!", this);
+                return;
+            }
             if (basketMeshes == null)
                 return;
 
@@ -230,6 +235,10 @@ private YarnColor boxColor;
             return slots.Any(s => !s.IsFilled);
         }
 
+        /// <summary>
+        /// Chỉ đổi visual rổ sang rainbow. KHÔNG đổi boxColor:
+        /// boxColor giữ màu logic gốc để PrintImage tô đúng ô ảnh của màu đó.
+        /// </summary>
         public void SetRainbowColor()
         {
             ApplyColor(YarnColor.Rainbow);

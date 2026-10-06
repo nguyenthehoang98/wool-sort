@@ -6457,14 +6457,26 @@ MonoBehaviour:
   - layerIndex: 2
     count: 6
   colorCountEntries:
+  - color: 12
+    count: 31
+  - color: 3
+    count: 10
+  - color: 8
+    count: 2
   - color: 5
-    count: 51
+    count: 2
+  - color: 4
+    count: 3
+  - color: 20
+    count: 1
+  - color: 9
+    count: 2
+  - color: 16
+    count: 1
   - color: 17
     count: 2
   - color: 15
     count: 2
-  - color: 8
-    count: 1
   - color: 18
     count: 1
 --- !u!114 &2232287079016477245

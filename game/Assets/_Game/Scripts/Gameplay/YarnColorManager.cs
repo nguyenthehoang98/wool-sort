@@ -59,7 +59,10 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogError("YarnManager: thiếu YarnColorDatabase!", this);
                 return null;
             }
-            return colorDatabase.GetMaterialBasket(color);
+            var mat = colorDatabase.GetMaterialBasket(color);
+            if (mat == null)
+                Debug.LogWarning($"YarnColorManager: thiếu basket material cho màu {color} — rổ/dây bắn ảnh sẽ sai màu!", this);
+            return mat;
         }
 
         public Material GetSlotStringMaterial(YarnColor color)
@@ -69,7 +72,10 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogError("YarnManager: thiếu YarnColorDatabase!", this);
                 return null;
             }
-            return colorDatabase.GetMaterialSlotString(color);
+            var mat = colorDatabase.GetMaterialSlotString(color);
+            if (mat == null)
+                Debug.LogWarning($"YarnColorManager: thiếu slot-string material cho màu {color} — vòng/dây sẽ sai màu!", this);
+            return mat;
         }
     }
 }

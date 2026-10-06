@@ -3729,7 +3729,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boxSpawnThresholds: 5a00000000000000000000000a000000
-  totalYarnPartCount: 82
+  totalYarnPartCount: 84
   totalYarnDecorations: 0
   totalYarnSpecialDecor: 0
   allBaseYarnParts:
@@ -3822,10 +3822,12 @@ MonoBehaviour:
   - layerIndex: 1
     count: 72
   - layerIndex: 2
-    count: 10
+    count: 11
+  - layerIndex: 3
+    count: 1
   colorCountEntries:
-  - color: 14
-    count: 72
+  - color: 12
+    count: 74
   - color: 20
     count: 2
   - color: 19
@@ -4546,9 +4548,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 2
+  innerColorTypes: 0100000001000000
+  innerFixedColors: 0c0000000c000000
   ancestor: {fileID: 2323199301236513866}
   rootPart: {fileID: 2323199301236513866}
   childPart: {fileID: 0}
