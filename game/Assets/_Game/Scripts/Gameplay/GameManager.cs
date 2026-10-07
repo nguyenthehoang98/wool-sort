@@ -1,4 +1,4 @@
-// GameManager.cs
+﻿// GameManager.cs
 
 using System;
 using System.Collections;
@@ -27,9 +27,9 @@ namespace _Game.Scripts.Gameplay
 
         public Camera OrthoCam => orthoCam;
 
-        [Header("Auto-Zoom & Reposition")]
-        [Tooltip("Sau mỗi mốc % còn lại (75%,50%,25%)")]
-        [SerializeField] private float[] autoZoomThresholds = new float[] { 0.75f, 0.5f, 0.25f };
+        [Header("Auto-Zoom & Reposition")] [Tooltip("Sau mỗi mốc % còn lại (75%,50%,25%)")] [SerializeField]
+        private float[] autoZoomThresholds = new float[] { 0.75f, 0.5f, 0.25f };
+
         private int currentZoomThresholdIndex = 0;
 
         [SerializeField] private BoxManager boxManager;
@@ -47,7 +47,8 @@ namespace _Game.Scripts.Gameplay
 
         [Header("Test (chỉ dùng lúc dev)")]
         [Tooltip("Level load khi bấm Play. Mặc định 1. Để 2 để test Level2 không cần chơi Level1.")]
-        [SerializeField] private int debugStartLevel = 1;
+        [SerializeField]
+        private int debugStartLevel = 1;
 
         private int realCurrentLevel;
         public int RealCurrentLevel => realCurrentLevel;
@@ -85,7 +86,9 @@ namespace _Game.Scripts.Gameplay
         public List<YarnColor> RandomColorPool { get; private set; }
 
         private float maxScale;
+
         private float scaleTweenDuration = 0.5f;
+
         // cache list để tái dùng mỗi lần tính center
         private readonly List<YarnPart> partCache = new List<YarnPart>();
 
@@ -142,6 +145,7 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogError($"Missing Resources/{levelPath}.prefab");
                 return;
             }
+
             var tempLevel = Instantiate(levelPrefab);
             GameUIController.Instance.PositionLevelContainer(tempLevel);
             currentLevelHolder = tempLevel.GetComponent<LevelYarnInfoHolder>();
@@ -259,6 +263,7 @@ namespace _Game.Scripts.Gameplay
             {
                 timeFade /= 2;
             }
+
             StartCoroutine(RunAndFlag(WaitingAreaManager.Instance.FadeIn(timeFade), () => waitDone = true));
 
             yield return new WaitUntil(() => boxDone && waitDone);
@@ -337,13 +342,8 @@ namespace _Game.Scripts.Gameplay
             if (isGameOver)
                 return;
 
-            countYarnRemain--;
-
-            // gọi Auto-zoom mỗi khi click clear piece
-            if (currentLevel != 1)
-            {
-                CheckAutoZoomAndReposition();
-            }
+            // KHÔNG giảm countYarnRemain ở đây - chỉ giảm khi sợi thực sự bị tiêu hao (trong ConsumeYarnPart)
+            // Điều này tránh double-count: click -> waiting area (--), sau đó waiting -> box (--) -> count âm -> win sớm
 
         }
 
@@ -359,7 +359,8 @@ namespace _Game.Scripts.Gameplay
             {
                 ApplyAutoZoomAndReposition();
                 currentZoomThresholdIndex++;
-                LogUtils.Log("ApplyAutoZoomAndReposition | currentZoomThresholdIndex = " + currentZoomThresholdIndex, Color.magenta);
+                LogUtils.Log("ApplyAutoZoomAndReposition | currentZoomThresholdIndex = " + currentZoomThresholdIndex,
+                    Color.magenta);
             }
         }
 
@@ -396,10 +397,13 @@ namespace _Game.Scripts.Gameplay
             // 1) tính center (hết part hoặc còn ≤2 part sót thì giữ nguyên vị trí)
             if (!TryGetActiveCenter(out Vector3 centerLocal, out int centerCount) || centerCount <= 2)
             {
-                _Game.Scripts.LevelDebugLog.Log($"[AutoZoom] Recenter bỏ qua (centerCount={centerCount}) — giữ nguyên vị trí.");
+                _Game.Scripts.LevelDebugLog.Log(
+                    $"[AutoZoom] Recenter bỏ qua (centerCount={centerCount}) — giữ nguyên vị trí.");
                 return;
             }
-            _Game.Scripts.LevelDebugLog.Log($"[AutoZoom] Dời model theo {centerCount} part, tâm=({centerLocal.x:F2},{centerLocal.y:F2}).");
+
+            _Game.Scripts.LevelDebugLog.Log(
+                $"[AutoZoom] Dời model theo {centerCount} part, tâm=({centerLocal.x:F2},{centerLocal.y:F2}).");
             centerToDraw = targetModelTransform.TransformPoint(centerLocal);
 
             // 2) Tính vị trí mới 
@@ -568,16 +572,22 @@ namespace _Game.Scripts.Gameplay
             {
                 if (rootPart == null)
                 {
-                    Debug.LogError($"[GameManager] allBaseYarnParts chứa phần tử NULL (có thể bạn kéo nhầm decor không có YarnPart vào list). Mở prefab Level{realCurrentLevel}, kiểm tra Holder -> All Base Yarn Parts, xóa slot None.", currentLevelHolder);
+                    Debug.LogError(
+                        $"[GameManager] allBaseYarnParts chứa phần tử NULL (có thể bạn kéo nhầm decor không có YarnPart vào list). Mở prefab Level{realCurrentLevel}, kiểm tra Holder -> All Base Yarn Parts, xóa slot None.",
+                        currentLevelHolder);
                     continue;
                 }
+
                 // 2a) Mỗi rootPart hiện tại là Layer 1, màu = rootPart.initColor
                 var rootInfo = new YarnPartInfo(rootPart.initColor, 1, null);
                 if (!piecesByColor.TryGetValue(rootInfo.Color, out var list))
                 {
-                    Debug.LogError($"[GameManager] {rootPart.name} có màu {rootInfo.Color} không hợp lệ (None?). Bỏ qua để không crash.", rootPart);
+                    Debug.LogError(
+                        $"[GameManager] {rootPart.name} có màu {rootInfo.Color} không hợp lệ (None?). Bỏ qua để không crash.",
+                        rootPart);
                     continue;
                 }
+
                 list.Add(rootInfo);
 
                 // 2b) Lưu link giữa runtime GameObject (nếu đã Spawn) và rootInfo
@@ -614,9 +624,11 @@ namespace _Game.Scripts.Gameplay
             var info = new YarnPartInfo(chosenColor, nextLayer, parentInfo);
             if (!piecesByColor.TryGetValue(chosenColor, out var colorList))
             {
-                Debug.LogError($"[GameManager] inner layer màu {chosenColor} không hợp lệ (None?). Bỏ qua.", parentVisual);
+                Debug.LogError($"[GameManager] inner layer màu {chosenColor} không hợp lệ (None?). Bỏ qua.",
+                    parentVisual);
                 return;
             }
+
             colorList.Add(info);
 
             // 4) (Chưa có GameObject tương ứng) → ta chỉ dừng ở mức dữ liệu, không Instantiate actual YarnPart
@@ -773,7 +785,8 @@ namespace _Game.Scripts.Gameplay
                 .OrderBy(g => g.Key)
                 .SelectMany(g =>
                         g.Select(kv => kv.Key)
-                            .OrderBy(_ => Random.value)    // xáo ngẫu nhiên trong nhóm cùng giá trị, để tránh tình trạng luôn lấy theo thứ tự bảng chữ cái
+                            .OrderBy(_ =>
+                                Random.value) // xáo ngẫu nhiên trong nhóm cùng giá trị, để tránh tình trạng luôn lấy theo thứ tự bảng chữ cái
                 )
                 .ToList();
 
@@ -790,6 +803,7 @@ namespace _Game.Scripts.Gameplay
                     Debug.LogError($"[ChooseNextBoxColor - SPECIAL MIN PRIORITY] sorted rỗng — fallback {fb}.");
                     return fb;
                 }
+
                 LogUtils.Log("[ChooseNextBoxColor - SPECIAL MIN PRIORITY] RESULT = " + sorted[0], Color.magenta);
                 LogUtils.Log("-------------------------------------------------------------", Color.magenta);
                 return sorted[0];
@@ -805,15 +819,15 @@ namespace _Game.Scripts.Gameplay
                     pool = sorted.Take(Mathf.CeilToInt(total * 0.5f)).ToList();
                     break;
                 case 2: // Cao trào: bỏ 30%, giữ 75%
-                    {
-                        int skipCount = Mathf.CeilToInt(total * 0.3f);        // xóa 30% dưới cùng
-                        int remainCount = total - skipCount;                   // phần còn lại
-                        int takeCount = Mathf.CeilToInt(remainCount * 0.75f); // lấy 75% của phần còn lại
-                        pool = sorted
-                            .Skip(skipCount)
-                            .Take(Mathf.Max(0, takeCount))
-                            .ToList();
-                    }
+                {
+                    int skipCount = Mathf.CeilToInt(total * 0.3f); // xóa 30% dưới cùng
+                    int remainCount = total - skipCount; // phần còn lại
+                    int takeCount = Mathf.CeilToInt(remainCount * 0.75f); // lấy 75% của phần còn lại
+                    pool = sorted
+                        .Skip(skipCount)
+                        .Take(Mathf.Max(0, takeCount))
+                        .ToList();
+                }
                     break;
                 case 3: // Kết: 75% màu min
                     pool = sorted.Take(Mathf.CeilToInt(total * 0.75f)).ToList();
@@ -850,6 +864,7 @@ namespace _Game.Scripts.Gameplay
                     if (kv.Value == null || kv.Value.Count == 0) continue;
                     dbg.Append($"{kv.Key}(con-lai={kv.Value.Count},giu-cho={CountMissingSlotsInBoxes(kv.Key)}) ");
                 }
+
                 _Game.Scripts.LevelDebugLog.LogError(dbg + "— kiểm tra config: mỗi màu phải chia hết cho 3!");
                 // Fallback đỡ hại nhất: màu còn nhiều nhất mà đang có box mở dở
                 // (sợi có chỗ để vào), nếu không thì màu còn nhiều nhất.
@@ -862,6 +877,7 @@ namespace _Game.Scripts.Gameplay
             LogUtils.Log("-------------------------------------------------------------", Color.magenta);
             return pool[idx];
         }
+
         /// <summary>
         /// Phân xử runtime-vs-config ngay đầu game: so runtime build được (piecesByColor)
         /// với holder khai báo (colorCountEntries + totalYarnPartCount).
@@ -884,17 +900,23 @@ namespace _Game.Scripts.Gameplay
                 if (r != d)
                 {
                     ok = false;
-                    _Game.Scripts.LevelDebugLog.LogError($"[START-CHECK] {currentLevelHolder.name}: màu {c} runtime={r} != holder={d} (holder stale hoặc build sai).");
+                    _Game.Scripts.LevelDebugLog.LogError(
+                        $"[START-CHECK] {currentLevelHolder.name}: màu {c} runtime={r} != holder={d} (holder stale hoặc build sai).");
                 }
             }
+
             int runtimeTotal = 0;
             foreach (var v in runtime.Values) runtimeTotal += v;
             if (runtimeTotal != currentLevelHolder.totalYarnPartCount)
             {
                 ok = false;
-                _Game.Scripts.LevelDebugLog.LogError($"[START-CHECK] {currentLevelHolder.name}: tổng runtime={runtimeTotal} != holder.totalYarnPartCount={currentLevelHolder.totalYarnPartCount} (totalYarnPartCount stale — mở prefab cho OnValidate chạy lại hoặc bấm Validate).");
+                _Game.Scripts.LevelDebugLog.LogError(
+                    $"[START-CHECK] {currentLevelHolder.name}: tổng runtime={runtimeTotal} != holder.totalYarnPartCount={currentLevelHolder.totalYarnPartCount} (totalYarnPartCount stale — mở prefab cho OnValidate chạy lại hoặc bấm Validate).");
             }
-            if (ok) _Game.Scripts.LevelDebugLog.Log($"[START-CHECK] {currentLevelHolder.name}: runtime khớp holder ({runtimeTotal} sợi).");
+
+            if (ok)
+                _Game.Scripts.LevelDebugLog.Log(
+                    $"[START-CHECK] {currentLevelHolder.name}: runtime khớp holder ({runtimeTotal} sợi).");
         }
 
         /// <summary>
@@ -908,18 +930,21 @@ namespace _Game.Scripts.Gameplay
             var inQueue = new Dictionary<YarnColor, int>();
             var inBox = new Dictionary<YarnColor, int>();
             foreach (var kv in piecesByColor)
-                foreach (var info in kv.Value)
-                {
-                    var d = info.State == PartState.OnBoard ? onBoard : info.State == PartState.InQueue ? inQueue : inBox;
-                    if (!d.ContainsKey(kv.Key)) d[kv.Key] = 0;
-                    d[kv.Key]++;
-                }
-            var sb = new System.Text.StringBuilder($"[STOCKTAKE] initial={initialYarnCount} remain={countYarnRemain}:\n");
+            foreach (var info in kv.Value)
+            {
+                var d = info.State == PartState.OnBoard ? onBoard : info.State == PartState.InQueue ? inQueue : inBox;
+                if (!d.ContainsKey(kv.Key)) d[kv.Key] = 0;
+                d[kv.Key]++;
+            }
+
+            var sb = new System.Text.StringBuilder(
+                $"[STOCKTAKE] initial={initialYarnCount} remain={countYarnRemain}:\n");
             var all = new HashSet<YarnColor>(onBoard.Keys);
             all.UnionWith(inQueue.Keys);
             all.UnionWith(inBox.Keys);
             if (currentLevelHolder.colorCountEntries != null)
-                foreach (var e in currentLevelHolder.colorCountEntries) all.Add(e.color);
+                foreach (var e in currentLevelHolder.colorCountEntries)
+                    all.Add(e.color);
             foreach (var c in all)
             {
                 onBoard.TryGetValue(c, out int b);
@@ -928,10 +953,13 @@ namespace _Game.Scripts.Gameplay
                 int init = 0;
                 if (currentLevelHolder.colorCountEntries != null)
                     foreach (var e in currentLevelHolder.colorCountEntries)
-                        if (e.color == c) init += e.count;
+                        if (e.color == c)
+                            init += e.count;
                 int missing = init - (b + q + x);
-                sb.AppendLine($"  {c}: init={init} board={b} queue={q} box={x} mat-tich={missing}{(missing != 0 ? " <<< LECH" : "")}");
+                sb.AppendLine(
+                    $"  {c}: init={init} board={b} queue={q} box={x} mat-tich={missing}{(missing != 0 ? " <<< LECH" : "")}");
             }
+
             _Game.Scripts.LevelDebugLog.Log(sb.ToString());
         }
 
@@ -955,6 +983,7 @@ namespace _Game.Scripts.Gameplay
                     best = kv.Key;
                 }
             }
+
             return best;
         }
 
@@ -982,8 +1011,10 @@ namespace _Game.Scripts.Gameplay
                     best = kv.Key;
                 }
             }
+
             if (best == YarnColor.None)
-                _Game.Scripts.LevelDebugLog.LogError("[ChooseNextBoxColor] fallback cũng None (hết sợi thật?). Kiểm tra lose/win.");
+                _Game.Scripts.LevelDebugLog.LogError(
+                    "[ChooseNextBoxColor] fallback cũng None (hết sợi thật?). Kiểm tra lose/win.");
             else
                 _Game.Scripts.LevelDebugLog.LogWarning($"[ChooseNextBoxColor] fallback strand = {best}.");
             return best;
@@ -1028,6 +1059,7 @@ namespace _Game.Scripts.Gameplay
                     childInfo.Parent = parentInfo;
                     parentInfo.Children.Add(childInfo);
                 }
+
                 parentInfo.Children.Remove(info);
 
                 // 3) Cập nhật liên kết YarnPart.childPart **nếu** đã spawn sẵn
@@ -1056,8 +1088,10 @@ namespace _Game.Scripts.Gameplay
             // 4) Xóa link và remove info khỏi nhóm màu
             UnlinkPart(part);
             piecesByColor[info.Color].Remove(info);
-        }
 
+            // Giảm số sợi còn lại khi sợi thực sự bị tiêu hao (dissolve/boxed)
+            countYarnRemain = Mathf.Max(0, countYarnRemain - 1);
+        }
 
         public bool CanInteractWithGame()
         {
@@ -1079,6 +1113,7 @@ namespace _Game.Scripts.Gameplay
         }
 
         #region Link Part and Info
+
         // Link Part and Info Method
         public void LinkPartInfo(YarnPart part, YarnPartInfo info)
         {
@@ -1118,6 +1153,7 @@ namespace _Game.Scripts.Gameplay
 
 
         #region Log
+
         private int GetMaxBuiltLayer(YarnPartInfo info)
         {
             int max = info.LayerIndex;
@@ -1157,7 +1193,8 @@ namespace _Game.Scripts.Gameplay
 
                 // 3) Log tổng số tầng (không tính layer gốc)
                 int builtLayers = maxLayer - rootInfo.LayerIndex;
-                Debug.Log($"[BuildSummary] {root.name}: totalInnerCount={root.totalInnerCount}, built layers={builtLayers}");
+                Debug.Log(
+                    $"[BuildSummary] {root.name}: totalInnerCount={root.totalInnerCount}, built layers={builtLayers}");
 
                 // 4) Log chi tiết mỗi layer
                 //    từ layer gốc+1 tới maxLayer, hiển thị count (0 nếu không có)
@@ -1168,6 +1205,7 @@ namespace _Game.Scripts.Gameplay
                 }
             }
         }
+
         #endregion
 
         private void ClearDecorationRoot()
@@ -1184,6 +1222,6 @@ namespace _Game.Scripts.Gameplay
         {
             return countYarnRemain;
         }
-
     }
 }
+

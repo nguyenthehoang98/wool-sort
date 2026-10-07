@@ -225,6 +225,8 @@ public sealed class LevelDifficultyTool : EditorWindow
 
         if (GUILayout.Button($"Đồng bộ material model theo initColor ({sel.levelName})", GUILayout.Height(28)))
             ResyncModelMaterials(sel);
+        if (GUILayout.Button($"Dựng lại holder từ prefab ({sel.levelName})", GUILayout.Height(28)))
+            RebuildHolder(sel);
         if (GUILayout.Button($"Chẩn đoán lệch màu ({sel.levelName})", GUILayout.Height(28)))
             DiagnoseColors(sel);
         if (GUILayout.Button($"Quét tràn mesh inner ({sel.levelName})", GUILayout.Height(28)))
@@ -904,6 +906,44 @@ public sealed class LevelDifficultyTool : EditorWindow
         for (int i = 0; i < mats.Length; i++)
             mats[i] = newMat;
         rend.sharedMaterials = mats;
+    }
+
+    /// <summary>
+    /// Dựng lại holder từ prefab: allBaseYarnParts = toàn bộ YarnPart layerIndex 1,
+    /// đếm lại totalYarnPartCount + color/layer. Chữa holder stale từ gốc
+    /// (thiếu part trong list -> runtime lẫn validator đếm sai).
+    /// </summary>
+    private void RebuildHolder(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+            var bases = root.GetComponentsInChildren<YarnPart>(true)
+                .Where(p => p.layerIndex == 1)
+                .OrderBy(p => p.name)
+                .ToList();
+            if (bases.Count == 0) { report = "[LỖI] Không có YarnPart layer 1 nào."; return; }
+            int before = holder.allBaseYarnParts != null ? holder.allBaseYarnParts.Count : 0;
+            holder.allBaseYarnParts = bases;
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(bases);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            var sb = new StringBuilder();
+            sb.AppendLine($"[OK] {row.levelName}: allBaseYarnParts {before} -> {bases.Count} part, tổng {holder.totalYarnPartCount} sợi.");
+            if (holder.colorCountEntries != null)
+                foreach (var e in holder.colorCountEntries.OrderByDescending(e => e.count))
+                    sb.AppendLine($"  = {e.color}: {e.count} sợi{(e.count % 3 != 0 ? " [LẺ %3!]" : "")}");
+            sb.AppendLine("Chạy Validate để vá tiếp %3/pool/matrix.");
+            report = sb.ToString();
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
     }
 
     /// <summary>
