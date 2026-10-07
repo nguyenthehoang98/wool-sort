@@ -6,15 +6,18 @@ namespace _Game.Scripts
     /// <summary>
     /// 1 màu trong ma trận: ID màu + màu hiển thị + danh sách ô thuộc màu đó.
     /// Trong Inspector thấy ngay màu nào gồm những ô nào.
+    /// LƯU Ý màu phụ: cùng 1 colorId (màu gốc để matching) có thể có NHIỀU
+    /// entry khác displayColor (VD Pink nhạt + Pink đậm shading đều tính cho
+    /// Pink). Runtime: GetColorId = màu gốc, GetDisplayColor = màu phụ từng ô.
     /// </summary>
     [System.Serializable]
     public struct ColorCellEntry
     {
-        [Tooltip("ID màu (hiển thị tên màu: Blue, Green...).")]
+        [Tooltip("ID màu GỐC (để matching gameplay: Blue, Green...). Màu phụ vẫn ghi màu gốc ở đây.")]
         public YarnColor colorId;
-        [Tooltip("Màu hiển thị chuẩn của yarn này lúc reveal.")]
+        [Tooltip("Màu hiển thị từng ô lúc reveal (màu phụ được giữ nguyên ở đây).")]
         public Color displayColor;
-        [Tooltip("Danh sách ô (x, y) thuộc màu này. y = 0 là hàng dưới.")]
+        [Tooltip("Danh sách ô (x, y) thuộc entry này. y = 0 là hàng dưới.")]
         public List<Vector2Int> cells;
     }
 
@@ -124,13 +127,14 @@ namespace _Game.Scripts
             return list;
         }
 
-        /// <summary>Số ô của 1 màu (để báo cáo ô/box).</summary>
+        /// <summary>Số ô của 1 màu GỐC (cộng dồn mọi entry shading cùng colorId).</summary>
         public int GetCellCount(YarnColor color)
         {
             if (entries == null) return 0;
+            int n = 0;
             foreach (var e in entries)
-                if (e.colorId == color) return e.cells != null ? e.cells.Count : 0;
-            return 0;
+                if (e.colorId == color) n += e.cells != null ? e.cells.Count : 0;
+            return n;
         }
 
 #if UNITY_EDITOR
@@ -237,6 +241,54 @@ namespace _Game.Scripts
                 });
             }
             entries.Sort((a, b) => ((int)a.colorId).CompareTo((int)b.colorId));
+            return entries;
+        }
+
+        /// <summary>
+        /// Dựng entries GIỮ MÀU PHỤ: cùng owner (màu gốc) nhưng khác display
+        /// thì tách entry riêng. In lên vẫn là màu phụ, nhưng matching
+        /// (GetColorId / GetCellCount / JamImage.BuildCellOwnersFromMatrix)
+        /// đều tính cho màu gốc.
+        /// ownerIds[y*grid+x] = YarnColor gốc, displays[y*grid+x] = màu in ra.
+        /// </summary>
+        public static List<ColorCellEntry> BuildEntriesPreservingDisplay(
+            YarnColor[] ownerIds, Color[] displays, int grid)
+        {
+            var map = new Dictionary<(YarnColor, Color), List<Vector2Int>>();
+            for (int y = 0; y < grid; y++)
+                for (int x = 0; x < grid; x++)
+                {
+                    int i = y * grid + x;
+                    var key = (ownerIds[i], displays[i]);
+                    if (!map.TryGetValue(key, out var list))
+                    {
+                        list = new List<Vector2Int>();
+                        map[key] = list;
+                    }
+                    list.Add(new Vector2Int(x, y));
+                }
+
+            var entries = new List<ColorCellEntry>();
+            foreach (var kv in map)
+            {
+                var show = kv.Key.Item2;
+                show.a = 1f;
+                entries.Add(new ColorCellEntry
+                {
+                    colorId = kv.Key.Item1,
+                    displayColor = show,
+                    cells = kv.Value
+                });
+            }
+            entries.Sort((a, b) =>
+            {
+                int c = ((int)a.colorId).CompareTo((int)b.colorId);
+                if (c != 0) return c;
+                var ca = a.displayColor;
+                var cb = b.displayColor;
+                int h = (ca.r + ca.g * 2f + ca.b * 3f).CompareTo(cb.r + cb.g * 2f + cb.b * 3f);
+                return h;
+            });
             return entries;
         }
     }

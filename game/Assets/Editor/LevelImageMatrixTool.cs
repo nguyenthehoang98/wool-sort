@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using _Game.Scripts;
 using _Game.Scripts.Gameplay;
 using UnityEditor;
@@ -24,9 +25,13 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private const int Grid = 28;
 
     private Vector2 scroll;
+    private Vector2 jsonScroll;
+    private bool selectAllJson;
     private string report = "Kéo ảnh vào + chọn level rồi Extract, hoặc Extract tất cả levels.";
 
     private Texture2D sourceTexture;
+    private TextAsset jsonAsset;
+    private string jsonText = "";
     private int selectedLevelIndex;
     private List<string> levelNames = new List<string>();
 
@@ -102,6 +107,86 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 ExtractSingle(levelNames[selectedLevelIndex], sourceTexture);
             }
         }
+
+        GUILayout.Space(8);
+        GUILayout.Label("JSON tay (màu phụ / shading)", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Dán JSON hoặc kéo TextAsset .json vào để import ma trận đã vẽ tay.\n" +
+            "matrix[0] = HÀNG TRÊN CÙNG (nhìn như ảnh), matrix cuối = hàng dưới.\n" +
+            "palette = màu IN RA (hex), owners = màu GỐC để matching.\n" +
+            "VD: \"4\" hiển thị #E028AA đậm nhưng owners[\"4\"]=\"Pink\" -> bắn Pink vẫn in ra đậm.",
+            MessageType.Info);
+        jsonAsset = (TextAsset)EditorGUILayout.ObjectField("File JSON", jsonAsset, typeof(TextAsset), false);
+        if (jsonAsset != null && GUILayout.Button("Nạp text từ file JSON"))
+            jsonText = jsonAsset.text;
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label("Nội dung JSON", EditorStyles.miniLabel);
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Chọn tất cả", GUILayout.Width(85)))
+        {
+            selectAllJson = true;
+            GUI.FocusControl("JsonInput");
+        }
+        if (GUILayout.Button("Dán", GUILayout.Width(55)))
+            jsonText = EditorGUIUtility.systemCopyBuffer ?? "";
+        if (GUILayout.Button("Xóa", GUILayout.Width(55)))
+        {
+            jsonText = "";
+            jsonAsset = null;
+            GUI.FocusControl(null);
+        }
+        EditorGUILayout.EndHorizontal();
+        GUI.SetNextControlName("JsonInput");
+        jsonScroll = EditorGUILayout.BeginScrollView(jsonScroll, GUILayout.Height(200));
+        jsonText = EditorGUILayout.TextArea(jsonText ?? "", GUILayout.ExpandHeight(true));
+        EditorGUILayout.EndScrollView();
+        // Unity mặc định không ăn Ctrl+A trong TextArea -> tự xử lý.
+        if (Event.current != null && Event.current.type == EventType.KeyDown
+            && Event.current.control && Event.current.keyCode == KeyCode.A
+            && GUI.GetNameOfFocusedControl() == "JsonInput")
+        {
+            var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            if (te != null) te.SelectAll();
+            Event.current.Use();
+        }
+        if (selectAllJson && GUI.GetNameOfFocusedControl() == "JsonInput")
+        {
+            var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            if (te != null) te.SelectAll();
+            selectAllJson = false;
+            Repaint();
+        }
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Import JSON -> level đã chọn", GUILayout.Height(32)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else if (string.IsNullOrWhiteSpace(jsonText))
+                report = "[LỖI] JSON trống.";
+            else
+                ImportJson(levelNames[selectedLevelIndex], jsonText);
+        }
+        if (GUILayout.Button("Export matrix -> JSON", GUILayout.Height(32)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else
+                ExportJson(levelNames[selectedLevelIndex]);
+        }
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Copy JSON mẫu", GUILayout.Height(28)))
+        {
+            jsonText = BuildSampleJson();
+            EditorGUIUtility.systemCopyBuffer = jsonText;
+            report = "[OK] Đã copy JSON mẫu 28x28 (4 màu: Green/Orange/Pink/Pink-shading) vào clipboard + nạp vào ô text. Sửa matrix/owners rồi bấm Import.";
+        }
+        if (GUILayout.Button("Nạp mẫu vào ô text", GUILayout.Height(28)))
+        {
+            jsonText = BuildSampleJson();
+            report = "[OK] Đã nạp JSON mẫu vào ô text. Sửa rồi bấm Import (chưa copy clipboard).";
+        }
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndVertical();
 
@@ -345,5 +430,322 @@ public sealed class LevelImageMatrixTool : EditorWindow
             if (!ownerCounts.ContainsKey(kv.Key))
                 sb.AppendLine($"  - {kv.Key}: 0 ô / {kv.Value} sợi [CẢNH BÁO: màu này bắn lên sẽ rỗng]");
         return sb.ToString();
+    }
+
+    // ---------- JSON tay: palette (màu in) + owners (màu gốc matching) ----------
+    // LƯU Ý: Unity JsonUtility KHÔNG serialize Dictionary {"1":"#..."} nên
+    // import/export bên dưới tự parse/build chuỗi JSON tay (Regex + StringBuilder).
+
+    private sealed class MatrixJsonDto
+    {
+        public int width = 28;
+        public int height = 28;
+        public Dictionary<string, string> palette = new Dictionary<string, string>();
+        public Dictionary<string, string> owners; // optional: "4" -> "Pink"
+        public List<List<int>> matrix = new List<List<int>>();
+    }
+
+    /// <summary>Tạo JSON mẫu 28x28 copy sẵn: 1=Green nền, 2=Orange viền, 3=Pink, 4=Pink đậm (shading của Pink).</summary>
+    private static string BuildSampleJson()
+    {
+        const int g = 28;
+        var dto = new MatrixJsonDto
+        {
+            width = g,
+            height = g,
+            palette = new Dictionary<string, string>
+            {
+                { "1", "#8EC336" },
+                { "2", "#FF8C33" },
+                { "3", "#FF75C4" },
+                { "4", "#E028AA" },
+            },
+            owners = new Dictionary<string, string>
+            {
+                { "1", "Green" },
+                { "2", "Orange" },
+                { "3", "Pink" },
+                { "4", "Pink" },
+            },
+            matrix = new List<List<int>>()
+        };
+        // Nền 1, khối hoa ở giữa: viền 2, cánh 3, nhụy đậm 4.
+        for (int r = 0; r < g; r++)
+        {
+            var row = new List<int>();
+            for (int c = 0; c < g; c++)
+            {
+                int id = 1;
+                bool inBox = r >= 8 && r < 20 && c >= 8 && c < 20;
+                bool inInner = r >= 11 && r < 17 && c >= 11 && c < 17;
+                bool inCore = r >= 13 && r < 15 && c >= 13 && c < 15;
+                if (inCore) id = 4;
+                else if (inInner) id = 3;
+                else if (inBox) id = 2;
+                row.Add(id);
+            }
+            dto.matrix.Add(row);
+        }
+        return BuildMatrixJsonString(dto);
+    }
+
+    private static string BuildMatrixJsonString(MatrixJsonDto dto)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("{");
+        sb.AppendLine($"  \"width\": {dto.width},");
+        sb.AppendLine($"  \"height\": {dto.height},");
+        sb.AppendLine("  \"palette\": {");
+        var pKeys = dto.palette.Keys.OrderBy(k => int.TryParse(k, out int n) ? n : int.MaxValue).ToList();
+        for (int i = 0; i < pKeys.Count; i++)
+            sb.AppendLine($"    \"{pKeys[i]}\": \"{dto.palette[pKeys[i]]}\"{(i < pKeys.Count - 1 ? "," : "")}");
+        sb.AppendLine("  },");
+        if (dto.owners != null && dto.owners.Count > 0)
+        {
+            sb.AppendLine("  \"owners\": {");
+            var oKeys = dto.owners.Keys.OrderBy(k => int.TryParse(k, out int n) ? n : int.MaxValue).ToList();
+            for (int i = 0; i < oKeys.Count; i++)
+                sb.AppendLine($"    \"{oKeys[i]}\": \"{dto.owners[oKeys[i]]}\"{(i < oKeys.Count - 1 ? "," : "")}");
+            sb.AppendLine("  },");
+        }
+        sb.AppendLine("  \"matrix\": [");
+        for (int r = 0; r < dto.matrix.Count; r++)
+            sb.AppendLine($"    [{string.Join(",", dto.matrix[r])}]{(r < dto.matrix.Count - 1 ? "," : "")}");
+        sb.AppendLine("  ]");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    /// <summary>Parse JSON dict-style {"1":"#..."} + matrix số. Trả false + err nếu sai format.</summary>
+    private static bool TryParseMatrixJson(string text, out MatrixJsonDto dto, out string err)
+    {
+        dto = new MatrixJsonDto();
+        err = null;
+        try
+        {
+            var mW = Regex.Match(text, @"""width""\s*:\s*(\d+)");
+            var mH = Regex.Match(text, @"""height""\s*:\s*(\d+)");
+            if (!mW.Success || !mH.Success) { err = "Thiếu width/height."; return false; }
+            dto.width = int.Parse(mW.Groups[1].Value);
+            dto.height = int.Parse(mH.Groups[1].Value);
+
+            dto.palette = ParseStringMapBlock(text, "palette");
+            if (dto.palette == null || dto.palette.Count == 0) { err = "Thiếu palette (VD \"palette\": {\"1\": \"#8EC336\"})."; return false; }
+            dto.owners = ParseStringMapBlock(text, "owners"); // optional
+
+            if (!TryParseMatrixBlock(text, dto.width, dto.height, out var mat, out err)) { dto = null; return false; }
+            dto.matrix = mat;
+            return true;
+        }
+        catch (Exception ex) { err = "JSON parse fail: " + ex.Message; dto = null; return false; }
+    }
+
+    private static Dictionary<string, string> ParseStringMapBlock(string text, string key)
+    {
+        int ki = text.IndexOf("\"" + key + "\"", StringComparison.Ordinal);
+        if (ki < 0) return null;
+        int b0 = text.IndexOf('{', ki);
+        if (b0 < 0) return null;
+        int depth = 0, b1 = -1;
+        for (int i = b0; i < text.Length; i++)
+        {
+            if (text[i] == '{') depth++;
+            else if (text[i] == '}') { depth--; if (depth == 0) { b1 = i; break; } }
+        }
+        if (b1 < 0) return null;
+        var inner = text.Substring(b0 + 1, b1 - b0 - 1);
+        var map = new Dictionary<string, string>();
+        foreach (Match m in Regex.Matches(inner, @"""([^""]+)""\s*:\s*""([^""]*)"""))
+            map[m.Groups[1].Value] = m.Groups[2].Value;
+        return map;
+    }
+
+    private static bool TryParseMatrixBlock(string text, int w, int h, out List<List<int>> mat, out string err)
+    {
+        mat = new List<List<int>>();
+        err = null;
+        int ki = text.IndexOf("\"matrix\"", StringComparison.Ordinal);
+        if (ki < 0) { err = "Thiếu matrix."; return false; }
+        int b0 = text.IndexOf('[', ki);
+        if (b0 < 0) { err = "Thiếu matrix."; return false; }
+        int depth = 0, b1 = -1;
+        for (int i = b0; i < text.Length; i++)
+        {
+            if (text[i] == '[') depth++;
+            else if (text[i] == ']') { depth--; if (depth == 0) { b1 = i; break; } }
+        }
+        if (b1 < 0) { err = "matrix ngoặc [] không đóng."; return false; }
+        var inner = text.Substring(b0 + 1, b1 - b0 - 1); // các hàng [1,2,...]
+        foreach (Match row in Regex.Matches(inner, @"\[([^\[\]]*)\]"))
+        {
+            var list = new List<int>();
+            foreach (Match n in Regex.Matches(row.Groups[1].Value, @"-?\d+"))
+                list.Add(int.Parse(n.Value));
+            if (list.Count > 0) mat.Add(list);
+        }
+        if (mat.Count != h) { err = $"matrix có {mat.Count} hàng, cần {h}."; return false; }
+        for (int r = 0; r < mat.Count; r++)
+            if (mat[r].Count != w) { err = $"hàng {r} có {mat[r].Count} ô, cần {w}."; return false; }
+        return true;
+    }
+
+    /// <summary>
+    /// Import JSON vẽ tay -> .asset. matrix[0] = hàng TRÊN cùng.
+    /// palette[id] = màu IN RA (hex). owners[id] = màu GỐC để matching
+    /// (thiếu owners -> tự map hex về YarnColor dataset gần nhất).
+    /// </summary>
+    private void ImportJson(string levelName, string text)
+    {
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        if (db == null) { report = "[LỖI] Không thấy Database: " + DatabasePath; return; }
+        if (!TryParseMatrixJson(text, out var dto, out var parseErr))
+        { report = "[LỖI] JSON: " + parseErr; return; }
+        if (dto.width != Grid || dto.height != Grid)
+        { report = $"[LỖI] JSON {dto.width}x{dto.height}, tool cần {Grid}x{Grid}."; return; }
+        if (dto.matrix.Count != Grid)
+        { report = $"[LỖI] matrix có {dto.matrix.Count} hàng, cần {Grid}."; return; }
+
+        // Dataset gốc của level (đúng nguồn runtime dùng để matching).
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Resources/Levels/{levelName}.prefab");
+        if (prefab == null) { report = "[LỖI] " + levelName + ": không thấy prefab."; return; }
+        var holder = prefab.GetComponent<LevelYarnInfoHolder>();
+        if (holder == null) holder = prefab.GetComponentInChildren<LevelYarnInfoHolder>(true);
+        var available = new List<YarnColor>();
+        if (holder != null && holder.colorCountEntries != null)
+            foreach (var e in holder.colorCountEntries)
+                if (e.count > 0 && !available.Contains(e.color)) available.Add(e.color);
+        if (available.Count == 0)
+            foreach (var p in prefab.GetComponentsInChildren<YarnPart>(true))
+                if (!available.Contains(p.initColor)) available.Add(p.initColor);
+        if (available.Count == 0) { report = "[LỖI] level không có màu nào."; return; }
+
+        // Giải palette hex -> display, owners -> YarnColor gốc.
+        var displayById = new Dictionary<int, Color>();
+        var ownerById = new Dictionary<int, YarnColor>();
+        foreach (var kv in dto.palette)
+        {
+            if (!int.TryParse(kv.Key, out int id)) { report = $"[LỖI] palette key '{kv.Key}' không phải số."; return; }
+            if (!ColorUtility.TryParseHtmlString(kv.Value, out var c))
+            { report = $"[LỖI] palette[{kv.Key}]='{kv.Value}' không phải hex."; return; }
+            c.a = 1f;
+            displayById[id] = c;
+        }
+        foreach (var id in displayById.Keys)
+        {
+            YarnColor owner = YarnColor.None;
+            bool hasOwner = dto.owners != null && dto.owners.TryGetValue(id.ToString(), out var name)
+                && Enum.TryParse<YarnColor>(name, true, out owner);
+            if (!hasOwner)
+                owner = LevelColorMatrixUtility.FindClosest(displayById[id], available, db); // fallback
+            if (!available.Contains(owner))
+            {
+                // Ô ghi màu không còn trong level -> map về màu gần nhất còn dùng (giống runtime).
+                owner = LevelColorMatrixUtility.FindClosest(
+                    LevelColorMatrixUtility.RefColor(db, owner), available, db);
+            }
+            ownerById[id] = owner;
+        }
+
+        var owners = new YarnColor[Grid * Grid];
+        var displays = new Color[Grid * Grid];
+        for (int r = 0; r < Grid; r++)
+        {
+            var row = dto.matrix[r];
+            if (row == null || row.Count != Grid)
+            { report = $"[LỖI] hàng {r} có {row?.Count ?? 0} ô, cần {Grid}."; return; }
+            int y = Grid - 1 - r; // JSON hàng 0 = trên cùng -> data y = dưới lên
+            for (int x = 0; x < Grid; x++)
+            {
+                int id = row[x];
+                if (!displayById.ContainsKey(id))
+                { report = $"[LỖI] ô [hàng {r}, cột {x}] id={id} không có trong palette."; return; }
+                owners[y * Grid + x] = ownerById[id];
+                displays[y * Grid + x] = displayById[id];
+            }
+        }
+
+        var entries = LevelColorMatrixUtility.BuildEntriesPreservingDisplay(owners, displays, Grid);
+        if (!AssetDatabase.IsValidFolder(MatrixFolder))
+            AssetDatabase.CreateFolder("Assets/Resources", "LevelColorMatrix");
+        string assetPath = $"{MatrixFolder}/{levelName}.asset";
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>(assetPath);
+        if (matrix == null)
+        {
+            matrix = ScriptableObject.CreateInstance<LevelColorMatrix>();
+            AssetDatabase.CreateAsset(matrix, assetPath);
+        }
+        matrix.levelName = levelName;
+        matrix.gridSize = Grid;
+        matrix.entries = entries;
+        matrix.InvalidateLookup();
+        EditorUtility.SetDirty(matrix);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        cachedLevel = null;
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"[OK-JSON] {levelName} -> {assetPath} ({entries.Count} entry, {Grid}x{Grid})");
+        foreach (var e in entries)
+            sb.AppendLine($"  - gốc {e.colorId} | in #{ColorUtility.ToHtmlStringRGB(e.displayColor)} | {e.cells.Count} ô");
+        // Tổng theo màu gốc (đúng số runtime dùng để chia batch).
+        var sum = new Dictionary<YarnColor, int>();
+        foreach (var e in entries)
+        {
+            if (!sum.ContainsKey(e.colorId)) sum[e.colorId] = 0;
+            sum[e.colorId] += e.cells.Count;
+        }
+        foreach (var kv in sum.OrderByDescending(kv => kv.Value))
+            sb.AppendLine($"  = {kv.Key}: tổng {kv.Value} ô (gồm mọi shading)");
+        report = sb.ToString();
+        Debug.Log(report);
+        jsonText = text; // giữ lại để sửa tiếp
+    }
+
+    /// <summary>Xuất matrix hiện tại -> JSON dán vào ô text (để sửa tay rồi Import lại).</summary>
+    private void ExportJson(string levelName)
+    {
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{levelName}.asset");
+        if (matrix == null || !matrix.IsValid) { report = "[LỖI] Chưa có matrix hợp lệ cho " + levelName; return; }
+        int g = matrix.gridSize;
+        // Gom (gốc + display) -> palette id.
+        var keyToId = new Dictionary<string, int>();
+        var palette = new Dictionary<string, string>();
+        var owners = new Dictionary<string, string>();
+        int nextId = 1;
+        var grid = new int[g, g];
+        for (int y = 0; y < g; y++)
+            for (int x = 0; x < g; x++)
+            {
+                var owner = matrix.GetColorId(x, y);
+                var show = matrix.GetDisplayColor(x, y);
+                show.a = 1f;
+                string key = owner + "|" + ColorUtility.ToHtmlStringRGB(show);
+                if (!keyToId.TryGetValue(key, out int id))
+                {
+                    id = nextId++;
+                    keyToId[key] = id;
+                    palette[id.ToString()] = "#" + ColorUtility.ToHtmlStringRGB(show);
+                    owners[id.ToString()] = owner.ToString();
+                }
+                grid[y, x] = id;
+            }
+        var dto = new MatrixJsonDto
+        {
+            width = g,
+            height = g,
+            palette = palette,
+            owners = owners,
+            matrix = new List<List<int>>()
+        };
+        for (int r = 0; r < g; r++)
+        {
+            int y = g - 1 - r; // xuất hàng trên cùng trước
+            var row = new List<int>();
+            for (int x = 0; x < g; x++) row.Add(grid[y, x]);
+            dto.matrix.Add(row);
+        }
+        jsonText = BuildMatrixJsonString(dto);
+        report = $"[OK] Đã xuất {levelName} ra ô JSON ({palette.Count} palette id, {keyToId.Count} entry). Sửa hex/owners/matrix rồi bấm Import.";
+        Debug.Log(report);
     }
 }
