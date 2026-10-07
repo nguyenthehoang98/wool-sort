@@ -4683,6 +4683,7 @@ MonoBehaviour:
   boxManager: {fileID: 1488103024}
   boxUnlockStart: 2
   decorationRoot: {fileID: 1180980792}
+  debugStartLevel: 3
 --- !u!1 &2009665440
 GameObject:
   m_ObjectHideFlags: 0

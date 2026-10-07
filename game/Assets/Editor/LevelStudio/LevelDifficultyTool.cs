@@ -24,6 +24,7 @@ public sealed class LevelDifficultyTool : EditorWindow
     private const string DatabasePath = "Assets/_Game/Configs/YarnColorDatabase.asset";
 
     private Vector2 scroll;
+    private Vector2 reportScroll;
     private string report = "Bấm \"Quét độ khó\" để chấm điểm tất cả level.";
     private readonly List<DiffRow> rows = new List<DiffRow>();
 
@@ -31,6 +32,27 @@ public sealed class LevelDifficultyTool : EditorWindow
     private int selectedLevelIndex;
     private int detailLastLoaded = -1;
     private readonly int[] thresholdEdit = new int[4] { 20, 40, 15, 25 };
+    private int nhịpPresetIndex;
+
+    private sealed class NhipPreset
+    {
+        public string name;
+        public int[] thresholds;
+    }
+
+    private static readonly List<NhipPreset> NhipPresets = new List<NhipPreset>
+    {
+        new NhipPreset { name = "Cân bằng TB [20,40,15,25]", thresholds = new[]{20,40,15,25} },
+        new NhipPreset { name = "Dễ [30,45,10,15]", thresholds = new[]{30,45,10,15} },
+        new NhipPreset { name = "Khó [10,30,30,30]", thresholds = new[]{10,30,30,30} },
+        new NhipPreset { name = "Dễ thở đầu game [35,40,15,10]", thresholds = new[]{35,40,15,10} },
+        new NhipPreset { name = "Khó dần [15,35,25,25]", thresholds = new[]{15,35,25,25} },
+        new NhipPreset { name = "Cuối bùng nổ [20,30,20,30]", thresholds = new[]{20,30,20,30} },
+        new NhipPreset { name = "Ổn định đều [25,25,25,25]", thresholds = new[]{25,25,25,25} },
+        new NhipPreset { name = "Mở nhanh [30,45,10,15]", thresholds = new[]{30,45,10,15} },
+        new NhipPreset { name = "Dồn cuối [15,25,30,30]", thresholds = new[]{15,25,30,30} },
+        new NhipPreset { name = "Cày đầu nhẹ [40,35,15,10]", thresholds = new[]{40,35,15,10} },
+    };
     private bool initialized;
 
     /// <summary>Gọi 1 lần khi Studio mở tab (thay Open cũ).</summary>
@@ -83,7 +105,10 @@ public sealed class LevelDifficultyTool : EditorWindow
         else DrawDetailTab();
 
         GUILayout.Space(4);
-        EditorGUILayout.TextArea(report, GUILayout.MinHeight(80));
+        GUILayout.Label("Báo cáo:", EditorStyles.miniBoldLabel);
+        reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(220));
+        EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
+        EditorGUILayout.EndScrollView();
     }
 
     // ---------------- Tab 1: tổng quan độ khó ----------------
@@ -181,6 +206,13 @@ public sealed class LevelDifficultyTool : EditorWindow
         if (GUILayout.Button("Preset TB [20,40,15,25]")) SetThresholdEdit(20, 40, 15, 25);
         if (GUILayout.Button("Preset Khó [10,30,30,30]")) SetThresholdEdit(10, 30, 30, 30);
         EditorGUILayout.EndHorizontal();
+        EditorGUI.BeginChangeCheck();
+        nhịpPresetIndex = EditorGUILayout.Popup("Preset nhịp:", nhịpPresetIndex, NhipPresets.Select(p => p.name).ToArray());
+        if (EditorGUI.EndChangeCheck())
+        {
+            var pr = NhipPresets[Mathf.Clamp(nhịpPresetIndex, 0, NhipPresets.Count - 1)];
+            for (int i = 0; i < 4; i++) thresholdEdit[i] = pr.thresholds[i];
+        }
         if (GUILayout.Button($"Áp nhịp box cho {sel.levelName} (đang [{string.Join(",", sel.thresholds)}])", GUILayout.Height(28)))
             ApplyThresholds(sel);
 

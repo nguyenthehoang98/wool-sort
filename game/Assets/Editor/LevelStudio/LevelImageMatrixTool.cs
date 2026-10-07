@@ -25,6 +25,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private const int Grid = 28;
 
     private Vector2 scroll;
+    private Vector2 reportScroll;
     private Vector2 jsonScroll;
     private bool selectAllJson;
     private string report = "Kéo ảnh vào + chọn level rồi Extract, hoặc Extract tất cả levels.";
@@ -206,10 +207,11 @@ public sealed class LevelImageMatrixTool : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-        // Trong Studio: bỏ scroll lồng nhau, để scroll ngoài của Studio lo.
-        // (scroll lồng + ExpandHeight làm scroll ngoài không bao giờ tràn.)
+        // Trong Studio: ô báo cáo cuộn riêng cố định, scroll ngoài của Studio lo phần còn lại.
         GUILayout.Label("Báo cáo:", EditorStyles.miniBoldLabel);
-        EditorGUILayout.TextArea(report, GUILayout.MinHeight(150));
+        reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(180));
+        EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
+        EditorGUILayout.EndScrollView();
     }
 
     /// <summary>Đổi level -> tự nạp ảnh nguồn đúng thứ tự fallback của JamImage (khỏi kéo tay).</summary>

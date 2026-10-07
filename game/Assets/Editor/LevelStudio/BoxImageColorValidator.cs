@@ -23,6 +23,7 @@ public sealed class BoxImageColorValidator : EditorWindow
     private const string LevelsFolder = "Assets/Resources/Levels";
 
     private Vector2 scroll;
+    private Vector2 reportScroll;
     private string report = "Bấm \"Quét full\" để kiểm tra. Tab tự quét nhanh Database lúc mở.";
     private int okLevelCount;
     private int errorLevelCount;
@@ -105,7 +106,9 @@ public sealed class BoxImageColorValidator : EditorWindow
         EditorGUILayout.LabelField($"Level OK: {okLevelCount}   Level lỗi: {errorLevelCount}");
         // Trong Studio: bỏ scroll lồng nhau, để scroll ngoài của Studio lo.
         GUILayout.Label("Báo cáo:", EditorStyles.miniBoldLabel);
-        EditorGUILayout.TextArea(report, GUILayout.MinHeight(150));
+        reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(180));
+        EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
+        EditorGUILayout.EndScrollView();
     }
 
     private void RefreshAll()
