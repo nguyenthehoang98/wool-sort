@@ -103,9 +103,9 @@ public sealed class BoxImageColorValidator : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.LabelField($"Level OK: {okLevelCount}   Level lỗi: {errorLevelCount}");
-        scroll = EditorGUILayout.BeginScrollView(scroll);
-        EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
-        EditorGUILayout.EndScrollView();
+        // Trong Studio: bỏ scroll lồng nhau, để scroll ngoài của Studio lo.
+        GUILayout.Label("Báo cáo:", EditorStyles.miniBoldLabel);
+        EditorGUILayout.TextArea(report, GUILayout.MinHeight(150));
     }
 
     private void RefreshAll()

@@ -45,6 +45,10 @@ namespace _Game.Scripts.Gameplay
         private int currentLevel;
         public int CurrentLevel => currentLevel;
 
+        [Header("Test (chỉ dùng lúc dev)")]
+        [Tooltip("Level load khi bấm Play. Mặc định 1. Để 2 để test Level2 không cần chơi Level1.")]
+        [SerializeField] private int debugStartLevel = 1;
+
         private int realCurrentLevel;
         public int RealCurrentLevel => realCurrentLevel;
 
@@ -106,6 +110,7 @@ namespace _Game.Scripts.Gameplay
 
         void Start()
         {
+            currentLevel = Mathf.Max(1, debugStartLevel);
             InitEmptyScreen();
 
             this.WaitNextFrame(LoadLevel);

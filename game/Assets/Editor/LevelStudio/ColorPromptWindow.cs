@@ -382,7 +382,17 @@ public class ColorPromptWindow : EditorWindow
             var stats = ColorUsageTracker.CollectStatsForPrefab(path);
             if (stats != null) _levels.Add(stats);
         }
-        _levels = _levels.OrderBy(s => s.levelName).ToList();
+        _levels = _levels.OrderBy(s => LevelSortKey(s.levelName)).ThenBy(s => s.levelName).ToList();
+    }
+
+    /// <summary>Sort theo số cuối tên (Level2 trước Level10). Tên không có số xếp cuối.</summary>
+    private static int LevelSortKey(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return int.MaxValue;
+        int end = name.Length, start = end;
+        while (start > 0 && char.IsDigit(name[start - 1])) start--;
+        if (start < end && int.TryParse(name.Substring(start, end - start), out int n)) return n;
+        return int.MaxValue;
     }
 
     private void OnGUI()

@@ -188,6 +188,9 @@ public sealed class LevelDifficultyTool : EditorWindow
         if (GUILayout.Button("Giảm 1 màu (gộp 2 màu hiếm nhất)", GUILayout.Height(28))) MergeRarest(sel);
         if (GUILayout.Button("Tăng 1 màu (tách 3 sợi sang màu mới)", GUILayout.Height(28))) SplitNewColor(sel);
         EditorGUILayout.EndHorizontal();
+
+        DrawManualColorEdit(sel);
+
         if (GUILayout.Button($"Đồng bộ material model theo initColor ({sel.levelName})", GUILayout.Height(28)))
             ResyncModelMaterials(sel);
         if (GUILayout.Button($"Chẩn đoán lệch màu ({sel.levelName})", GUILayout.Height(28)))
@@ -195,6 +198,176 @@ public sealed class LevelDifficultyTool : EditorWindow
         EditorGUILayout.HelpBox(
             "Nếu model nhìn sai màu so với dataset/preview: bấm Đồng bộ material (nó ép mọi MeshRenderer về đúng material của initColor trong Database).",
             MessageType.None);
+    }
+
+    // ---------------- Chỉnh tay từng màu ----------------
+
+    private YarnColor manualSrc = YarnColor.Green;
+    private YarnColor manualDst = YarnColor.Orange;
+    private int manualCount = 3;
+
+    /// <summary>
+    /// Chỉnh tay: +-3 sợi từng màu (thêm/bớt inner Fixed, giữ %3) + đổi màu tùy chọn.
+    /// </summary>
+    private void DrawManualColorEdit(DiffRow sel)
+    {
+        GUILayout.Space(4);
+        GUILayout.Label("CHỈNH TAY TỪNG MÀU", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "+3/-3 sợi = thêm/bớt 3 lớp inner Fixed (lớp ngoài giữ nguyên, tổng vẫn %3).\n" +
+            "Đổi màu: chuyển part ngoài sang màu khác (có thể lẻ %3 -> chạy lại Validate tab 3).",
+            MessageType.None);
+
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        foreach (var kv in sel.perColor.OrderByDescending(kv => kv.Value))
+        {
+            EditorGUILayout.BeginHorizontal();
+            var show = LevelColorMatrixUtility.RefColor(db, kv.Key);
+            show.a = 1f;
+            var swatch = GUILayoutUtility.GetRect(16, 14, GUILayout.Width(16));
+            EditorGUI.DrawRect(swatch, show);
+            GUILayout.Label($"{kv.Key}", GUILayout.Width(80));
+            GUILayout.Label($"{kv.Value} sợi", GUILayout.Width(70));
+            if (GUILayout.Button("-3", GUILayout.Width(40))) AdjustColorCount(sel, kv.Key, -3);
+            if (GUILayout.Button("+3", GUILayout.Width(40))) AdjustColorCount(sel, kv.Key, +3);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        GUILayout.Space(2);
+        GUILayout.Label("Đổi part ngoài sang màu khác:", EditorStyles.miniBoldLabel);
+        var levelColors = sel.perColor.Keys.ToList();
+        if (levelColors.Count > 0 && !levelColors.Contains(manualSrc))
+            manualSrc = levelColors[0];
+        EditorGUILayout.BeginHorizontal();
+        manualSrc = (YarnColor)EditorGUILayout.EnumPopup(manualSrc, GUILayout.Width(110));
+        GUILayout.Label("->", GUILayout.Width(25));
+        manualDst = (YarnColor)EditorGUILayout.EnumPopup(manualDst, GUILayout.Width(110));
+        manualCount = EditorGUILayout.IntField(manualCount, GUILayout.Width(45));
+        GUILayout.Label("part", GUILayout.Width(35));
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Đổi N part ngoài", GUILayout.Height(26))) RecolorManual(sel, false);
+        if (GUILayout.Button("Đổi TẤT CẢ (ngoài+inner+pool)", GUILayout.Height(26))) RecolorManual(sel, true);
+        EditorGUILayout.EndHorizontal();
+    }
+
+    /// <summary>Thêm (delta=+3) hoặc bớt (delta=-3) sợi 1 màu bằng inner Fixed.</summary>
+    private void AdjustColorCount(DiffRow row, YarnColor color, int delta)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var parts = root.GetComponentsInChildren<YarnPart>(true).ToList();
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+
+            // Chuẩn hóa list inner theo totalInnerCount trước khi thêm/bớt.
+            foreach (var p in parts) NormalizeInnerLists(p);
+
+            if (delta > 0)
+            {
+                // Thêm vào part cùng màu, ít lớp nhất trước (chia đều).
+                var cands = parts.Where(p => p.initColor == color).OrderBy(p => p.totalInnerCount).ToList();
+                if (cands.Count == 0) { report = $"[LỖI] Không có part ngoài màu {color} để thêm inner."; return; }
+                for (int i = 0; i < delta; i++)
+                {
+                    var p = cands.OrderBy(x => x.totalInnerCount).First();
+                    p.totalInnerCount++;
+                    p.innerColorTypes.Add(InnerColorType.Fixed);
+                    p.innerFixedColors.Add(color);
+                    EditorUtility.SetDirty(p);
+                }
+            }
+            else
+            {
+                // Bớt inner Fixed màu đó, lấy từ part nhiều lớp nhất trước.
+                int need = -delta, removed = 0;
+                foreach (var p in parts.OrderByDescending(p => p.totalInnerCount))
+                {
+                    for (int j = p.innerFixedColors.Count - 1; j >= 0 && removed < need; j--)
+                    {
+                        if (j < p.innerColorTypes.Count && p.innerColorTypes[j] == InnerColorType.Fixed
+                            && p.innerFixedColors[j] == color)
+                        {
+                            p.innerColorTypes.RemoveAt(j);
+                            p.innerFixedColors.RemoveAt(j);
+                            p.totalInnerCount = Math.Max(0, p.totalInnerCount - 1);
+                            EditorUtility.SetDirty(p);
+                            removed++;
+                        }
+                    }
+                    if (removed >= need) break;
+                }
+                if (removed < need) { report = $"[LỖI] Màu {color} chỉ bớt được {removed}/{need} sợi inner (không đủ inner Fixed)."; return; }
+            }
+
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            report = $"[OK] {row.levelName}: màu {color} {(delta > 0 ? "+" : "")}{delta} sợi (inner Fixed). Tổng vẫn %3.";
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    private static void NormalizeInnerLists(YarnPart p)
+    {
+        if (p.innerColorTypes == null) p.innerColorTypes = new List<InnerColorType>();
+        if (p.innerFixedColors == null) p.innerFixedColors = new List<YarnColor>();
+        while (p.innerColorTypes.Count < p.totalInnerCount) p.innerColorTypes.Add(InnerColorType.Random);
+        while (p.innerFixedColors.Count < p.totalInnerCount) p.innerFixedColors.Add(p.initColor);
+    }
+
+    /// <summary>Đổi màu tay: N part ngoài (all=false) hoặc tất cả ngoài+inner+pool (all=true).</summary>
+    private void RecolorManual(DiffRow row, bool all)
+    {
+        if (manualSrc == manualDst) { report = "[LỖI] Màu nguồn và màu đích trùng nhau."; return; }
+        if (!all && manualCount <= 0) { report = "[LỖI] Số part phải > 0 (hoặc bấm Đổi TẤT CẢ)."; return; }
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+            if (db == null) { report = "[LỖI] Không load được YarnColorDatabase."; return; }
+            if (db.GetMaterial(manualDst) == null) { report = $"[LỖI] Database thiếu yarn material cho {manualDst}."; return; }
+            var parts = root.GetComponentsInChildren<YarnPart>(true).ToList();
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+
+            int moved;
+            if (all)
+            {
+                moved = RecolorAll(parts, holder, db, manualSrc, manualDst);
+                if (moved == 0) { report = $"[LỖI] Không tìm thấy sợi nào màu {manualSrc}."; return; }
+            }
+            else
+            {
+                var cands = parts.Where(p => p.initColor == manualSrc).OrderBy(p => p.totalInnerCount).Take(manualCount).ToList();
+                if (cands.Count < manualCount) { report = $"[LỖI] Chỉ có {cands.Count} part ngoài màu {manualSrc}, cần {manualCount}."; return; }
+                foreach (var p in cands)
+                {
+                    p.initColor = manualDst;
+                    SwapSharedMaterial(p, db, manualSrc, manualDst);
+                    EditorUtility.SetDirty(p);
+                }
+                moved = cands.Count;
+            }
+
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            report = $"[OK] {row.levelName}: đổi {moved} sợi {manualSrc} -> {manualDst}." +
+                (all ? "" : " (có thể lẻ %3 — chạy Validate để sửa)");
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
     }
 
     private void SetThresholdEdit(int a, int b, int c, int d)

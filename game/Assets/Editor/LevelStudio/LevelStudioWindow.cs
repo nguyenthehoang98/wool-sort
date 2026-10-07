@@ -31,13 +31,17 @@ public sealed class LevelStudioWindow : EditorWindow
     private ColorPromptWindow promptPanel;
     private LevelImageMatrixTool matrixPanel;
     private LevelDifficultyTool difficultyPanel;
+    private Vector2 studioScroll;
 
     private void OnGUI()
     {
         GUILayout.Label("LEVEL STUDIO — làm từng bước 1 là xong", EditorStyles.boldLabel);
-        tab = GUILayout.Toolbar(tab, tabNames, GUILayout.Height(32));
+        int next = GUILayout.Toolbar(tab, tabNames, GUILayout.Height(32));
+        if (next != tab) { tab = next; studioScroll = Vector2.zero; }
         EditorGUILayout.Space(4);
 
+        // Scroll toàn tab để màn hình bé vẫn thao tác được.
+        studioScroll = EditorGUILayout.BeginScrollView(studioScroll);
         switch (tab)
         {
             case 0:
@@ -66,5 +70,6 @@ public sealed class LevelStudioWindow : EditorWindow
                 matrixPanel.DrawPanel();
                 break;
         }
+        EditorGUILayout.EndScrollView();
     }
 }

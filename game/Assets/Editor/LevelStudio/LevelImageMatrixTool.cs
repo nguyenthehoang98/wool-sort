@@ -206,9 +206,10 @@ public sealed class LevelImageMatrixTool : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-        scroll = EditorGUILayout.BeginScrollView(scroll);
-        EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
-        EditorGUILayout.EndScrollView();
+        // Trong Studio: bỏ scroll lồng nhau, để scroll ngoài của Studio lo.
+        // (scroll lồng + ExpandHeight làm scroll ngoài không bao giờ tràn.)
+        GUILayout.Label("Báo cáo:", EditorStyles.miniBoldLabel);
+        EditorGUILayout.TextArea(report, GUILayout.MinHeight(150));
     }
 
     /// <summary>Đổi level -> tự nạp ảnh nguồn đúng thứ tự fallback của JamImage (khỏi kéo tay).</summary>
