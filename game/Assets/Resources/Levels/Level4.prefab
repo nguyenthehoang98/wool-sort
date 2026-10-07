@@ -1,118 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &22038464285736840
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8973771357057404393}
-  - component: {fileID: 7104987550795175532}
-  - component: {fileID: 3416074393874776462}
-  - component: {fileID: 5252916922272933914}
-  m_Layer: 0
-  m_Name: Thuan_LV74_62
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8973771357057404393
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22038464285736840}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.7853779, y: 6.4005036, z: -0.5459024}
-  m_LocalScale: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2244393447809748521}
-  m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
---- !u!33 &7104987550795175532
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22038464285736840}
-  m_Mesh: {fileID: 4300000, guid: c290021900bf8a247b0654b629d7d607, type: 2}
---- !u!23 &3416074393874776462
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22038464285736840}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 95ab7ca613264c044ae0925fa4e8de87, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5252916922272933914
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22038464285736840}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: c290021900bf8a247b0654b629d7d607, type: 2}
 --- !u!1 &169749910299378702
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,9 +127,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 11000000
   ancestor: {fileID: 248446126408783114}
   rootPart: {fileID: 248446126408783114}
   childPart: {fileID: 0}
@@ -375,9 +262,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 14000000
   ancestor: {fileID: 6171928308295966894}
   rootPart: {fileID: 6171928308295966894}
   childPart: {fileID: 0}
@@ -394,8 +281,7 @@ GameObject:
   - component: {fileID: 133548986583485342}
   - component: {fileID: 2876348087124157617}
   - component: {fileID: 3301200040659380525}
-  - component: {fileID: 4440733823937122699}
-  - component: {fileID: 2996663299843397114}
+  - component: {fileID: 3780482539081679189}
   m_Layer: 6
   m_Name: Thuan_LV74_Item_1
   m_TagString: Untagged
@@ -412,11 +298,11 @@ Transform:
   m_GameObject: {fileID: 289449216230634857}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.47033298, y: 4.5376635, z: 1.8206025}
-  m_LocalScale: {x: 1.0000002, y: 1.0000002, z: 1.0000002}
+  m_LocalPosition: {x: 0.6610441, y: 0.82868254, z: 1.9661107}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2244393447809748521}
+  m_Father: {fileID: 3475324995700034874}
   m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
 --- !u!33 &2876348087124157617
 MeshFilter:
@@ -475,29 +361,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &4440733823937122699
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 289449216230634857}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 97ee2c2a46764294987e77eea3897a5d, type: 2}
---- !u!114 &2996663299843397114
+--- !u!114 &3780482539081679189
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -506,18 +370,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 289449216230634857}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
+  m_Script: {fileID: 11500000, guid: f153593425f97d145814000fdb705843, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 16
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
-  ancestor: {fileID: 2996663299843397114}
-  rootPart: {fileID: 2996663299843397114}
-  childPart: {fileID: 0}
-  layerIndex: 1
-  decorations: []
+  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnDecoration
 --- !u!1 &401341028173819349
 GameObject:
   m_ObjectHideFlags: 0
@@ -780,9 +635,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0a000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 1295214722398863819}
   rootPart: {fileID: 1295214722398863819}
   childPart: {fileID: 0}
@@ -1050,9 +905,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 14000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 6239191954527188705}
   rootPart: {fileID: 6239191954527188705}
   childPart: {fileID: 0}
@@ -1328,37 +1183,6 @@ MonoBehaviour:
   childPart: {fileID: 0}
   layerIndex: 1
   decorations: []
---- !u!1 &1486455340910453879
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7323495514091688744}
-  m_Layer: 0
-  m_Name: Thuan_LV74
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7323495514091688744
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1486455340910453879}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.1892128, y: -1.9327574, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5187425555647473055}
-  m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
 --- !u!1 &1487771226253288724
 GameObject:
   m_ObjectHideFlags: 0
@@ -2066,7 +1890,9 @@ Transform:
   m_LocalPosition: {x: -1.1313772, y: 3.7089808, z: -0.1455082}
   m_LocalScale: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 133548986583485342}
+  - {fileID: 6921049240386468387}
   m_Father: {fileID: 2244393447809748521}
   m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
 --- !u!33 &4117577702429429114
@@ -2161,14 +1987,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 13
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0d000000
   ancestor: {fileID: 1632795098815790070}
   rootPart: {fileID: 1632795098815790070}
   childPart: {fileID: 0}
   layerIndex: 1
-  decorations: []
+  decorations:
+  - {fileID: 3780482539081679189}
+  - {fileID: 1877845422536943023}
 --- !u!1 &1816763768011087193
 GameObject:
   m_ObjectHideFlags: 0
@@ -2566,9 +2394,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 16
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0d000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 4507409583630121733}
   rootPart: {fileID: 4507409583630121733}
   childPart: {fileID: 0}
@@ -2836,9 +2664,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 14000000
+  totalInnerCount: 2
+  innerColorTypes: 0100000001000000
+  innerFixedColors: 1400000014000000
   ancestor: {fileID: 5291850466464666895}
   rootPart: {fileID: 5291850466464666895}
   childPart: {fileID: 0}
@@ -3106,9 +2934,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0c000000
   ancestor: {fileID: 8783915712844778816}
   rootPart: {fileID: 8783915712844778816}
   childPart: {fileID: 0}
@@ -3781,9 +3609,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 10000000
+  totalInnerCount: 2
+  innerColorTypes: 0100000001000000
+  innerFixedColors: 100000000e000000
   ancestor: {fileID: 4992922855262086436}
   rootPart: {fileID: 4992922855262086436}
   childPart: {fileID: 0}
@@ -4051,9 +3879,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0d000000
   ancestor: {fileID: 217624017589489348}
   rootPart: {fileID: 217624017589489348}
   childPart: {fileID: 0}
@@ -4726,9 +4554,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0a000000
   ancestor: {fileID: 1293432080425513209}
   rootPart: {fileID: 1293432080425513209}
   childPart: {fileID: 0}
@@ -4861,46 +4689,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 1
-  innerColorTypes: 00000000
-  innerFixedColors: 03000000
+  totalInnerCount: 2
+  innerColorTypes: 0000000001000000
+  innerFixedColors: 0300000010000000
   ancestor: {fileID: 6589616687299388532}
   rootPart: {fileID: 6589616687299388532}
   childPart: {fileID: 0}
   layerIndex: 1
   decorations: []
---- !u!1 &4884729911884190585
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5187425555647473055}
-  m_Layer: 0
-  m_Name: Stage_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5187425555647473055
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4884729911884190585}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 7323495514091688744}
-  m_Father: {fileID: 2244393447809748521}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4950538326881016860
 GameObject:
   m_ObjectHideFlags: 0
@@ -5028,9 +4824,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 14000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 925807088176456751}
   rootPart: {fileID: 925807088176456751}
   childPart: {fileID: 0}
@@ -5163,9 +4959,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 10000000
   ancestor: {fileID: 1979580602557903440}
   rootPart: {fileID: 1979580602557903440}
   childPart: {fileID: 0}
@@ -5289,8 +5085,6 @@ MonoBehaviour:
   - {fileID: 923519872196588895}
   - {fileID: 4678595577578515014}
   - {fileID: 3404422867330907932}
-  - {fileID: 2996663299843397114}
-  - {fileID: 4068976330828086936}
   randomColorEntries:
   - color: 17
     count: 2
@@ -5304,9 +5098,11 @@ MonoBehaviour:
     count: 1
   layerCountEntries:
   - layerIndex: 1
-    count: 66
+    count: 64
   - layerIndex: 2
-    count: 24
+    count: 22
+  - layerIndex: 3
+    count: 4
   colorCountEntries:
   - color: 20
     count: 15
@@ -5320,15 +5116,15 @@ MonoBehaviour:
     count: 3
   - color: 13
     count: 3
-  - color: 6
-    count: 3
   - color: 10
     count: 3
   - color: 14
     count: 3
+  - color: 19
+    count: 3
   - color: 17
     count: 3
-  - color: 19
+  - color: 6
     count: 3
 --- !u!114 &3336351636094599117
 MonoBehaviour:
@@ -6214,8 +6010,7 @@ GameObject:
   - component: {fileID: 6921049240386468387}
   - component: {fileID: 6990162047626737891}
   - component: {fileID: 5706351486132886102}
-  - component: {fileID: 2292477393098638707}
-  - component: {fileID: 4068976330828086936}
+  - component: {fileID: 1877845422536943023}
   m_Layer: 6
   m_Name: Thuan_LV74_Item_2
   m_TagString: Untagged
@@ -6232,11 +6027,11 @@ Transform:
   m_GameObject: {fileID: 5961254063047326441}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.20873411, y: 3.6595216, z: 1.9878639}
-  m_LocalScale: {x: 1.0000002, y: 1.0000002, z: 1.0000002}
+  m_LocalPosition: {x: 0.92264295, y: -0.049458735, z: 2.133372}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2244393447809748521}
+  m_Father: {fileID: 3475324995700034874}
   m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
 --- !u!33 &6990162047626737891
 MeshFilter:
@@ -6295,29 +6090,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2292477393098638707
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5961254063047326441}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: d14a726ee8f53d947ab0c325bc000194, type: 2}
---- !u!114 &4068976330828086936
+--- !u!114 &1877845422536943023
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6326,18 +6099,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5961254063047326441}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3a11c2bb8076d14cbd7a31a2df9fed9, type: 3}
+  m_Script: {fileID: 11500000, guid: f153593425f97d145814000fdb705843, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
-  initColor: 16
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
-  ancestor: {fileID: 4068976330828086936}
-  rootPart: {fileID: 4068976330828086936}
-  childPart: {fileID: 0}
-  layerIndex: 1
-  decorations: []
+  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnDecoration
 --- !u!1 &6069670468743232202
 GameObject:
   m_ObjectHideFlags: 0
@@ -6465,9 +6229,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 03000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 6493654059922157038}
   rootPart: {fileID: 6493654059922157038}
   childPart: {fileID: 0}
@@ -6735,9 +6499,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0c000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 8762440698386024208}
   rootPart: {fileID: 8762440698386024208}
   childPart: {fileID: 0}
@@ -7005,9 +6769,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 11000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 260640645673038846}
   rootPart: {fileID: 260640645673038846}
   childPart: {fileID: 0}
@@ -7312,7 +7076,6 @@ Transform:
   m_LocalScale: {x: 1.125, y: 1.125, z: 1.125}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5187425555647473055}
   - {fileID: 7143912342422559347}
   - {fileID: 175140115736616959}
   - {fileID: 743755186052090935}
@@ -7372,15 +7135,11 @@ Transform:
   - {fileID: 587579113437984292}
   - {fileID: 6159310607414817020}
   - {fileID: 3475324995700034874}
-  - {fileID: 133548986583485342}
-  - {fileID: 6921049240386468387}
   - {fileID: 7864617854444966215}
   - {fileID: 7003343538325962582}
   - {fileID: 8540674214747596742}
   - {fileID: 5456863202503001430}
   - {fileID: 8824316178109147076}
-  - {fileID: 8973771357057404393}
-  - {fileID: 6055644252247407999}
   m_Father: {fileID: 6885777388807469890}
   m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
 --- !u!1 &7545265293120306008
@@ -7510,9 +7269,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0d000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 806537570809763318}
   rootPart: {fileID: 806537570809763318}
   childPart: {fileID: 0}
@@ -8217,9 +7976,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 16
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 06000000
   ancestor: {fileID: 9155692230003832917}
   rootPart: {fileID: 9155692230003832917}
   childPart: {fileID: 0}
@@ -8352,9 +8111,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 06000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 4036195226457467589}
   rootPart: {fileID: 4036195226457467589}
   childPart: {fileID: 0}
@@ -8622,9 +8381,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0e000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 7702938964418244269}
   rootPart: {fileID: 7702938964418244269}
   childPart: {fileID: 0}
@@ -9027,127 +8786,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 01000000
-  innerFixedColors: 0e000000
+  totalInnerCount: 0
+  innerColorTypes: 
+  innerFixedColors: 
   ancestor: {fileID: 6972329906136760586}
   rootPart: {fileID: 6972329906136760586}
   childPart: {fileID: 0}
   layerIndex: 1
   decorations: []
---- !u!1 &9159903751089620786
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6055644252247407999}
-  - component: {fileID: 8565090890044377014}
-  - component: {fileID: 8779565931030097586}
-  - component: {fileID: 2732825499235056499}
-  m_Layer: 0
-  m_Name: Thuan_LV74_63
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6055644252247407999
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159903751089620786}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.1530585, y: 7.551975, z: -0.80956775}
-  m_LocalScale: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2244393447809748521}
-  m_LocalEulerAnglesHint: {x: 0, y: -0, z: 0}
---- !u!33 &8565090890044377014
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159903751089620786}
-  m_Mesh: {fileID: 4300000, guid: 5abd99c056a14a54f9f71f65624a9255, type: 2}
---- !u!23 &8779565931030097586
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159903751089620786}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 95ab7ca613264c044ae0925fa4e8de87, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2732825499235056499
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159903751089620786}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 5abd99c056a14a54f9f71f65624a9255, type: 2}
 --- !u!1 &9181131616929161747
 GameObject:
   m_ObjectHideFlags: 0
@@ -9312,8 +8958,8 @@ Transform:
   m_GameObject: {fileID: 9206369507009656578}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.18921098, y: -6.842259, z: -0.16491334}
-  m_LocalScale: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
+  m_LocalPosition: {x: -0.18921098, y: -7.17, z: -0.16491334}
+  m_LocalScale: {x: 1.2, y: 1.1, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2244393447809748521}
@@ -9410,9 +9056,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 7
-  totalInnerCount: 1
-  innerColorTypes: 00000000
-  innerFixedColors: 07000000
+  totalInnerCount: 2
+  innerColorTypes: 0000000001000000
+  innerFixedColors: 0700000003000000
   ancestor: {fileID: 4370914852952808388}
   rootPart: {fileID: 4370914852952808388}
   childPart: {fileID: 0}
@@ -9545,9 +9191,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 16
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0e000000
   ancestor: {fileID: 3430903576204576768}
   rootPart: {fileID: 3430903576204576768}
   childPart: {fileID: 0}

@@ -206,6 +206,13 @@ public sealed class LevelImageMatrixTool : EditorWindow
             report = "[OK] Đã nạp JSON mẫu vào ô text. Sửa rồi bấm Import (chưa copy clipboard).";
         }
         EditorGUILayout.EndHorizontal();
+        if (GUILayout.Button("Vá màu thiếu vào matrix (lấy ô từ màu nhiều nhất)", GUILayout.Height(30)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else
+                FixMissingColors(levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)]);
+        }
 
         EditorGUILayout.EndVertical();
 
@@ -682,6 +689,87 @@ public sealed class LevelImageMatrixTool : EditorWindow
             return available.Count > 0;
         }
         finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Vá màu thiếu: màu nào của level mà 0 ô thì lấy ô từ màu nhiều nhất sang.
+    /// Mỗi màu cần ít nhất (sợi/3) ô để mỗi box đều có batch để tô.
+    /// </summary>
+    private void FixMissingColors(string levelName)
+    {
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        if (db == null) { report = "[LỖI] Không thấy Database: " + DatabasePath; return; }
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{levelName}.asset");
+        if (matrix == null || !matrix.IsValid) { report = "[LỖI] Chưa có matrix hợp lệ cho " + levelName + " — Extract/Import trước."; return; }
+        var sb = new StringBuilder();
+        if (!RefreshHolderCounts(levelName, out _, out var yarnCounts, sb))
+        { report = "[LỖI] " + levelName + ": level không có màu nào."; return; }
+        int g = matrix.gridSize;
+
+        var owners = new YarnColor[g * g];
+        var displays = new Color[g * g];
+        var cellsOf = new Dictionary<YarnColor, List<Vector2Int>>();
+        for (int y = 0; y < g; y++)
+            for (int x = 0; x < g; x++)
+            {
+                owners[y * g + x] = matrix.GetColorId(x, y);
+                displays[y * g + x] = matrix.GetDisplayColor(x, y);
+                var o = owners[y * g + x];
+                if (!cellsOf.ContainsKey(o)) cellsOf[o] = new List<Vector2Int>();
+                cellsOf[o].Add(new Vector2Int(x, y));
+            }
+        int Cells(YarnColor c) => cellsOf.TryGetValue(c, out var l) ? l.Count : 0;
+
+        var missing = new List<YarnColor>();
+        foreach (var kv in yarnCounts)
+            if (kv.Value > 0 && Cells(kv.Key) == 0) missing.Add(kv.Key);
+        if (missing.Count == 0) { report = $"[OK] {levelName}: không thiếu màu nào."; return; }
+
+        var sb2 = new StringBuilder();
+        sb2.AppendLine($"[VÁ] {levelName}: thiếu {missing.Count} màu.");
+        foreach (var m in missing.OrderByDescending(m => yarnCounts[m]))
+        {
+            int need = Math.Max(1, Mathf.CeilToInt(yarnCounts[m] / 3f));
+            // Cho màu cho: nhiều ô nhất mà sau khi cho vẫn đủ batch của nó.
+            YarnColor donor = YarnColor.None;
+            int donorCells = -1;
+            foreach (var kv in cellsOf)
+            {
+                int yarn = yarnCounts.TryGetValue(kv.Key, out var y) ? y : 0;
+                int keep = Math.Max(1, Mathf.CeilToInt(yarn / 3f));
+                if (kv.Value.Count - need >= keep && kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
+            }
+            if (donor == YarnColor.None)
+            {
+                // Không ai đủ cho mà vẫn đủ batch -> lấy của đứa nhiều nhất (báo rõ).
+                foreach (var kv in cellsOf)
+                    if (kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
+                sb2.AppendLine($"  [CHÚ Ý] {m} lấy {need} ô của {donor} nhưng {donor} có thể thiếu batch — kiểm tra lại.");
+            }
+            var show = LevelColorMatrixUtility.RefColor(db, m);
+            show.a = 1f;
+            int take = Math.Min(need, cellsOf[donor].Count);
+            for (int i = 0; i < take; i++)
+            {
+                var cell = cellsOf[donor][0];
+                cellsOf[donor].RemoveAt(0);
+                owners[cell.y * g + cell.x] = m;
+                displays[cell.y * g + cell.x] = show;
+                if (!cellsOf.ContainsKey(m)) cellsOf[m] = new List<Vector2Int>();
+                cellsOf[m].Add(cell);
+            }
+            sb2.AppendLine($"  - {m} ({yarnCounts[m]} sợi): lấy {take} ô từ {donor}.");
+        }
+
+        matrix.entries = LevelColorMatrixUtility.BuildEntriesPreservingDisplay(owners, displays, g);
+        matrix.InvalidateLookup();
+        EditorUtility.SetDirty(matrix);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        cachedLevel = null;
+        sb2.AppendLine("[OK] Đã vá xong — quét Validate lại. Muốn đẹp thì Export JSON sửa tay vị trí ô.");
+        report = sb.ToString() + sb2.ToString();
+        Debug.Log(report);
     }
 
     /// <summary>
