@@ -32,7 +32,7 @@ namespace _Game.Scripts.Gameplay
         [SerializeField] private MeshRenderer slotSpoolRenderer;
         [SerializeField] private MeshRenderer slotShadowRenderer;
 
-        [Header("Vòng co khi yarn bay đi (giữ Cylinder, chỉ co các vòng này)")]
+        [Header("Vòng co khi yarn bay đi (giữ Cylinder, co theo thứ tự 4,3,2,1)")]
         [SerializeField] private MeshRenderer[] shrinkRings;
 
         [Header("Warning VFX (Waiting-only)")]
@@ -86,15 +86,16 @@ namespace _Game.Scripts.Gameplay
         private MeshRenderer[] GetShrinkRings()
         {
             if (shrinkRings != null && shrinkRings.Length > 0) return shrinkRings;
-            // Fallback: dùng allRings lọc đúng SM_vong1/2/3 (bỏ vong4/base).
+            // Fallback: dùng allRings lọc đúng SM_vong1/2/3/4.
             if (allRings == null) return null;
             return allRings.Where(r => r != null &&
-                    (r.name.Contains("vong1") || r.name.Contains("vong2") || r.name.Contains("vong3")))
+                    (r.name.Contains("vong1") || r.name.Contains("vong2") ||
+                     r.name.Contains("vong3") || r.name.Contains("vong4")))
                 .ToArray();
         }
 
         /// <summary>
-        /// Co các vòng nối tiếp SM_vong3 -> vong2 -> vong1 trong duration
+        /// Co các vòng nối tiếp SM_vong4 -> vong3 -> vong2 -> vong1 trong duration
         /// (dây bay lên + vòng thu nhỏ cùng lúc). Cylinder giữ nguyên.
         /// </summary>
         public void PlayRingsShrink(float duration)

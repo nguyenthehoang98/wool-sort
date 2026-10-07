@@ -3435,7 +3435,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 045b944ca7b0d4a4788e79cb83a12125, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boxSpawnThresholds: 5a00000000000000000000000a000000
+  boxSpawnThresholds: 1e0000002d0000000a0000000f000000
   totalYarnPartCount: 48
   totalYarnDecorations: 5
   totalYarnSpecialDecor: 0
