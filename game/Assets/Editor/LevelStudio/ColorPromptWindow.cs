@@ -333,18 +333,19 @@ public class ColorPromptWindow : EditorWindow
     private Vector2 _scrollPosition;
     private string _search = "";
 
-    [MenuItem("Tools/Puzzle/6. Tao prompt anh level (copy)", false, 6)]
-    public static void ShowWindow()
+    // Studio tự tạo panel, không còn menu riêng.
+    private bool initialized;
+
+    /// <summary>Gọi 1 lần khi Studio mở tab (thay ShowWindow/OnEnable cũ).</summary>
+    public void InitPanel()
     {
-        var window = GetWindow<ColorPromptWindow>();
-        window.minSize = new Vector2(650, 500);
-        window.titleContent = new GUIContent("Color Prompt Generator");
-        window.LoadData();
-        window.RefreshLevels();
-        window.Show();
+        if (initialized) return;
+        initialized = true;
+        LoadData();
+        RefreshLevels();
     }
 
-    private void OnEnable() => LoadData();
+    public void DrawPanel() => OnGUI();
 
     private void LoadData()
     {

@@ -32,20 +32,26 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private Texture2D sourceTexture;
     private TextAsset jsonAsset;
     private string jsonText = "";
+    private bool showDataset = true;
     private int selectedLevelIndex;
     private List<string> levelNames = new List<string>();
 
     private LevelColorMatrix cachedMatrix;
     private string cachedLevel;
 
-    [MenuItem("Tools/Puzzle/5. Extract ảnh thành ma trận màu", false, 5)]
-    private static void Open() => GetWindow<LevelImageMatrixTool>("Extract ma trận màu");
+    // Studio tự tạo panel, không còn menu riêng.
+    private bool initialized;
 
-    private void OnEnable()
+    /// <summary>Gọi 1 lần khi Studio mở tab (thay OnEnable cũ).</summary>
+    public void InitPanel()
     {
+        if (initialized) return;
+        initialized = true;
         RefreshLevelNames();
         AutoLoadSourceTexture();
     }
+
+    public void DrawPanel() => OnGUI();
 
     private void RefreshLevelNames()
     {
@@ -86,6 +92,11 @@ public sealed class LevelImageMatrixTool : EditorWindow
             EditorGUILayout.HelpBox("Không tìm thấy prefab nào trong " + LevelsFolder, MessageType.Warning);
         }
         DrawMatrixPreview();
+        GUILayout.Space(4);
+        if (GUILayout.Button(showDataset ? "Ẩn Dataset ▲" : "Hiện Dataset (màu gốc level) ▼", GUILayout.Height(26)))
+            showDataset = !showDataset;
+        if (showDataset)
+            DrawDatasetPanel();
         EditorGUILayout.EndVertical();
 
         // PHẢI: extract
@@ -107,6 +118,8 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 ExtractSingle(levelNames[selectedLevelIndex], sourceTexture);
             }
         }
+
+        GUILayout.Space(4);
 
         GUILayout.Space(8);
         GUILayout.Label("JSON tay (màu phụ / shading)", EditorStyles.boldLabel);
@@ -246,6 +259,69 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 EditorGUI.DrawRect(new Rect(px + 0.5f, py + 0.5f, cell - 1f, cell - 1f), c);
             }
         }
+    }
+
+    /// <summary>
+    /// Hiện dataset màu GỐC của level đang chọn (đúng nguồn runtime dùng để matching).
+    /// Sửa dataset = sửa prefab (holder.colorCountEntries / YarnPart.initColor), KHÔNG phải sửa matrix.
+    /// </summary>
+    private void DrawDatasetPanel()
+    {
+        if (levelNames.Count == 0) return;
+        string levelName = levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)];
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Resources/Levels/{levelName}.prefab");
+        if (prefab == null)
+        {
+            EditorGUILayout.HelpBox("Không thấy prefab " + levelName, MessageType.Warning);
+            return;
+        }
+        var holder = prefab.GetComponent<LevelYarnInfoHolder>();
+        if (holder == null) holder = prefab.GetComponentInChildren<LevelYarnInfoHolder>(true);
+
+        var available = new List<YarnColor>();
+        var yarnCounts = new Dictionary<YarnColor, int>();
+        string src;
+        if (holder != null && holder.colorCountEntries != null && holder.colorCountEntries.Count > 0)
+        {
+            src = "holder.colorCountEntries";
+            foreach (var e in holder.colorCountEntries)
+                if (e.count > 0 && !available.Contains(e.color))
+                {
+                    available.Add(e.color);
+                    yarnCounts[e.color] = e.count;
+                }
+        }
+        else
+        {
+            src = "YarnPart.initColor (holder trống)";
+            foreach (var p in prefab.GetComponentsInChildren<YarnPart>(true))
+            {
+                if (!available.Contains(p.initColor)) { available.Add(p.initColor); yarnCounts[p.initColor] = 0; }
+                yarnCounts[p.initColor]++;
+            }
+        }
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.Label($"Dataset {levelName} ({available.Count} màu gốc, nguồn: {src})", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Đây là các màu gameplay được phép. Extract/Import chỉ được map về các màu này.\n" +
+            "Muốn thêm/bớt màu -> sửa PREFAB (holder.colorCountEntries), rồi Extract lại.",
+            MessageType.None);
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        foreach (var c in available)
+        {
+            EditorGUILayout.BeginHorizontal();
+            var sw = LevelColorMatrixUtility.RefColor(db, c);
+            sw.a = 1f;
+            var r = GUILayoutUtility.GetRect(18, 18, GUILayout.Width(18), GUILayout.Height(18));
+            EditorGUI.DrawRect(r, sw);
+            int yarn = yarnCounts.TryGetValue(c, out var y) ? y : 0;
+            GUILayout.Label($"{c} - {yarn} sợi (#{ColorUtility.ToHtmlStringRGB(sw)})");
+            EditorGUILayout.EndHorizontal();
+        }
+        if (available.Count == 0)
+            EditorGUILayout.HelpBox("Level chưa có màu nào.", MessageType.Warning);
+        EditorGUILayout.EndVertical();
     }
 
     private void ExtractSingle(string levelName, Texture2D tex)

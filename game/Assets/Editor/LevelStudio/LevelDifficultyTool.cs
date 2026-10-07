@@ -31,6 +31,17 @@ public sealed class LevelDifficultyTool : EditorWindow
     private int selectedLevelIndex;
     private int detailLastLoaded = -1;
     private readonly int[] thresholdEdit = new int[4] { 20, 40, 15, 25 };
+    private bool initialized;
+
+    /// <summary>Gọi 1 lần khi Studio mở tab (thay Open cũ).</summary>
+    public void InitPanel()
+    {
+        if (initialized) return;
+        initialized = true;
+        Scan();
+    }
+
+    public void DrawPanel() => OnGUI();
 
     private sealed class DiffRow
     {
@@ -50,13 +61,7 @@ public sealed class LevelDifficultyTool : EditorWindow
         public Dictionary<YarnColor, int> perColor = new Dictionary<YarnColor, int>();
     }
 
-    [MenuItem("Tools/Puzzle/7. Do kho level (check + sua)", false, 7)]
-    private static void Open()
-    {
-        var w = GetWindow<LevelDifficultyTool>("Do kho level");
-        w.minSize = new Vector2(720, 560);
-        w.Scan();
-    }
+    // Studio tự tạo panel, không còn menu riêng.
 
     private void OnGUI()
     {
@@ -88,6 +93,13 @@ public sealed class LevelDifficultyTool : EditorWindow
         EditorGUILayout.HelpBox(
             "Độ khó nên tăng dần theo level — dòng nào tụt điểm sẽ báo.",
             MessageType.None);
+        EditorGUILayout.HelpBox(
+            "Chuẩn 21 màu = YarnColorDatabase (màu <-> material yarn/basket/slot). " +
+            "Mỗi level chỉ dùng tập con (3-6 màu từ prefab đó). Nút dưới ép mesh mọi level " +
+            "về đúng material DB theo initColor + báo màu thiếu material.",
+            MessageType.None);
+        if (GUILayout.Button("Đồng bộ màu TẤT CẢ levels theo DB 21 màu", GUILayout.Height(30)))
+            ResyncAllLevels();
         scroll = EditorGUILayout.BeginScrollView(scroll);
         DiffRow prev = null;
         foreach (var r in rows)
@@ -176,6 +188,13 @@ public sealed class LevelDifficultyTool : EditorWindow
         if (GUILayout.Button("Giảm 1 màu (gộp 2 màu hiếm nhất)", GUILayout.Height(28))) MergeRarest(sel);
         if (GUILayout.Button("Tăng 1 màu (tách 3 sợi sang màu mới)", GUILayout.Height(28))) SplitNewColor(sel);
         EditorGUILayout.EndHorizontal();
+        if (GUILayout.Button($"Đồng bộ material model theo initColor ({sel.levelName})", GUILayout.Height(28)))
+            ResyncModelMaterials(sel);
+        if (GUILayout.Button($"Chẩn đoán lệch màu ({sel.levelName})", GUILayout.Height(28)))
+            DiagnoseColors(sel);
+        EditorGUILayout.HelpBox(
+            "Nếu model nhìn sai màu so với dataset/preview: bấm Đồng bộ material (nó ép mọi MeshRenderer về đúng material của initColor trong Database).",
+            MessageType.None);
     }
 
     private void SetThresholdEdit(int a, int b, int c, int d)
@@ -440,15 +459,176 @@ public sealed class LevelDifficultyTool : EditorWindow
 
     private static void SwapSharedMaterial(YarnPart part, YarnColorDatabase db, YarnColor oldColor, YarnColor newColor)
     {
+        // Ép toàn bộ slot về material của màu mới (đừng so sánh reference oldMat:
+        // prefab cũ có thể đang cầm material lạ/instance nên so == sẽ trượt -> model lệch màu logic).
         var rend = part.GetComponent<MeshRenderer>();
         if (rend == null || db == null) return;
-        var oldMat = db.GetMaterial(oldColor);
         var newMat = db.GetMaterial(newColor);
         if (newMat == null) return;
         var mats = rend.sharedMaterials;
-        bool changed = false;
+        if (mats == null || mats.Length == 0) mats = new Material[1];
         for (int i = 0; i < mats.Length; i++)
-            if (mats[i] == oldMat) { mats[i] = newMat; changed = true; }
-        if (changed) rend.sharedMaterials = mats;
+            mats[i] = newMat;
+        rend.sharedMaterials = mats;
+    }
+
+    /// <summary>
+    /// Sửa các level đã bị lệch trước đây: ép mọi MeshRenderer về đúng material
+    /// của initColor trong Database (không đổi logic sợi nào).
+    /// </summary>
+    private void ResyncModelMaterials(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+            if (db == null) { report = "[LỖI] Không load được YarnColorDatabase."; return; }
+            var parts = root.GetComponentsInChildren<YarnPart>(true);
+            int fixedCount = 0;
+            foreach (var p in parts)
+            {
+                var mat = db.GetMaterial(p.initColor);
+                if (mat == null) continue;
+                var rend = p.GetComponent<MeshRenderer>();
+                if (rend == null) continue;
+                var mats = rend.sharedMaterials;
+                if (mats == null || mats.Length == 0) mats = new Material[1];
+                bool need = false;
+                for (int i = 0; i < mats.Length; i++)
+                    if (mats[i] != mat) { mats[i] = mat; need = true; }
+                if (need) { rend.sharedMaterials = mats; EditorUtility.SetDirty(p); fixedCount++; }
+            }
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            report = $"[OK] {row.levelName}: đã đồng bộ material cho {fixedCount}/{parts.Length} part theo initColor. " +
+                     $"Mở lại prefab kiểm tra, rồi Extract lại matrix nếu cần.";
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Đồng bộ 1 chạm: mọi level ép mesh về đúng material DB 21 màu theo initColor.
+    /// Logic sợi (initColor/inner/pool) GIỮ NGUYÊN — chỉ sửa phần nhìn + báo thiếu material.
+    /// </summary>
+    private void ResyncAllLevels()
+    {
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        if (db == null) { report = "[LỖI] Không load được YarnColorDatabase."; return; }
+        var sb = new StringBuilder();
+        sb.AppendLine("[ĐỒNG BỘ 21 MÀU] DB = " + DatabasePath);
+        int totalFixed = 0, totalLevels = 0;
+        foreach (var r in rows)
+        {
+            GameObject root = null;
+            try
+            {
+                root = PrefabUtility.LoadPrefabContents(r.path);
+                var parts = root.GetComponentsInChildren<YarnPart>(true);
+                var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+                int fixedCount = 0;
+                var missing = new HashSet<YarnColor>();
+                foreach (var p in parts)
+                {
+                    // initColor phải nằm trong 21 màu có yarn material.
+                    var yarnMat = db.GetMaterial(p.initColor);
+                    if (yarnMat == null) { missing.Add(p.initColor); continue; }
+                    if (db.GetMaterialBasket(p.initColor) == null) missing.Add(p.initColor);
+                    if (db.GetMaterialSlotString(p.initColor) == null) missing.Add(p.initColor);
+                    var rend = p.GetComponent<MeshRenderer>();
+                    if (rend == null) continue;
+                    var mats = rend.sharedMaterials;
+                    if (mats == null || mats.Length == 0) mats = new Material[1];
+                    bool need = false;
+                    for (int i = 0; i < mats.Length; i++)
+                        if (mats[i] != yarnMat) { mats[i] = yarnMat; need = true; }
+                    if (need) { rend.sharedMaterials = mats; EditorUtility.SetDirty(p); fixedCount++; }
+                    // inner Fixed + pool: chỉ kiểm tra có material, không tự đổi màu logic.
+                    if (p.innerFixedColors != null)
+                        foreach (var c in p.innerFixedColors)
+                            if (db.GetMaterial(c) == null) missing.Add(c);
+                }
+                if (holder != null && holder.randomColorEntries != null)
+                    foreach (var e in holder.randomColorEntries)
+                        if (db.GetMaterial(e.color) == null) missing.Add(e.color);
+                if (holder != null)
+                {
+                    holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+                    holder.UpdateDebugInfo();
+                    EditorUtility.SetDirty(holder);
+                }
+                PrefabUtility.SaveAsPrefabAsset(root, r.path);
+                totalFixed += fixedCount;
+                totalLevels++;
+                sb.AppendLine($"  - {r.levelName}: {fixedCount}/{parts.Length} part đồng bộ" +
+                    (missing.Count > 0 ? $" | THIẾU material: {string.Join(",", missing)}" : ""));
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"  - {r.levelName}: [LỖI] {ex.Message}");
+            }
+            finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+        }
+        AssetDatabase.SaveAssets();
+        sb.AppendLine($"[XONG] {totalLevels} levels, {totalFixed} part đã ép về material DB. Chạy validator step 1 rồi Extract lại matrix.");
+        report = sb.ToString();
+        Debug.Log(report);
+        Scan();
+    }
+
+    /// <summary>
+    /// Chẩn đoán lệch màu từng part: initColor (logic) vs material đang gắn trên mesh
+    /// (nhìn thấy) vs material chuẩn trong Database. Chạy cái này TRƯỚC khi sửa.
+    /// </summary>
+    private void DiagnoseColors(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+            if (db == null) { report = "[LỖI] Không load được YarnColorDatabase."; return; }
+            var sb = new StringBuilder();
+            sb.AppendLine($"[CHẨN ĐOÁN] {row.levelName} (db: {DatabasePath})");
+            sb.AppendLine("Logic lúc CHẠY = initColor + database của YarnColorManager trong scene (Awake gán lại material).");
+            sb.AppendLine("Prefab sharedMaterial chỉ là cái NHÌN trong Editor.");
+            var parts = root.GetComponentsInChildren<YarnPart>(true);
+            int mismatch = 0;
+            foreach (var p in parts)
+            {
+                var dbMat = db.GetMaterial(p.initColor);
+                var rend = p.GetComponent<MeshRenderer>();
+                string meshMats = "-";
+                string resolved = "-";
+                bool ok = true;
+                if (rend != null)
+                {
+                    var mats = rend.sharedMaterials;
+                    var names = new List<string>();
+                    var res = new List<string>();
+                    if (mats != null)
+                        foreach (var m in mats)
+                        {
+                            names.Add(m != null ? m.name : "null");
+                            if (m != null && db.TryGetColor(m, out var rc)) res.Add(rc.ToString());
+                            else res.Add("?");
+                        }
+                    meshMats = string.Join(",", names);
+                    resolved = string.Join(",", res.Distinct());
+                    // Lệch nếu mesh đang cầm material không map về initColor.
+                    ok = mats != null && mats.Length > 0 && mats.All(m => m != null && m == dbMat);
+                }
+                if (!ok) mismatch++;
+                sb.AppendLine($"  {(ok ? "[OK]" : "[LỆCH]")} {p.name}: init={p.initColor} | mesh=[{meshMats}] -> {resolved} | db={(dbMat != null ? dbMat.name : "THIẾU_DB")}");
+            }
+            sb.AppendLine(mismatch == 0
+                ? "=> Model khớp initColor. Nếu lúc CHẠY vẫn sai: initColor đang sai (sửa logic), hoặc database trong scene khác file này, hoặc database gán nhầm cặp màu-material."
+                : $"=> Có {mismatch} part mesh lệch initColor. Bấm Đồng bộ material để sửa phần nhìn. Nếu sau đó lúc CHẠY vẫn sai thì initColor mới là cái sai.");
+            report = sb.ToString();
+            Debug.Log(report);
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
     }
 }

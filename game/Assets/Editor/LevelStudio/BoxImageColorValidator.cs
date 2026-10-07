@@ -23,61 +23,20 @@ public sealed class BoxImageColorValidator : EditorWindow
     private const string LevelsFolder = "Assets/Resources/Levels";
 
     private Vector2 scroll;
-    private string report = "Bấm \"Quét full\" để kiểm tra. Window tự quét nhanh Database lúc mở.";
+    private string report = "Bấm \"Quét full\" để kiểm tra. Tab tự quét nhanh Database lúc mở.";
     private int okLevelCount;
     private int errorLevelCount;
+    private bool initialized;
 
-    [MenuItem("Tools/Puzzle/Kiểm tra màu box-ảnh", false, 10)]
-    private static void Open()
+    /// <summary>Gọi 1 lần khi Studio mở tab (thay OnEnable cũ).</summary>
+    public void InitPanel()
     {
-            var w = GetWindow<BoxImageColorValidator>("Kiểm tra màu box-ảnh");
-        w.RefreshAll();
+        if (initialized) return;
+        initialized = true;
+        OnEnable();
     }
 
-    [MenuItem("Tools/Puzzle/Quét tất cả level", false, 11)]
-    private static void ScanAllMenu()
-    {
-        RunStep("full", doLevel: true, doImage: true);
-    }
-
-    // Step 1-3: đi theo thứ tự là check xong (step nào đỏ thì sửa rồi quét lại trước khi qua tiếp).
-    [MenuItem("Tools/Puzzle/1. Quét level + box-ảnh", false, 1)]
-    private static void Step1ScanFull()
-    {
-        RunStep("level + box-ảnh", doLevel: true, doImage: true);
-    }
-
-    [MenuItem("Tools/Puzzle/2. Sửa từng màu %3 (giữ lớp ngoài)", false, 2)]
-    private static void Step2FixPerColor()
-    {
-        if (!EditorUtility.DisplayDialog("Bước 2 — sửa từng màu %3?",
-            "Thêm 1-2 lớp inner Fixed cho màu lẻ (lớp ngoài giữ nguyên). Tiếp tục?",
-            "Sửa luôn", "Hủy")) return;
-        string fix = AutoFixPerColorDiv3Core();
-        string verify = ScanAllLevels(out int ok, out int err, doLevel: true, doImage: false);
-        string result = fix + "\n" + verify;
-        foreach (var line in result.Split('\n'))
-        {
-            if (line.StartsWith("[LỖI]") || line.StartsWith("  [LỖI]"))
-                Debug.LogError("[BoxImageColor] " + line);
-        }
-        Debug.Log("[BoxImageColor] Bước 2 xong.\n" + result);
-        EditorUtility.DisplayDialog("Bước 2 — sửa từng màu %3",
-            string.Join("\n", result.Split('\n').Take(12)) + "\n\nXem Console để xem đầy đủ.", "OK");
-    }
-
-    private static void RunStep(string stepName, bool doLevel, bool doImage)
-    {
-        string result = ScanAllLevels(out int ok, out int err, doLevel, doImage);
-        foreach (var line in result.Split('\n'))
-        {
-            if (line.StartsWith("[LỖI]") || line.StartsWith("  [LỖI]"))
-                Debug.LogError("[BoxImageColor] " + line);
-        }
-        Debug.Log($"[BoxImageColor] {stepName} xong: {ok} OK, {err} lỗi.\n" + result);
-        EditorUtility.DisplayDialog($"Quét {stepName}: {ok} OK, {err} lỗi",
-            string.Join("\n", result.Split('\n').Take(12)) + "\n\nXem Console để click tới từng asset lỗi.", "OK");
-    }
+    public void DrawPanel() => OnGUI();
 
     private void OnEnable()
     {

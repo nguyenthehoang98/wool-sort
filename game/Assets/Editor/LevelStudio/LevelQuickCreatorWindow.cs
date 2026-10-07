@@ -5,10 +5,12 @@ using System.Linq;
 using _Game.Scripts;
 using _Game.Scripts.Gameplay;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.UIElements;
 
+/// <summary>
+/// Tạo prefab level từ model FBX. Bỏ chọn các mesh trang trí.
+/// Panel trong Level Studio (tab 1), viết bằng IMGUI để nhúng chung cửa sổ.
+/// </summary>
 public sealed class LevelQuickCreatorWindow : EditorWindow
 {
     private const string TemplatePath = "Assets/Resources/Levels/Level1.prefab";
@@ -18,51 +20,68 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
 
     private readonly List<MeshPartChoice> parts = new List<MeshPartChoice>();
     private GameObject modelAsset;
-    private TextField levelNameField;
-    private ScrollView partList;
-    private HelpBox status;
+    private string levelName;
+    private Vector2 scroll;
+    private string status = "Chọn model FBX để quét các mesh.";
+    private MessageType statusType = MessageType.Info;
+    private bool initialized;
 
-    [MenuItem("Tools/Level Quick Creator")]
-    private static void Open() => GetWindow<LevelQuickCreatorWindow>("Level Creator");
-
-    private void CreateGUI()
+    /// <summary>Gọi 1 lần khi Studio mở tab.</summary>
+    public void InitPanel()
     {
-        rootVisualElement.Add(new Label("Tạo prefab level từ model FBX. Bỏ chọn các mesh trang trí."));
+        if (initialized) return;
+        initialized = true;
+        if (string.IsNullOrEmpty(levelName))
+            levelName = GetNextLevelName();
+    }
 
-        var modelField = new ObjectField("Model")
+    public void DrawPanel() => OnGUI();
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Tạo prefab level từ model FBX. Bỏ chọn các mesh trang trí.", EditorStyles.boldLabel);
+
+        EditorGUI.BeginChangeCheck();
+        var picked = (GameObject)EditorGUILayout.ObjectField("Model", modelAsset, typeof(GameObject), false);
+        if (EditorGUI.EndChangeCheck())
+            ScanModel(picked);
+
+        levelName = EditorGUILayout.TextField("Tên prefab", levelName ?? "");
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Chọn tất cả mesh")) SetAllParts(true);
+        if (GUILayout.Button("Bỏ chọn tất cả")) SetAllParts(false);
+        EditorGUILayout.EndHorizontal();
+
+        scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MinHeight(150));
+        foreach (var part in parts)
         {
-            objectType = typeof(GameObject),
-            allowSceneObjects = false
-        };
-        modelField.RegisterValueChangedCallback(evt => ScanModel(evt.newValue as GameObject));
-        rootVisualElement.Add(modelField);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginHorizontal();
+            part.include = EditorGUILayout.Toggle(part.include, GUILayout.Width(20));
+            GUILayout.Label(part.path, EditorStyles.boldLabel);
+            EditorGUILayout.EndHorizontal();
+            part.color = (YarnColor)EditorGUILayout.EnumPopup("Màu", part.color);
+            part.innerCount = Mathf.Max(0, EditorGUILayout.IntField("Số lớp trong", part.innerCount));
+            EditorGUILayout.EndVertical();
+        }
+        if (parts.Count == 0)
+            GUILayout.Label("Chưa có mesh nào (chọn model FBX).", EditorStyles.miniLabel);
+        EditorGUILayout.EndScrollView();
 
-        levelNameField = new TextField("Tên prefab") { value = GetNextLevelName() };
-        rootVisualElement.Add(levelNameField);
-
-        var selectionButtons = new VisualElement();
-        selectionButtons.Add(new Button(() => SetAllParts(true)) { text = "Chọn tất cả mesh" });
-        selectionButtons.Add(new Button(() => SetAllParts(false)) { text = "Bỏ chọn tất cả" });
-        rootVisualElement.Add(selectionButtons);
-
-        partList = new ScrollView();
-        rootVisualElement.Add(partList);
-
-        status = new HelpBox("Chọn model FBX để quét các mesh.", HelpBoxMessageType.Info);
-        rootVisualElement.Add(status);
-        rootVisualElement.Add(new Button(CreateLevel) { text = "Tạo Level Prefab" });
+        EditorGUILayout.HelpBox(status, statusType);
+        if (GUILayout.Button("Tạo Level Prefab", GUILayout.Height(32)))
+            CreateLevel();
     }
 
     private void ScanModel(GameObject selectedModel)
     {
         modelAsset = selectedModel;
         parts.Clear();
-        partList.Clear();
 
         if (modelAsset == null)
         {
-            status.text = "Chọn model FBX để quét các mesh.";
-            status.messageType = HelpBoxMessageType.Info;
+            SetStatus("Chọn model FBX để quét các mesh.", MessageType.Info);
             return;
         }
 
@@ -93,59 +112,30 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
             });
         }
 
-        RefreshPartList();
-        status.text = parts.Count == 0
+        SetStatus(parts.Count == 0
             ? "Model không có MeshFilter + MeshRenderer phù hợp."
-            : $"Tìm thấy {parts.Count} mesh. Kiểm tra mesh trang trí và màu trước khi tạo.";
-        status.messageType = parts.Count == 0 ? HelpBoxMessageType.Error : HelpBoxMessageType.Info;
-    }
-
-    private void RefreshPartList()
-    {
-        partList.Clear();
-        foreach (var part in parts)
-        {
-            var row = new VisualElement();
-            var include = new Toggle(part.path) { value = part.include };
-            include.RegisterValueChangedCallback(evt => part.include = evt.newValue);
-            row.Add(include);
-
-            var color = new EnumField("Màu", part.color);
-            color.RegisterValueChangedCallback(evt => part.color = (YarnColor)evt.newValue);
-            row.Add(color);
-
-            var innerCount = new IntegerField("Số lớp trong") { value = part.innerCount };
-            innerCount.tooltip = "Lớp trong mặc định dùng cùng màu đã chọn.";
-            innerCount.RegisterValueChangedCallback(evt =>
-            {
-                part.innerCount = Mathf.Max(0, evt.newValue);
-                if (evt.newValue < 0)
-                    innerCount.SetValueWithoutNotify(0);
-            });
-            row.Add(innerCount);
-            partList.Add(row);
-        }
+            : $"Tìm thấy {parts.Count} mesh. Kiểm tra mesh trang trí và màu trước khi tạo.",
+            parts.Count == 0 ? MessageType.Error : MessageType.Info);
     }
 
     private void SetAllParts(bool include)
     {
         foreach (var part in parts)
             part.include = include;
-        RefreshPartList();
     }
 
     private void CreateLevel()
     {
-        var name = levelNameField.value.Trim();
+        var name = (levelName ?? "").Trim();
         if (modelAsset == null || parts.All(part => !part.include))
         {
-            SetStatus("Chọn model và ít nhất một mesh gameplay.", HelpBoxMessageType.Error);
+            SetStatus("Chọn model và ít nhất một mesh gameplay.", MessageType.Error);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
-            SetStatus("Tên level không hợp lệ.", HelpBoxMessageType.Error);
+            SetStatus("Tên level không hợp lệ.", MessageType.Error);
             return;
         }
 
@@ -153,13 +143,13 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
         var outputPath = $"{LevelsFolder}/{name}.prefab";
         if (string.IsNullOrEmpty(modelPath) || !AssetDatabase.IsValidFolder(LevelsFolder))
         {
-            SetStatus("Model phải là asset trong Project và thư mục Resources/Levels phải tồn tại.", HelpBoxMessageType.Error);
+            SetStatus("Model phải là asset trong Project và thư mục Resources/Levels phải tồn tại.", MessageType.Error);
             return;
         }
 
         if (string.Equals(outputPath, TemplatePath, StringComparison.OrdinalIgnoreCase))
         {
-            SetStatus("Không thể ghi đè prefab mẫu Level1.", HelpBoxMessageType.Error);
+            SetStatus("Không thể ghi đè prefab mẫu Level1.", MessageType.Error);
             return;
         }
 
@@ -172,7 +162,7 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
         var yarnLayer = LayerMask.NameToLayer("YarnPart");
         if (template == null || database == null || yarnLayer < 0)
         {
-            SetStatus("Thiếu prefab Level1, YarnColorDatabase hoặc layer YarnPart.", HelpBoxMessageType.Error);
+            SetStatus("Thiếu prefab Level1, YarnColorDatabase hoặc layer YarnPart.", MessageType.Error);
             return;
         }
 
@@ -261,12 +251,13 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
             AssetDatabase.Refresh();
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(outputPath);
             EditorGUIUtility.PingObject(Selection.activeObject);
-            SetStatus($"Đã tạo {outputPath} với {createdParts.Count} YarnPart.", HelpBoxMessageType.Info);
+            levelName = GetNextLevelName();
+            SetStatus($"Đã tạo {outputPath} với {createdParts.Count} YarnPart.", MessageType.Info);
         }
         catch (Exception exception)
         {
             Debug.LogException(exception);
-            SetStatus(exception.Message, HelpBoxMessageType.Error);
+            SetStatus(exception.Message, MessageType.Error);
         }
         finally
         {
@@ -339,10 +330,10 @@ public sealed class LevelQuickCreatorWindow : EditorWindow
         return root;
     }
 
-    private void SetStatus(string message, HelpBoxMessageType type)
+    private void SetStatus(string message, MessageType type)
     {
-        status.text = message;
-        status.messageType = type;
+        status = message;
+        statusType = type;
     }
 
     private sealed class MeshPartChoice
