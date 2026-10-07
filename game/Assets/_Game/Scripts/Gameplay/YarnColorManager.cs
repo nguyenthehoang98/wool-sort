@@ -34,11 +34,42 @@ namespace _Game.Scripts.Gameplay
             return colorDatabase.GetMaterial(color);
         }
         
+        private Material runtimeTransparent;
+
         public Material GetTransparentMaterial()
         {
-            if (colorDatabase.transparentMaterial == null)
+            var baseMat = colorDatabase != null ? colorDatabase.transparentMaterial : null;
+            if (baseMat == null)
+            {
                 Debug.LogError("Thiếu transparentMaterial trong database!");
-            return colorDatabase.transparentMaterial;
+                return null;
+            }
+            // ThreadMat_Trans đang dùng shader YarnDissolve (Opaque) nên hold không bao giờ
+            // trong suốt được. Dựng bản trong suốt thật (Standard/Transparent) để nhìn xuyên lớp ngoài.
+            if (baseMat.shader != null && baseMat.shader.name.Contains("YarnDissolve"))
+            {
+                if (runtimeTransparent == null)
+                {
+                    var std = Shader.Find("Standard");
+                    if (std == null)
+                    {
+                        Debug.LogError("Không tìm thấy shader Standard để dựng vật liệu hold trong suốt!");
+                        return baseMat;
+                    }
+                    runtimeTransparent = new Material(std);
+                    runtimeTransparent.SetFloat("_Mode", 3f); // Transparent
+                    runtimeTransparent.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    runtimeTransparent.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    runtimeTransparent.SetInt("_ZWrite", 0);
+                    runtimeTransparent.DisableKeyword("_ALPHATEST_ON");
+                    runtimeTransparent.EnableKeyword("_ALPHABLEND_ON");
+                    runtimeTransparent.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    runtimeTransparent.renderQueue = 3000;
+                    runtimeTransparent.color = new Color(0.65f, 0.99f, 1f, 0.35f);
+                }
+                return runtimeTransparent;
+            }
+            return baseMat;
         }
         
         public bool TryGetColorFromMaterial(Material mat, out YarnColor color)

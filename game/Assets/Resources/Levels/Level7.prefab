@@ -532,9 +532,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0f000000
   ancestor: {fileID: 8069688779341496733}
   rootPart: {fileID: 8069688779341496733}
   childPart: {fileID: 0}
@@ -937,9 +937,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 03000000
   ancestor: {fileID: 6173837227877073115}
   rootPart: {fileID: 6173837227877073115}
   childPart: {fileID: 0}
@@ -1072,9 +1072,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 05000000
   ancestor: {fileID: 2205243722629938411}
   rootPart: {fileID: 2205243722629938411}
   childPart: {fileID: 0}
@@ -1477,9 +1477,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 08000000
   ancestor: {fileID: 6462240783580599552}
   rootPart: {fileID: 6462240783580599552}
   childPart: {fileID: 0}
@@ -2215,9 +2215,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 12000000
   ancestor: {fileID: 8284205858281005061}
   rootPart: {fileID: 8284205858281005061}
   childPart: {fileID: 0}
@@ -2350,9 +2350,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0c000000
   ancestor: {fileID: 3164009121524817869}
   rootPart: {fileID: 3164009121524817869}
   childPart: {fileID: 0}
@@ -2755,9 +2755,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 11000000
   ancestor: {fileID: 6501693135306982058}
   rootPart: {fileID: 6501693135306982058}
   childPart: {fileID: 0}
@@ -3835,9 +3835,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 20
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 10000000
   ancestor: {fileID: 5183958294655872752}
   rootPart: {fileID: 5183958294655872752}
   childPart: {fileID: 0}
@@ -3970,9 +3970,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 09000000
   ancestor: {fileID: 6312148036403243769}
   rootPart: {fileID: 6312148036403243769}
   childPart: {fileID: 0}
@@ -4542,9 +4542,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 03000000
   ancestor: {fileID: 3059646675212961194}
   rootPart: {fileID: 3059646675212961194}
   childPart: {fileID: 0}
@@ -4812,9 +4812,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 0c000000
   ancestor: {fileID: 3073375050384385536}
   rootPart: {fileID: 3073375050384385536}
   childPart: {fileID: 0}
@@ -5249,9 +5249,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 14000000
   ancestor: {fileID: 7057076502539690035}
   rootPart: {fileID: 7057076502539690035}
   childPart: {fileID: 0}
@@ -5789,9 +5789,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 14000000
   ancestor: {fileID: 3724452852344425456}
   rootPart: {fileID: 3724452852344425456}
   childPart: {fileID: 0}
@@ -5924,9 +5924,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 3
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 12000000
   ancestor: {fileID: 1673281040080245764}
   rootPart: {fileID: 1673281040080245764}
   childPart: {fileID: 0}
@@ -6059,9 +6059,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.YarnPart
   initColor: 12
-  totalInnerCount: 0
-  innerColorTypes: 
-  innerFixedColors: 
+  totalInnerCount: 1
+  innerColorTypes: 01000000
+  innerFixedColors: 10000000
   ancestor: {fileID: 4151523205894051209}
   rootPart: {fileID: 4151523205894051209}
   childPart: {fileID: 0}
@@ -6387,33 +6387,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boxSpawnThresholds: 5a00000000000000000000000a000000
-  totalYarnPartCount: 57
+  totalYarnPartCount: 72
   totalYarnDecorations: 0
   totalYarnSpecialDecor: 0
   allBaseYarnParts:
   - {fileID: 3059646675212961194}
-  - {fileID: 7744001979836193683}
-  - {fileID: 1037871067289086774}
-  - {fileID: 1275774188825163530}
-  - {fileID: 2488736535139127881}
-  - {fileID: 307563078102331573}
-  - {fileID: 8410762784763695895}
-  - {fileID: 2562681700021587583}
-  - {fileID: 1123380162467409275}
-  - {fileID: 808487992271977973}
   - {fileID: 6173837227877073115}
-  - {fileID: 1762628964987760281}
-  - {fileID: 1868300045430933751}
   - {fileID: 2205243722629938411}
   - {fileID: 6462240783580599552}
-  - {fileID: 581796979812329413}
   - {fileID: 6312148036403243769}
   - {fileID: 3073375050384385536}
   - {fileID: 3164009121524817869}
-  - {fileID: 4038841421808650283}
-  - {fileID: 6516496220249715772}
-  - {fileID: 528931460558254579}
   - {fileID: 8069688779341496733}
+  - {fileID: 5183958294655872752}
+  - {fileID: 4151523205894051209}
+  - {fileID: 6501693135306982058}
   - {fileID: 8284205858281005061}
   - {fileID: 1673281040080245764}
   - {fileID: 7057076502539690035}
@@ -6422,13 +6410,10 @@ MonoBehaviour:
   - {fileID: 3381723951194359410}
   - {fileID: 8751635251474443404}
   - {fileID: 453214255100378619}
-  - {fileID: 5183958294655872752}
-  - {fileID: 4151523205894051209}
-  - {fileID: 6501693135306982058}
   - {fileID: 3942006477484066161}
-  - {fileID: 2247888696248454133}
   - {fileID: 670295223200565277}
   - {fileID: 1389919520434161250}
+  - {fileID: 7744001979836193683}
   - {fileID: 611122933404754028}
   - {fileID: 3138056365046372192}
   - {fileID: 799113224386695465}
@@ -6438,10 +6423,25 @@ MonoBehaviour:
   - {fileID: 7247733185388798481}
   - {fileID: 3604161870708695794}
   - {fileID: 3459247198158446755}
+  - {fileID: 1037871067289086774}
   - {fileID: 5671082463183127190}
   - {fileID: 7902726498495362156}
   - {fileID: 881898100654867419}
   - {fileID: 6517481989648191625}
+  - {fileID: 1275774188825163530}
+  - {fileID: 2488736535139127881}
+  - {fileID: 307563078102331573}
+  - {fileID: 8410762784763695895}
+  - {fileID: 2562681700021587583}
+  - {fileID: 1123380162467409275}
+  - {fileID: 4038841421808650283}
+  - {fileID: 6516496220249715772}
+  - {fileID: 528931460558254579}
+  - {fileID: 808487992271977973}
+  - {fileID: 1762628964987760281}
+  - {fileID: 2247888696248454133}
+  - {fileID: 1868300045430933751}
+  - {fileID: 581796979812329413}
   randomColorEntries:
   - color: 17
     count: 2
@@ -6455,30 +6455,30 @@ MonoBehaviour:
   - layerIndex: 1
     count: 51
   - layerIndex: 2
-    count: 6
+    count: 21
   colorCountEntries:
   - color: 12
-    count: 31
+    count: 33
+  - color: 20
+    count: 3
   - color: 3
-    count: 10
+    count: 12
+  - color: 9
+    count: 3
+  - color: 16
+    count: 3
   - color: 8
-    count: 2
+    count: 3
   - color: 5
-    count: 2
+    count: 3
   - color: 4
     count: 3
-  - color: 20
-    count: 1
-  - color: 9
-    count: 2
-  - color: 16
-    count: 1
-  - color: 17
-    count: 2
   - color: 15
-    count: 2
+    count: 3
+  - color: 17
+    count: 3
   - color: 18
-    count: 1
+    count: 3
 --- !u!114 &2232287079016477245
 MonoBehaviour:
   m_ObjectHideFlags: 0

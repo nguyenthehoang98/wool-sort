@@ -37,14 +37,45 @@ public sealed class BoxImageColorValidator : EditorWindow
     [MenuItem("Tools/Puzzle/Quét tất cả level", false, 11)]
     private static void ScanAllMenu()
     {
-        string result = ScanAllLevels(out _, out _);
+        RunStep("full", doLevel: true, doImage: true);
+    }
+
+    // Step 1-3: đi theo thứ tự là check xong (step nào đỏ thì sửa rồi quét lại trước khi qua tiếp).
+    [MenuItem("Tools/Puzzle/1. Quét level + box-ảnh", false, 1)]
+    private static void Step1ScanFull()
+    {
+        RunStep("level + box-ảnh", doLevel: true, doImage: true);
+    }
+
+    [MenuItem("Tools/Puzzle/2. Sửa từng màu %3 (giữ lớp ngoài)", false, 2)]
+    private static void Step2FixPerColor()
+    {
+        if (!EditorUtility.DisplayDialog("Bước 2 — sửa từng màu %3?",
+            "Thêm 1-2 lớp inner Fixed cho màu lẻ (lớp ngoài giữ nguyên). Tiếp tục?",
+            "Sửa luôn", "Hủy")) return;
+        string fix = AutoFixPerColorDiv3Core();
+        string verify = ScanAllLevels(out int ok, out int err, doLevel: true, doImage: false);
+        string result = fix + "\n" + verify;
         foreach (var line in result.Split('\n'))
         {
             if (line.StartsWith("[LỖI]") || line.StartsWith("  [LỖI]"))
                 Debug.LogError("[BoxImageColor] " + line);
         }
-        Debug.Log("[BoxImageColor] Quét xong.\n" + result);
-            EditorUtility.DisplayDialog("Quét tất cả level",
+        Debug.Log("[BoxImageColor] Bước 2 xong.\n" + result);
+        EditorUtility.DisplayDialog("Bước 2 — sửa từng màu %3",
+            string.Join("\n", result.Split('\n').Take(12)) + "\n\nXem Console để xem đầy đủ.", "OK");
+    }
+
+    private static void RunStep(string stepName, bool doLevel, bool doImage)
+    {
+        string result = ScanAllLevels(out int ok, out int err, doLevel, doImage);
+        foreach (var line in result.Split('\n'))
+        {
+            if (line.StartsWith("[LỖI]") || line.StartsWith("  [LỖI]"))
+                Debug.LogError("[BoxImageColor] " + line);
+        }
+        Debug.Log($"[BoxImageColor] {stepName} xong: {ok} OK, {err} lỗi.\n" + result);
+        EditorUtility.DisplayDialog($"Quét {stepName}: {ok} OK, {err} lỗi",
             string.Join("\n", result.Split('\n').Take(12)) + "\n\nXem Console để click tới từng asset lỗi.", "OK");
     }
 
@@ -78,9 +109,10 @@ public sealed class BoxImageColorValidator : EditorWindow
             "4. Ảnh tồn tại + chia đủ ô cho mọi màu (tránh bắn lên trắng/sai ô).",
             MessageType.Info);
 
+        GUILayout.Label("BƯỚC 1 — LEVEL (sợi, màu, số lượng)", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Quét full", GUILayout.Height(32))) RefreshAll();
-        if (GUILayout.Button("Chỉ quét Database", GUILayout.Height(32)))
+        if (GUILayout.Button("1. Quét level", GUILayout.Height(32))) RefreshLevelOnly();
+        if (GUILayout.Button("Chỉ quét Database", GUILayout.Height(28)))
         {
             var sb = new StringBuilder();
             int e = CheckDatabase(sb);
@@ -88,13 +120,28 @@ public sealed class BoxImageColorValidator : EditorWindow
         }
         EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Tự sửa tổng %3 (thêm lớp Fixed cùng màu)", GUILayout.Height(32)))
+        if (GUILayout.Button("Sửa từng màu %3 (giữ lớp ngoài, chỉ thêm inner)", GUILayout.Height(28)))
+        {
+            if (EditorUtility.DisplayDialog("Sửa từng màu %3?",
+                "Với mỗi màu lẻ trong từng level, tool sẽ thêm 1-2 lớp inner Fixed màu đó vào part ít lớp nhất.\nLớp ngoài (hình ảnh) giữ nguyên, chỉ inner thay đổi.\nTiếp tục?",
+                "Sửa luôn", "Hủy"))
+                AutoFixPerColorDiv3();
+        }
+
+        if (GUILayout.Button("Tự sửa tổng %3 (thêm lớp Fixed cùng màu)", GUILayout.Height(28)))
         {
             if (EditorUtility.DisplayDialog("Tự sửa tổng %3?",
                 "Với mỗi level có tổng số sợi không chia hết cho 3, tool sẽ thêm 1-2 lớp inner Fixed cùng màu vào 1 part, rồi lưu prefab.\nTiếp tục?",
                 "Sửa luôn", "Hủy"))
                 AutoFixDiv3();
         }
+
+        GUILayout.Space(4);
+        GUILayout.Label("BƯỚC 2 — BOX ẢNH (ma trận màu, texture, chia ô)", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("2. Quét box-ảnh", GUILayout.Height(32))) RefreshImageOnly();
+        if (GUILayout.Button("Quét full (cả 2 bước)", GUILayout.Height(32))) RefreshAll();
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.LabelField($"Level OK: {okLevelCount}   Level lỗi: {errorLevelCount}");
         scroll = EditorGUILayout.BeginScrollView(scroll);
@@ -104,12 +151,22 @@ public sealed class BoxImageColorValidator : EditorWindow
 
     private void RefreshAll()
     {
-        report = ScanAllLevels(out okLevelCount, out errorLevelCount);
+        report = ScanAllLevels(out okLevelCount, out errorLevelCount, doLevel: true, doImage: true);
+    }
+
+    private void RefreshLevelOnly()
+    {
+        report = ScanAllLevels(out okLevelCount, out errorLevelCount, doLevel: true, doImage: false);
+    }
+
+    private void RefreshImageOnly()
+    {
+        report = ScanAllLevels(out okLevelCount, out errorLevelCount, doLevel: false, doImage: true);
     }
 
     // ---------------- Core scan (dùng chung cho window + menu) ----------------
 
-    private static string ScanAllLevels(out int okCount, out int errCount)
+    private static string ScanAllLevels(out int okCount, out int errCount, bool doLevel = true, bool doImage = true)
     {
         var sb = new StringBuilder();
         okCount = 0;
@@ -131,9 +188,15 @@ public sealed class BoxImageColorValidator : EditorWindow
             .ToList();
         sb.AppendLine($"Quét {levelPaths.Count} level trong {LevelsFolder}...");
 
+        string step = doLevel && doImage ? "full (level + box-ảnh)"
+            : doLevel ? "bước 1 (level)" : "bước 2 (box-ảnh)";
+        sb.AppendLine($"Quét {step}: {levelPaths.Count} level trong {LevelsFolder}...");
+
         foreach (var path in levelPaths)
         {
-            var errs = ScanOneLevel(path, db);
+            var errs = new List<string>();
+            if (doLevel) errs.AddRange(ScanLevelConfig(path, db));
+            if (doImage) errs.AddRange(ScanBoxImage(path, db));
             if (errs.Count == 0) okCount++;
             else
             {
@@ -143,7 +206,7 @@ public sealed class BoxImageColorValidator : EditorWindow
             }
         }
 
-        sb.AppendLine($"Xong: {okCount} OK, {errCount} lỗi / {levelPaths.Count} level.");
+        sb.AppendLine($"Xong {step}: {okCount} OK, {errCount} lỗi / {levelPaths.Count} level.");
         return sb.ToString();
     }
 
@@ -188,10 +251,10 @@ public sealed class BoxImageColorValidator : EditorWindow
         return missing;
     }
 
-    private static List<string> ScanOneLevel(string prefabPath, YarnColorDatabase db)
+    /// <summary>BƯỚC 1 — level: part, màu, số lượng, holder, material.</summary>
+    private static List<string> ScanLevelConfig(string prefabPath, YarnColorDatabase db)
     {
         var errs = new List<string>();
-        string levelName = Path.GetFileNameWithoutExtension(prefabPath);
 
         var go = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (go == null) return new List<string> { $"Không load được prefab: {prefabPath}" };
@@ -228,6 +291,14 @@ public sealed class BoxImageColorValidator : EditorWindow
         if (total == 0) errs.Add("Tổng số sợi = 0.");
         else if (total % 3 != 0)
             errs.Add($"Tổng {total} không chia hết cho 3 (1 box = 3 sợi) — box cuối lẻ, ảnh thiếu/thừa ô.");
+        // Từng màu cũng phải chia hết cho 3, nếu không box cuối của màu đó không bao giờ đủ 3 sợi
+        // cùng màu -> runtime sinh box None (nhận mọi màu -> box lẫn Green,Orange,Gray) hoặc kẹt game.
+        foreach (var kv in real.OrderBy(kv => kv.Key.ToString()))
+        {
+            if (kv.Key == YarnColor.None || kv.Key == YarnColor.Rainbow) continue;
+            if (kv.Value % 3 != 0)
+                errs.Add($"Màu {kv.Key} có {kv.Value} sợi, không chia hết cho 3 — cuối game sẽ dư {kv.Value % 3} sợi lẻ, box lẫn màu/BoxColor=None, ảnh tô sai!");
+        }
 
         // Holder có stale không
         if (holder != null)
@@ -255,6 +326,21 @@ public sealed class BoxImageColorValidator : EditorWindow
             if (db.GetMaterialSlotString(kv.Key) == null)
                 errs.Add($"Màu {kv.Key} ({kv.Value} sợi) thiếu slot material — vòng/dây sai màu.");
         }
+        return errs;
+    }
+
+    /// <summary>BƯỚC 2 — box ảnh: ma trận color ID, texture, mô phỏng chia ô.</summary>
+    private static List<string> ScanBoxImage(string prefabPath, YarnColorDatabase db)
+    {
+        var errs = new List<string>();
+        string levelName = Path.GetFileNameWithoutExtension(prefabPath);
+
+        var go = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (go == null) return new List<string> { $"Không load được prefab: {prefabPath}" };
+
+        var holder = go.GetComponent<LevelYarnInfoHolder>();
+        if (holder == null) holder = go.GetComponentInChildren<LevelYarnInfoHolder>(true);
+        var parts = go.GetComponentsInChildren<YarnPart>(true);
 
         // Ma trận color ID: runtime JamImage ưu tiên đọc file này thay vì ảnh trực tiếp.
         // Cần real (đếm từ prefab) để đối chiếu, nên tính ở đây thay vì dùng holder stale.
@@ -487,5 +573,112 @@ public sealed class BoxImageColorValidator : EditorWindow
         sb.AppendLine(fixedCount == 0 ? "Không có level nào cần sửa." : $"Đã sửa {fixedCount} level. Bấm Quét full để kiểm tra lại.");
         report = sb.ToString() + "\n" + ScanAllLevels(out okLevelCount, out errorLevelCount);
         Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Sửa từng màu % 3 mà KHÔNG đụng lớp ngoài (hình ảnh giữ nguyên):
+    /// - Chuẩn hóa list inner về đúng totalInnerCount (thiếu thì bù Fixed cùng màu ngoài để đếm được).
+    /// - Màu nào lẻ thì thêm 1-2 lớp inner Fixed màu đó vào part ít lớp nhất.
+    /// Random pool và initColor ngoài giữ nguyên.
+    /// </summary>
+    private void AutoFixPerColorDiv3()
+    {
+        string fix = AutoFixPerColorDiv3Core();
+        report = fix + "\n" + ScanAllLevels(out okLevelCount, out errorLevelCount);
+        Debug.Log(report);
+    }
+
+    private static string AutoFixPerColorDiv3Core()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("=== TỰ SỬA TỪNG MÀU %3 (giữ lớp ngoài) ===");
+        int fixedLevelCount = 0;
+
+        var levelPaths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .OrderBy(p => p)
+            .ToList();
+
+        foreach (var path in levelPaths)
+        {
+            string levelName = Path.GetFileNameWithoutExtension(path);
+            GameObject root = null;
+            try
+            {
+                root = PrefabUtility.LoadPrefabContents(path);
+                var parts = root.GetComponentsInChildren<YarnPart>(true).OrderBy(p => p.name).ToList();
+                var holder = root.GetComponent<LevelYarnInfoHolder>();
+                if (holder == null) holder = root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+                if (parts.Count == 0 || holder == null) continue;
+
+                // 1) Chuẩn hóa list inner (chỉ thêm/bớt ở inner, ngoài giữ nguyên)
+                foreach (var p in parts)
+                {
+                    bool dirty = false;
+                    if (p.innerColorTypes == null) { p.innerColorTypes = new List<InnerColorType>(); dirty = true; }
+                    if (p.innerFixedColors == null) { p.innerFixedColors = new List<YarnColor>(); dirty = true; }
+                    while (p.innerColorTypes.Count < p.totalInnerCount) { p.innerColorTypes.Add(InnerColorType.Fixed); dirty = true; }
+                    while (p.innerFixedColors.Count < p.totalInnerCount) { p.innerFixedColors.Add(p.initColor); dirty = true; }
+                    while (p.innerColorTypes.Count > p.totalInnerCount) { p.innerColorTypes.RemoveAt(p.innerColorTypes.Count - 1); dirty = true; }
+                    while (p.innerFixedColors.Count > p.totalInnerCount) { p.innerFixedColors.RemoveAt(p.innerFixedColors.Count - 1); dirty = true; }
+                    if (dirty) EditorUtility.SetDirty(p);
+                }
+
+                // 2) Đếm thật: ngoài + inner Fixed + random pool
+                var real = new Dictionary<YarnColor, int>();
+                foreach (var p in parts)
+                {
+                    AddCount(real, p.initColor, 1);
+                    for (int j = 0; j < p.totalInnerCount; j++)
+                        if (p.innerColorTypes[j] == InnerColorType.Fixed)
+                            AddCount(real, p.innerFixedColors[j], 1);
+                }
+                if (holder.randomColorEntries != null)
+                    foreach (var e in holder.randomColorEntries)
+                        AddCount(real, e.color, e.count);
+
+                // 3) Màu lẻ -> thêm lớp inner Fixed màu đó (ngoài của part được chọn giữ nguyên màu cũ)
+                bool changed = false;
+                foreach (var kv in real.Where(kv => kv.Key != YarnColor.None && kv.Key != YarnColor.Rainbow).OrderBy(kv => kv.Key.ToString()).ToList())
+                {
+                    int need = (3 - kv.Value % 3) % 3;
+                    for (int i = 0; i < need; i++)
+                    {
+                        var target = parts.OrderBy(p => p.totalInnerCount).First();
+                        target.totalInnerCount++;
+                        target.innerColorTypes.Add(InnerColorType.Fixed);
+                        target.innerFixedColors.Add(kv.Key);
+                        EditorUtility.SetDirty(target);
+                        AddCount(real, kv.Key, 1);
+                        changed = true;
+                        sb.AppendLine($"[SỬA] {levelName}: +1 inner {kv.Key} vào '{target.name}' (ngoài {target.initColor} giữ nguyên).");
+                    }
+                }
+
+                if (!changed) continue;
+
+                holder.allBaseYarnParts = parts;
+                holder.totalYarnPartCount = holder.GetTotalYarnPartCount(parts);
+                holder.UpdateDebugInfo();
+                EditorUtility.SetDirty(holder);
+
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                fixedLevelCount++;
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"[LỖI] {path}: " + ex.Message);
+                Debug.LogException(ex);
+            }
+            finally
+            {
+                if (root != null) PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        sb.AppendLine(fixedLevelCount == 0 ? "Không có level nào cần sửa." : $"Đã sửa {fixedLevelCount} level (lớp ngoài giữ nguyên). Quét lại bước 1 để kiểm tra.");
+        return sb.ToString();
     }
 }

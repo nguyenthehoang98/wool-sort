@@ -139,10 +139,8 @@ namespace _Game.Scripts.Gameplay
                 Debug.Log($"[DecorDbg] {name}: deco {deco.name} localY={localPos.y:F3} bounds=[{bounds.min.y:F3},{bounds.max.y:F3}] threshold={normY:F3}", deco);
                 if (normY < 0f || normY > 1f)
                     Debug.LogError($"[Decor] {name} -> {deco.name}: threshold={normY:F2} ngoài [0,1] (decor nằm ngoài bounds len). Nó sẽ rơi trễ (cuối dissolve) hoặc ngay frame đầu. Dời decor sát mặt len hơn.", deco);
-                if (deco.GetComponent<Collider>() == null)
-                    Debug.LogError($"[Decor] {deco.name} (con của {name}): thiếu Collider nên tap/dissolve vẫn chạy nhưng vật lý rơi có thể sai.", deco);
-                if (deco.GetComponent<Rigidbody>() == null)
-                    Debug.LogError($"[Decor] {deco.name} (con của {name}): thiếu Rigidbody (runtime sẽ tự Add, nhưng nên gắn sẵn, isKinematic=true).", deco);
+                // Không check thiếu Collider/Rigidbody ở đây: YarnDecoration.Awake đã tự Add Rigidbody
+                // (isKinematic=true) và Drop() chịu được khi thiếu MeshCollider — decor vẫn bắn ra bình thường.
             }
             if (_decoInfos.Count == 0)
                 Debug.Log($"[DecorDbg] {name}: KHÔNG có YarnDecoration con nào (layerIndex={layerIndex}). Nếu đây là layer 1 mà bạn mong có decor rơi thì decor đang mồ côi hoặc là SpecialDecor.", this);
@@ -423,9 +421,9 @@ namespace _Game.Scripts.Gameplay
             var mat = YarnColorManager.Instance.GetYarnMaterial(color);
             if (mat == null)
             {
-                // Không có material dissolve-capable -> SetFillAmount(_Dissolve/_Cutoff)
-                // sẽ thành no-op thầm lặng, model không bao giờ tan dần!
-                Debug.LogWarning($"YarnPart {name}: thiếu yarn material cho màu {color} — dissolve sẽ không hiển thị!", this);
+                // Không có material -> inner giữ lại material clone của lớp ngoài => SAI MÀU lớp trong!
+                // Fix gốc: chạy step 1 validator (báo "thiếu yarn material cho màu X").
+                Debug.LogError($"YarnPart {name}: thiếu yarn material cho màu {color} — inner sẽ dùng SAI vật liệu (giữ màu lớp ngoài)!", this);
                 return;
             }
             // Luôn gán (kể cả trùng màu): renderer phải dùng đúng ThreadMat có

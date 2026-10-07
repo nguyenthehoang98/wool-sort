@@ -13,7 +13,7 @@ using UnityEngine;
 /// </summary>
 public static class YarnDecorValidator
 {
-    [MenuItem("Tools/Puzzle/Validate decor gắn len", false, 17)]
+    [MenuItem("Tools/Puzzle/3. Quét decor gắn len (scene đang mở)", false, 3)]
     public static void ValidateCurrentScene()
     {
         var sb = new StringBuilder();
@@ -91,7 +91,7 @@ public static class YarnDecorValidator
         EditorUtility.DisplayDialog("Validate decor gắn len", sb.ToString(), "OK");
     }
 
-    [MenuItem("Tools/Puzzle/Validate tất cả Level prefab", false, 18)]
+    [MenuItem("Tools/Puzzle/4. Quét decor tất cả Level prefab", false, 4)]
     public static void ValidateAllLevelPrefabs()
     {
         var guids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/Levels" });

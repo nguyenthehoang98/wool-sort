@@ -760,6 +760,12 @@ namespace _Game.Scripts.Gameplay
             // 4.1) SPECIAL OVERRIDE: nếu true, trả màu nhỏ nhất luôn
             if (forceMinPriority)
             {
+                if (total == 0)
+                {
+                    var fb = GetMaxRemainingColor();
+                    Debug.LogError($"[ChooseNextBoxColor - SPECIAL MIN PRIORITY] sorted rỗng — fallback {fb}.");
+                    return fb;
+                }
                 LogUtils.Log("[ChooseNextBoxColor - SPECIAL MIN PRIORITY] RESULT = " + sorted[0], Color.magenta);
                 LogUtils.Log("-------------------------------------------------------------", Color.magenta);
                 return sorted[0];
@@ -812,14 +818,41 @@ namespace _Game.Scripts.Gameplay
 
             if (pool.Count == 0)
             {
-                LogUtils.Log("Sinh box màu None => check lại config có lỗi không", Color.red);
-                return YarnColor.None;
+                // Không màu nào đủ 3 sợi mới (thường do 1 màu lẻ, không chia hết cho 3).
+                // Fallback: lấy màu còn nhiều sợi nhất để không sinh box None (box None nhận mọi
+                // màu -> box lẫn Green,Orange,Gray, ảnh tô sai). Fix gốc: validate từng màu % 3 ở Editor.
+                var fallback = GetMaxRemainingColor();
+                Debug.LogError($"[ChooseNextBoxColor] pool rỗng (mỗi màu còn lại < 3 sợi mới?) — fallback {fallback}. Kiểm tra config: mỗi màu phải chia hết cho 3!");
+                return fallback;
             }
 
             int idx = Random.Range(0, pool.Count);
             LogUtils.Log("[ChooseNextBoxColor] RESULT = " + pool[idx], Color.magenta);
             LogUtils.Log("-------------------------------------------------------------", Color.magenta);
             return pool[idx];
+        }
+
+        /// <summary>
+        /// Màu còn nhiều sợi nhất (priority >= 0, tức OnBoard + InQueue) và có basket material.
+        /// Trả None chỉ khi thật sự không còn sợi nào.
+        /// </summary>
+        public YarnColor GetMaxRemainingColor()
+        {
+            var priLists = CollectPriorityLists();
+            YarnColor best = YarnColor.None;
+            int bestCount = 0;
+            foreach (var kv in priLists)
+            {
+                if (kv.Key == YarnColor.None || kv.Key == YarnColor.Rainbow) continue;
+                if (kv.Value == null || kv.Value.Count == 0) continue;
+                if (YarnColorManager.Instance.GetBasketMaterial(kv.Key) == null) continue;
+                if (kv.Value.Count > bestCount)
+                {
+                    bestCount = kv.Value.Count;
+                    best = kv.Key;
+                }
+            }
+            return best;
         }
 
         public void HandlePartPicked(YarnPart part)

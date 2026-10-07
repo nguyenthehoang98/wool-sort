@@ -72,9 +72,14 @@ namespace _Game.Scripts.Gameplay
             }
         }
 
-        public bool CanAccept(YarnColor c) =>
-            !IsFilled && (FilledColor == c || FilledColor == YarnColor.None ||
-                          (ParentBox != null && ParentBox.BoxColor == YarnColor.Rainbow));
+        public bool CanAccept(YarnColor c)
+        {
+            if (IsFilled) return false;
+            // Box None là box lỗi (không chọn được màu) — không nhận sợi nào để tránh box lẫn 3 màu.
+            if (ParentBox != null && ParentBox.BoxColor == YarnColor.None) return false;
+            return FilledColor == c || FilledColor == YarnColor.None ||
+                   (ParentBox != null && ParentBox.BoxColor == YarnColor.Rainbow);
+        }
 
         /// <summary>
         /// Fill this slot with the given color.

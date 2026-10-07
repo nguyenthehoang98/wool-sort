@@ -166,10 +166,8 @@ namespace _Game.Scripts.Gameplay
 
             activeBoxes.Add(box);
 
-            box.Initialize(gm.ChooseNextBoxColor());
-
-            box.SetSlotsInteractable(true);
-            slotManager.RegisterSlots(box.Slots);
+            var initColor = gm.ChooseNextBoxColor();
+            box.Initialize(initColor);
 
             System.Action<Box> onFull = null;
             onFull = b =>
@@ -191,6 +189,17 @@ namespace _Game.Scripts.Gameplay
                 StartCoroutine(HandleCloseRoutine(b, idx));
             };
             box.OnBoxClose += onClose;
+
+            // None phải check SAU khi đã đăng ký OnBoxClose để AutoCloseEmptyBox có chuỗi đóng mà chạy.
+            if (initColor == YarnColor.None)
+            {
+                Debug.LogError("BoxManager: box đầu game đã None (config màu lẻ?) — tự đóng để không kẹt game!", box);
+                StartCoroutine(AutoCloseEmptyBox(box, idx));
+                return;
+            }
+
+            box.SetSlotsInteractable(true);
+            slotManager.RegisterSlots(box.Slots);
         }
 
         // bình thường khi sinh box mới là kết thúc quá trình process của box cũ
@@ -242,6 +251,16 @@ namespace _Game.Scripts.Gameplay
                 StartCoroutine(HandleCloseRoutine(b, idx));
             };
             box.OnBoxClose += onClose;
+
+            // Hết sợi thật sự (không còn màu nào) — đóng box rỗng để giữ nhịp close/spawn/win,
+            // thay vì để box None nhận bừa 3 màu lạ rồi tô sai ảnh. Check SAU đăng ký OnBoxClose.
+            if (yarnColor == YarnColor.None)
+            {
+                Debug.LogError("BoxManager: sinh box None (hết sợi hoặc config màu lẻ?) — tự đóng box rỗng!", box);
+                StartCoroutine(AutoCloseEmptyBox(box, idx));
+                yield break;
+            }
+
             box.PlayInAnimation();
             yield return new WaitForSeconds(box.InDuration);
 
@@ -258,6 +277,18 @@ namespace _Game.Scripts.Gameplay
             }
         }
 
+
+        /// <summary>
+        /// Giả lập fill animation cho box rỗng (None) để nó đi đúng chuỗi đóng/spawn/win
+        /// mà không tô ảnh, không nhận sợi bừa.
+        /// </summary>
+        private IEnumerator AutoCloseEmptyBox(Box box, int idx)
+        {
+            yield return null; // đợi subscribe OnBoxClose xong
+            if (box == null) yield break;
+            foreach (var s in box.Slots)
+                s.ShowFullStateVisual(); // -> pendingCloseCount -> OnBoxClose -> PrintImage(None: skip) -> HandleCloseRoutine
+        }
 
         // Chạy BasketOut rồi destroy + respawn tiếp
         private IEnumerator HandleCloseRoutine(Box box, int idx)
@@ -438,6 +469,15 @@ namespace _Game.Scripts.Gameplay
         {
             if (boxInfo == null)
                 return;
+
+            // Box None là box lỗi (thường do 1 màu lẻ, không chia hết cho 3) — bỏ qua tô ảnh/dây
+            // để không tô sai ô, box sẽ tự đóng ở AutoCloseEmptyBox.
+            if (boxInfo.BoxColor == YarnColor.None)
+            {
+                Debug.LogError("PrintImage: BoxColor=None (thiếu màu — kiểm tra config: mỗi màu phải chia hết cho 3!) — bỏ qua tô ảnh.", boxInfo);
+                currentWaitOfTime = 0.3f;
+                return;
+            }
 
             // Validate: 3 sợi trong box phải cùng màu logic với BoxColor,
             // nếu không ảnh sẽ tô sai ô.
