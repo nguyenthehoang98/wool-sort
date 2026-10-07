@@ -128,6 +128,7 @@ namespace _Game.Scripts.Gameplay
             if (currentLevel < 1)
                 currentLevel = 1;
             realCurrentLevel = currentLevel;
+            _Game.Scripts.LevelDebugLog.Init($"Level{realCurrentLevel}");
 
             if (currentLevelHolder != null)
             {
@@ -160,6 +161,7 @@ namespace _Game.Scripts.Gameplay
             BuildAllPartData();
 
             LogUtils.LogPiecesByColor(piecesByColor);
+            VerifyInitialCounts();
 
             currentLevelHolder.GetComponent<YarnPartLayerSpawner>().Init(); // gọi sau để khi spawn inner thì link được
 
@@ -824,10 +826,17 @@ namespace _Game.Scripts.Gameplay
             if (pool.Count == 0)
             {
                 // Không màu nào đủ 3 sợi mới (thường do 1 màu lẻ, không chia hết cho 3).
-                // Fallback: lấy màu còn nhiều sợi nhất để không sinh box None (box None nhận mọi
-                // màu -> box lẫn Green,Orange,Gray, ảnh tô sai). Fix gốc: validate từng màu % 3 ở Editor.
-                var fallback = GetMaxRemainingColor();
-                Debug.LogError($"[ChooseNextBoxColor] pool rỗng (mỗi màu còn lại < 3 sợi mới?) — fallback {fallback}. Kiểm tra config: mỗi màu phải chia hết cho 3!");
+                // Chẩn đoán kẹt: còn-lại vs giữ-chỗ từng màu để biết sót ở đâu.
+                var dbg = new System.Text.StringBuilder("[ChooseNextBoxColor] pool rỗng — tồn kho: ");
+                foreach (var kv in priLists)
+                {
+                    if (kv.Value == null || kv.Value.Count == 0) continue;
+                    dbg.Append($"{kv.Key}(con-lai={kv.Value.Count},giu-cho={CountMissingSlotsInBoxes(kv.Key)}) ");
+                }
+                _Game.Scripts.LevelDebugLog.LogError(dbg + "— kiểm tra config: mỗi màu phải chia hết cho 3!");
+                // Fallback đỡ hại nhất: màu còn nhiều nhất mà đang có box mở dở
+                // (sợi có chỗ để vào), nếu không thì màu còn nhiều nhất.
+                var fallback = ChooseStrandFallback(priLists);
                 return fallback;
             }
 
@@ -835,6 +844,78 @@ namespace _Game.Scripts.Gameplay
             LogUtils.Log("[ChooseNextBoxColor] RESULT = " + pool[idx], Color.magenta);
             LogUtils.Log("-------------------------------------------------------------", Color.magenta);
             return pool[idx];
+        }
+        /// <summary>
+        /// Phân xử runtime-vs-config ngay đầu game: so runtime build được (piecesByColor)
+        /// với holder khai báo (colorCountEntries + totalYarnPartCount).
+        /// Lệch ở đâu thì thằng đó báo sai — đọc log [START-CHECK].
+        /// </summary>
+        private void VerifyInitialCounts()
+        {
+            var runtime = new Dictionary<YarnColor, int>();
+            foreach (var kv in piecesByColor)
+                runtime[kv.Key] = kv.Value != null ? kv.Value.Count : 0;
+            var declared = new Dictionary<YarnColor, int>();
+            if (currentLevelHolder.colorCountEntries != null)
+                foreach (var e in currentLevelHolder.colorCountEntries)
+                    declared[e.color] = e.count;
+            bool ok = true;
+            foreach (YarnColor c in System.Enum.GetValues(typeof(YarnColor)))
+            {
+                runtime.TryGetValue(c, out int r);
+                declared.TryGetValue(c, out int d);
+                if (r != d)
+                {
+                    ok = false;
+                    _Game.Scripts.LevelDebugLog.LogError($"[START-CHECK] {currentLevelHolder.name}: màu {c} runtime={r} != holder={d} (holder stale hoặc build sai).");
+                }
+            }
+            int runtimeTotal = 0;
+            foreach (var v in runtime.Values) runtimeTotal += v;
+            if (runtimeTotal != currentLevelHolder.totalYarnPartCount)
+            {
+                ok = false;
+                _Game.Scripts.LevelDebugLog.LogError($"[START-CHECK] {currentLevelHolder.name}: tổng runtime={runtimeTotal} != holder.totalYarnPartCount={currentLevelHolder.totalYarnPartCount} (totalYarnPartCount stale — mở prefab cho OnValidate chạy lại hoặc bấm Validate).");
+            }
+            if (ok) _Game.Scripts.LevelDebugLog.Log($"[START-CHECK] {currentLevelHolder.name}: runtime khớp holder ({runtimeTotal} sợi).");
+        }
+
+        /// <summary>
+        /// Chụp tồn kho giữa game: Play tới lúc nghi -> Pause -> chuột phải GameManager ->
+        /// "Debug Ton Kho". missing != 0 nghĩa là sợi mất đi đâu đó ngoài box (runtime leak).
+        /// </summary>
+        [ContextMenu("Debug Ton Kho")]
+        public void DebugStocktake()
+        {
+            var onBoard = new Dictionary<YarnColor, int>();
+            var inQueue = new Dictionary<YarnColor, int>();
+            var inBox = new Dictionary<YarnColor, int>();
+            foreach (var kv in piecesByColor)
+                foreach (var info in kv.Value)
+                {
+                    var d = info.State == PartState.OnBoard ? onBoard : info.State == PartState.InQueue ? inQueue : inBox;
+                    if (!d.ContainsKey(kv.Key)) d[kv.Key] = 0;
+                    d[kv.Key]++;
+                }
+            var sb = new System.Text.StringBuilder($"[STOCKTAKE] initial={initialYarnCount} remain={countYarnRemain}:\n");
+            var all = new HashSet<YarnColor>(onBoard.Keys);
+            all.UnionWith(inQueue.Keys);
+            all.UnionWith(inBox.Keys);
+            if (currentLevelHolder.colorCountEntries != null)
+                foreach (var e in currentLevelHolder.colorCountEntries) all.Add(e.color);
+            foreach (var c in all)
+            {
+                onBoard.TryGetValue(c, out int b);
+                inQueue.TryGetValue(c, out int q);
+                inBox.TryGetValue(c, out int x);
+                int init = 0;
+                if (currentLevelHolder.colorCountEntries != null)
+                    foreach (var e in currentLevelHolder.colorCountEntries)
+                        if (e.color == c) init += e.count;
+                int missing = init - (b + q + x);
+                sb.AppendLine($"  {c}: init={init} board={b} queue={q} box={x} mat-tich={missing}{(missing != 0 ? " <<< LECH" : "")}");
+            }
+            _Game.Scripts.LevelDebugLog.Log(sb.ToString());
         }
 
         /// <summary>
@@ -857,6 +938,37 @@ namespace _Game.Scripts.Gameplay
                     best = kv.Key;
                 }
             }
+            return best;
+        }
+
+        /// <summary>
+        /// Fallback khi pool rỗng (sót lẻ cuối game): ưu tiên màu còn nhiều nhất mà đang
+        /// có box mở dở (sợi mới tap có chỗ để vào ngay), nếu không thì màu còn nhiều nhất.
+        /// Vẫn log cảnh báo vì đây là tình huống lẽ ra không xảy ra khi config %3 chuẩn.
+        /// </summary>
+        private YarnColor ChooseStrandFallback(Dictionary<YarnColor, List<int>> priLists)
+        {
+            YarnColor best = YarnColor.None;
+            int bestScore = -1;
+            foreach (var kv in priLists)
+            {
+                if (kv.Key == YarnColor.None || kv.Key == YarnColor.Rainbow) continue;
+                if (kv.Value == null || kv.Value.Count == 0) continue;
+                if (YarnColorManager.Instance.GetBasketMaterial(kv.Key) == null) continue;
+                int remain = kv.Value.Count;
+                int reserved = CountMissingSlotsInBoxes(kv.Key);
+                // +1000 điểm nếu đang có box dở để sợi vào tiếp được ngay.
+                int score = remain + (reserved > 0 ? 1000 : 0);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = kv.Key;
+                }
+            }
+            if (best == YarnColor.None)
+                _Game.Scripts.LevelDebugLog.LogError("[ChooseNextBoxColor] fallback cũng None (hết sợi thật?). Kiểm tra lose/win.");
+            else
+                _Game.Scripts.LevelDebugLog.LogWarning($"[ChooseNextBoxColor] fallback strand = {best}.");
             return best;
         }
 

@@ -188,6 +188,11 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 ExportJson(levelNames[selectedLevelIndex]);
         }
         EditorGUILayout.EndHorizontal();
+        if (levelNames.Count > 0)
+        {
+            string lv = levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)];
+            GUILayout.Label($"File asset ghi đè: {MatrixFolder}/{lv}.asset (Import/Extract tự lưu đè)", EditorStyles.miniLabel);
+        }
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Copy JSON mẫu", GUILayout.Height(28)))
         {
@@ -356,33 +361,10 @@ public sealed class LevelImageMatrixTool : EditorWindow
     {
         var sb = new StringBuilder();
 
-        // 1. Dataset = các màu level đang dùng (đúng nguồn runtime JamImage.Initialize dùng)
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Resources/Levels/{levelName}.prefab");
-        if (prefab == null) return "[LỖI] " + levelName + ": không thấy prefab.";
-        var holder = prefab.GetComponent<LevelYarnInfoHolder>();
-        if (holder == null) holder = prefab.GetComponentInChildren<LevelYarnInfoHolder>(true);
-
-        var available = new List<YarnColor>();
-        var yarnCounts = new Dictionary<YarnColor, int>();
-        if (holder != null && holder.colorCountEntries != null && holder.colorCountEntries.Count > 0)
-        {
-            foreach (var e in holder.colorCountEntries)
-                if (e.count > 0 && !available.Contains(e.color))
-                {
-                    available.Add(e.color);
-                    yarnCounts[e.color] = e.count;
-                }
-        }
-        else
-        {
-            foreach (var p in prefab.GetComponentsInChildren<YarnPart>(true))
-                if (!available.Contains(p.initColor))
-                {
-                    available.Add(p.initColor);
-                    yarnCounts[p.initColor] = 0;
-                }
-        }
-        if (available.Count == 0) return "[LỖI] " + levelName + ": level không có màu nào.";
+        // 1. Dataset = các màu level đang dùng (đúng nguồn runtime JamImage.Initialize dùng).
+        // Tự đếm lại + lưu holder trước (chống stale).
+        if (!RefreshHolderCounts(levelName, out var available, out var yarnCounts, sb))
+            return "[LỖI] " + levelName + ": level không có màu nào.";
         if (tex == null) return "[LỖI] " + levelName + ": chưa kéo ảnh vào.";
 
         // 3. Ảnh phải đọc pixel CHÍNH XÁC: readable + không nén (nén DXT làm lem
@@ -669,6 +651,40 @@ public sealed class LevelImageMatrixTool : EditorWindow
     }
 
     /// <summary>
+    /// Đếm lại holder từ part thật + lưu prefab (chống holder stale).
+    /// Trả về dataset màu gốc đúng nguồn runtime (colorCountEntries count > 0).
+    /// </summary>
+    private static bool RefreshHolderCounts(string levelName, out List<YarnColor> available, out Dictionary<YarnColor, int> yarnCounts, StringBuilder log)
+    {
+        available = new List<YarnColor>();
+        yarnCounts = new Dictionary<YarnColor, int>();
+        string path = $"Assets/Resources/Levels/{levelName}.prefab";
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(path);
+            if (root == null) return false;
+            var holder = root.GetComponent<LevelYarnInfoHolder>();
+            if (holder == null) holder = root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null)
+            {
+                foreach (var p in root.GetComponentsInChildren<YarnPart>(true))
+                    if (!available.Contains(p.initColor)) { available.Add(p.initColor); yarnCounts[p.initColor] = 0; }
+                return available.Count > 0;
+            }
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            if (holder.colorCountEntries != null)
+                foreach (var e in holder.colorCountEntries)
+                    if (e.count > 0 && !available.Contains(e.color)) { available.Add(e.color); yarnCounts[e.color] = e.count; }
+            log?.AppendLine($"  (holder {levelName} đã tự đếm lại + lưu)");
+            return available.Count > 0;
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
     /// Import JSON vẽ tay -> .asset. matrix[0] = hàng TRÊN cùng.
     /// palette[id] = màu IN RA (hex). owners[id] = màu GỐC để matching
     /// (thiếu owners -> tự map hex về YarnColor dataset gần nhất).
@@ -685,18 +701,13 @@ public sealed class LevelImageMatrixTool : EditorWindow
         { report = $"[LỖI] matrix có {dto.matrix.Count} hàng, cần {Grid}."; return; }
 
         // Dataset gốc của level (đúng nguồn runtime dùng để matching).
+        // Tự đếm lại + lưu holder trước khi đọc (khỏi mở prefab tay — chống holder stale).
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Resources/Levels/{levelName}.prefab");
         if (prefab == null) { report = "[LỖI] " + levelName + ": không thấy prefab."; return; }
-        var holder = prefab.GetComponent<LevelYarnInfoHolder>();
-        if (holder == null) holder = prefab.GetComponentInChildren<LevelYarnInfoHolder>(true);
-        var available = new List<YarnColor>();
-        if (holder != null && holder.colorCountEntries != null)
-            foreach (var e in holder.colorCountEntries)
-                if (e.count > 0 && !available.Contains(e.color)) available.Add(e.color);
-        if (available.Count == 0)
-            foreach (var p in prefab.GetComponentsInChildren<YarnPart>(true))
-                if (!available.Contains(p.initColor)) available.Add(p.initColor);
-        if (available.Count == 0) { report = "[LỖI] level không có màu nào."; return; }
+        var holderSb = new StringBuilder();
+        if (!RefreshHolderCounts(levelName, out var available, out _, holderSb))
+        { report = "[LỖI] " + levelName + ": level không có màu nào."; return; }
+        if (holderSb.Length > 0) Debug.Log(holderSb.ToString());
 
         // Giải palette hex -> display, owners -> YarnColor gốc.
         var displayById = new Dictionary<int, Color>();
@@ -775,6 +786,15 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         foreach (var kv in sum.OrderByDescending(kv => kv.Value))
             sb.AppendLine($"  = {kv.Key}: tổng {kv.Value} ô (gồm mọi shading)");
+        // Đủ màu chưa: màu nào của level mà 0 ô thì box màu đó đầy sẽ lỗi PrintImage.
+        bool lack = false;
+        foreach (var c in available)
+            if (!sum.ContainsKey(c) || sum[c] == 0)
+            {
+                sb.AppendLine($"  [THIẾU MÀU] {c} có sợi trong level nhưng 0 ô trong matrix — box {c} đầy sẽ lỗi PrintImage! Sửa owners/matrix rồi Import lại.");
+                lack = true;
+            }
+        if (!lack) sb.AppendLine("  [OK] Đủ màu: mọi màu của level đều có ô.");
         report = sb.ToString();
         Debug.Log(report);
         jsonText = text; // giữ lại để sửa tiếp

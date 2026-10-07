@@ -3438,10 +3438,6 @@ MonoBehaviour:
   randomColorEntries:
   - color: 5
     count: 2
-  - color: 13
-    count: 2
-  - color: 13
-    count: 1
   - color: 12
     count: 1
   layerCountEntries:
@@ -3459,7 +3455,7 @@ MonoBehaviour:
   - color: 20
     count: 36
   - color: 13
-    count: 21
+    count: 18
   - color: 3
     count: 12
   - color: 17

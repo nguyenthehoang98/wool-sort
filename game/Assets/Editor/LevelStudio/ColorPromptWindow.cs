@@ -431,22 +431,6 @@ public class ColorPromptWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.EndVertical();
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        GUILayout.Label("Ban vi du da dien mau san (copy gui kem AI / tham khao):", EditorStyles.miniBoldLabel);
-        EditorGUI.BeginChangeCheck();
-        _savedData.promptExample = EditorGUILayout.TextArea(_savedData.promptExample ?? "", GUILayout.Height(110));
-        if (EditorGUI.EndChangeCheck()) SaveData();
-        EditorGUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Copy vi du", GUILayout.Width(100))) { GUIUtility.systemCopyBuffer = _savedData.promptExample ?? ""; }
-        if (GUILayout.Button("Reset vi du", GUILayout.Width(100)))
-        {
-            _savedData.promptExample = new SavedPromptData().promptExample;
-            SaveData();
-        }
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.EndVertical();
-
         EditorGUILayout.Space(4);
         EditorGUILayout.BeginHorizontal();
         GUILayout.Label($"Levels: {_levels.Count} | Tong mau: {_levels.SelectMany(s=>s.colorCounts).GroupBy(kv=>kv.Key).Count()} mau", EditorStyles.miniLabel);

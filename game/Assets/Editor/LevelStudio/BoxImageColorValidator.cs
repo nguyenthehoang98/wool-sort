@@ -249,6 +249,27 @@ public sealed class BoxImageColorValidator : EditorWindow
             foreach (var e in holder.randomColorEntries)
                 AddCount(real, e.color, e.count);
 
+        // Pool random phải khớp demand: thiếu là runtime rớt info (vỡ %3, pool rỗng cuối game),
+        // thừa là sợi ma không bao giờ spawn.
+        {
+            int demand = 0;
+            foreach (var p in parts)
+            {
+                int types = p.innerColorTypes != null ? p.innerColorTypes.Count : 0;
+                int fixeds = p.innerFixedColors != null ? p.innerFixedColors.Count : 0;
+                int limit = Math.Min(p.totalInnerCount, Math.Min(types, fixeds));
+                for (int j = 0; j < limit; j++)
+                    if (p.innerColorTypes[j] == InnerColorType.Random) demand++;
+            }
+            int supply = 0;
+            if (holder != null && holder.randomColorEntries != null)
+                foreach (var e in holder.randomColorEntries) supply += e.count;
+            if (demand != supply)
+                errs.Add(demand > supply
+                    ? $"Pool random lệch: {demand} slot Random nhưng randomColorEntries chỉ {supply} (thiếu {demand - supply}) — runtime rớt info, vỡ %3, cuối game pool rỗng! Thêm {demand - supply} vào pool (dồn 1 màu để khỏi vỡ %3)."
+                    : $"Pool random lệch: {demand} slot Random nhưng randomColorEntries tới {supply} (thừa {supply - demand}) — holder đếm sợi ma không bao giờ spawn, tổng ảo, cuối game lệch box! Bớt {supply - demand} khỏi pool.");
+        }
+
         int total = real.Values.Sum();
         if (total == 0) errs.Add("Tổng số sợi = 0.");
         else if (total % 3 != 0)
@@ -305,9 +326,21 @@ public sealed class BoxImageColorValidator : EditorWindow
         var parts = go.GetComponentsInChildren<YarnPart>(true);
 
         // Ma trận color ID: runtime JamImage ưu tiên đọc file này thay vì ảnh trực tiếp.
-        // Cần real (đếm từ prefab) để đối chiếu, nên tính ở đây thay vì dùng holder stale.
+        // So với ĐỦ màu (ngoài + inner cố định + pool) vì lớp trong hiện ra cũng cần ô để tô.
         var realForMatrix = new Dictionary<YarnColor, int>();
-        foreach (var p in parts) { if (!realForMatrix.ContainsKey(p.initColor)) realForMatrix[p.initColor] = 0; realForMatrix[p.initColor]++; }
+        foreach (var p in parts)
+        {
+            AddCount(realForMatrix, p.initColor, 1);
+            int lim = System.Math.Min(p.totalInnerCount, System.Math.Min(
+                p.innerColorTypes != null ? p.innerColorTypes.Count : 0,
+                p.innerFixedColors != null ? p.innerFixedColors.Count : 0));
+            for (int j = 0; j < lim; j++)
+                if (p.innerColorTypes[j] == InnerColorType.Fixed)
+                    AddCount(realForMatrix, p.innerFixedColors[j], 1);
+        }
+        if (holder != null && holder.randomColorEntries != null)
+            foreach (var e in holder.randomColorEntries)
+                AddCount(realForMatrix, e.color, e.count);
         var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"Assets/Resources/LevelColorMatrix/{levelName}.asset");
         bool matrixOk = matrix != null && matrix.IsValid;
         bool matrixDisplay = matrixOk && matrix.HasDisplayColors;

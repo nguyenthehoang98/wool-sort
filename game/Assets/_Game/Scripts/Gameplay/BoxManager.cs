@@ -510,6 +510,7 @@ namespace _Game.Scripts.Gameplay
             }
             else
             {
+                _Game.Scripts.LevelDebugLog.LogError($"PrintImage: màu {boxInfo.BoxColor} không lấy được ô ảnh nào (thiếu texture Resources/Images hoặc lệch colorCountEntries)!");
                 Debug.LogError($"PrintImage: màu {boxInfo.BoxColor} không lấy được ô ảnh nào (thiếu texture Resources/Images hoặc lệch colorCountEntries)!", boxInfo);
                 currentWaitOfTime = 1f;
             }
