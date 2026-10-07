@@ -23,12 +23,24 @@ namespace _Game.Scripts.Gameplay
             // 1) Tìm piece gốc (outermost YarnPart)
             var p = GetComponentInParent<YarnPart>();
             hostPart = p;
+            if (hostPart == null)
+            {
+                Debug.LogError($"[Decor] SpecialDecor {name}: mồ côi, không nằm dưới YarnPart nào. Kéo nó vào làm con của đúng sợi len.", this);
+                return;
+            }
 
             // 2) Detach để không bị ẩn khi các layer bị disable
-            transform.SetParent(hostPart.transform.parent, worldPositionStays: true);
+            if (hostPart.transform.parent != null)
+                transform.SetParent(hostPart.transform.parent, worldPositionStays: true);
+            else
+                Debug.LogError($"[Decor] SpecialDecor {name}: hostPart {hostPart.name} không có parent để detach.", this);
 
             _collider = GetComponent<Collider>();
+            if (_collider == null)
+                Debug.LogError($"[Decor] SpecialDecor {name}: thiếu Collider.", this);
             rb = GetComponent<Rigidbody>();
+            if (rb == null)
+                Debug.LogError($"[Decor] SpecialDecor {name}: thiếu Rigidbody (nên gắn sẵn).", this);
         }
         
         private void Start()
@@ -38,10 +50,30 @@ namespace _Game.Scripts.Gameplay
 
         void Drop()
         {
-            Debug.Log("Special Decor Drop");
+            Debug.Log($"[DecorDbg] SpecialDecor Drop: {name} host={(hostPart != null ? hostPart.name : "NULL")}", this);
+            if (hostPart == null)
+            {
+                Debug.LogError($"[Decor] SpecialDecor {name}: hostPart NULL, không Drop được.", this);
+                return;
+            }
+            if (_collider == null || rb == null)
+            {
+                Debug.LogError($"[Decor] SpecialDecor {name}: thiếu Collider/Rigidbody nên không rơi được.", this);
+                return;
+            }
             if (rootModelPart == null) rootModelPart = GameManager.Instance.GetTargetModel();
-            
-            transform.SetParent(GameManager.Instance.GetDecorationRoot(), true);
+            if (rootModelPart == null)
+            {
+                Debug.LogError($"[Decor] SpecialDecor {name}: rootModelPart NULL.", this);
+                return;
+            }
+            var decoRoot = GameManager.Instance.GetDecorationRoot();
+            if (decoRoot == null)
+            {
+                Debug.LogError($"[Decor] SpecialDecor {name}: decorationRoot NULL (chưa gán trong GameManager).", this);
+                return;
+            }
+            transform.SetParent(decoRoot, true);
             
             _collider.isTrigger = true;
             
@@ -111,10 +143,12 @@ namespace _Game.Scripts.Gameplay
 
         public void React(in YarnLastLayerCleared e)
         {
-            Debug.Log("React to YarnLastLayerCleared");
             // chỉ drop nếu layer cuối đó thuộc đúng piece này
-            if (e.YarnPart.ancestor == hostPart)
+            var clearedAncestor = (e.YarnPart != null && e.YarnPart.ancestor != null) ? e.YarnPart.ancestor : e.YarnPart;
+            if (clearedAncestor == hostPart)
                 Drop();
+            else
+                Debug.Log($"[DecorDbg] SpecialDecor {name}: bỏ qua YarnLastLayerCleared của {e.YarnPart.name} (ancestor {(clearedAncestor != null ? clearedAncestor.name : "NULL")} != host {(hostPart != null ? hostPart.name : "NULL")})", this);
         }
     }
 }

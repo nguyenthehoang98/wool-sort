@@ -542,14 +542,23 @@ namespace _Game.Scripts.Gameplay
             //    Ta khởi tạo tương ứng một YarnPartInfo, sau đó đệ quy xây toàn bộ cây “inner”
             foreach (var rootPart in currentLevelHolder.allBaseYarnParts)
             {
+                if (rootPart == null)
+                {
+                    Debug.LogError($"[GameManager] allBaseYarnParts chứa phần tử NULL (có thể bạn kéo nhầm decor không có YarnPart vào list). Mở prefab Level{realCurrentLevel}, kiểm tra Holder -> All Base Yarn Parts, xóa slot None.", currentLevelHolder);
+                    continue;
+                }
                 // 2a) Mỗi rootPart hiện tại là Layer 1, màu = rootPart.initColor
                 var rootInfo = new YarnPartInfo(rootPart.initColor, 1, null);
-                piecesByColor[rootInfo.Color].Add(rootInfo);
+                if (!piecesByColor.TryGetValue(rootInfo.Color, out var list))
+                {
+                    Debug.LogError($"[GameManager] {rootPart.name} có màu {rootInfo.Color} không hợp lệ (None?). Bỏ qua để không crash.", rootPart);
+                    continue;
+                }
+                list.Add(rootInfo);
 
                 // 2b) Lưu link giữa runtime GameObject (nếu đã Spawn) và rootInfo
                 //     Nhưng nhớ là layer 1 đã Spawn sẵn (YarnPart gốc).
-                if (rootPart != null)
-                    LinkPartInfo(rootPart, rootInfo);
+                LinkPartInfo(rootPart, rootInfo);
 
                 // 2c) Đệ quy tạo dữ liệu cho inner layers (2,3,…)
                 BuildInnerPartData(rootInfo, rootPart, 2);
@@ -579,7 +588,12 @@ namespace _Game.Scripts.Gameplay
 
             // 3) Khởi tạo YarnPartInfo cho inner layer này
             var info = new YarnPartInfo(chosenColor, nextLayer, parentInfo);
-            piecesByColor[chosenColor].Add(info);
+            if (!piecesByColor.TryGetValue(chosenColor, out var colorList))
+            {
+                Debug.LogError($"[GameManager] inner layer màu {chosenColor} không hợp lệ (None?). Bỏ qua.", parentVisual);
+                return;
+            }
+            colorList.Add(info);
 
             // 4) (Chưa có GameObject tương ứng) → ta chỉ dừng ở mức dữ liệu, không Instantiate actual YarnPart
             //    Việc spawn actual GameObject sẽ diễn ra khi user click; 
@@ -599,13 +613,16 @@ namespace _Game.Scripts.Gameplay
         private YarnColor ChooseInnerColorForData(YarnPart source, int layerIndex)
         {
             int idx = layerIndex - 2; // layerIndex=2 -> idx=0
+            var ancestor = (source != null && source.ancestor != null) ? source.ancestor : source;
             // 1) Nếu Fixed:
-            if (source.ancestor.innerColorTypes != null &&
+            if (ancestor != null &&
+                ancestor.innerColorTypes != null &&
                 idx >= 0 &&
-                idx < source.ancestor.innerColorTypes.Count &&
-                source.ancestor.innerColorTypes[idx] == InnerColorType.Fixed)
+                idx < ancestor.innerColorTypes.Count &&
+                ancestor.innerColorTypes[idx] == InnerColorType.Fixed)
             {
-                return source.ancestor.innerFixedColors[idx];
+                if (idx < ancestor.innerFixedColors.Count)
+                    return ancestor.innerFixedColors[idx];
             }
 
             // 2) Ngược lại nếu Random và pool chưa cạn:

@@ -41,9 +41,25 @@ namespace _Game.Scripts.Gameplay
         /// <summary>Gọi khi part dissolve xong để drop decoration.</summary>
         public void Drop()
         {
+            Debug.Log($"[DecorDbg] Drop gọi: {name} parentPart={(parentPart != null ? parentPart.name : "NULL")} pos={transform.position}", this);
+            if (parentPart == null)
+            {
+                Debug.LogError($"[DecorDbg] {name}: parentPart NULL -> decor mồ côi, không tính được hướng bắn. Kiểm tra lại hierarchy.", this);
+                return;
+            }
             if (rootModelPart == null) rootModelPart = GameManager.Instance.GetTargetModel();
-            
-            transform.SetParent(GameManager.Instance.GetDecorationRoot(), true);
+            if (rootModelPart == null)
+            {
+                Debug.LogError($"[DecorDbg] {name}: rootModelPart NULL.", this);
+                return;
+            }
+            var decoRoot = GameManager.Instance.GetDecorationRoot();
+            if (decoRoot == null)
+            {
+                Debug.LogError($"[DecorDbg] {name}: decorationRoot NULL (chưa gán trong GameManager).", this);
+                return;
+            }
+            transform.SetParent(decoRoot, true);
 
             var mc = GetComponent<MeshCollider>();
             if (mc != null) mc.convex = true;

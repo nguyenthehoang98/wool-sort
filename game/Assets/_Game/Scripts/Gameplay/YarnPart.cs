@@ -125,13 +125,27 @@ namespace _Game.Scripts.Gameplay
             var bounds = meshRenderer.localBounds;
             foreach (var deco in decorations)
             {
+                if (deco == null)
+                {
+                    Debug.LogError($"[Decor] {name}: decorations list chứa slot NULL (kéo thiếu trong Inspector).", this);
+                    continue;
+                }
                 // Convert world position của deco sang local của part
                 Vector3 localPos = transform.InverseTransformPoint(deco.transform.position);
                 // Normalized Y trong [0,1]
                 float normY = Mathf.InverseLerp(bounds.min.y, bounds.max.y, localPos.y);
                 // Khi progress ≤ normY thì drop
                 _decoInfos.Add(new DecoInfo { deco = deco, threshold = normY });
+                Debug.Log($"[DecorDbg] {name}: deco {deco.name} localY={localPos.y:F3} bounds=[{bounds.min.y:F3},{bounds.max.y:F3}] threshold={normY:F3}", deco);
+                if (normY < 0f || normY > 1f)
+                    Debug.LogError($"[Decor] {name} -> {deco.name}: threshold={normY:F2} ngoài [0,1] (decor nằm ngoài bounds len). Nó sẽ rơi trễ (cuối dissolve) hoặc ngay frame đầu. Dời decor sát mặt len hơn.", deco);
+                if (deco.GetComponent<Collider>() == null)
+                    Debug.LogError($"[Decor] {deco.name} (con của {name}): thiếu Collider nên tap/dissolve vẫn chạy nhưng vật lý rơi có thể sai.", deco);
+                if (deco.GetComponent<Rigidbody>() == null)
+                    Debug.LogError($"[Decor] {deco.name} (con của {name}): thiếu Rigidbody (runtime sẽ tự Add, nhưng nên gắn sẵn, isKinematic=true).", deco);
             }
+            if (_decoInfos.Count == 0)
+                Debug.Log($"[DecorDbg] {name}: KHÔNG có YarnDecoration con nào (layerIndex={layerIndex}). Nếu đây là layer 1 mà bạn mong có decor rơi thì decor đang mồ côi hoặc là SpecialDecor.", this);
 
             dissolveDuration = GameManager.Instance.GameConfig.dissolveDuration;
             holdThreshold = GameManager.Instance.GameConfig.holdThreshold;
@@ -349,8 +363,10 @@ namespace _Game.Scripts.Gameplay
                 for (int i = _decoInfos.Count - 1; i >= 0; i--)
                 {
                     var info = _decoInfos[i];
+                    if (info.deco == null) { _decoInfos.RemoveAt(i); continue; }
                     if (progress <= info.threshold)
                     {
+                        Debug.Log($"[DecorDbg] {name}: progress={progress:F2} <= threshold={info.threshold:F2} -> Drop {info.deco.name}", info.deco);
                         info.deco.Drop();
                         _decoInfos.RemoveAt(i);
                     }
@@ -437,6 +453,22 @@ namespace _Game.Scripts.Gameplay
 #if UNITY_EDITOR
         void OnValidate()
         {
+            // 0) Tự sửa lỗi hay gặp ở Editor: ancestor null -> decor Special không bao giờ rơi
+            if (layerIndex == 1 && ancestor == null)
+            {
+                ancestor = this;
+                rootPart = this;
+                EditorUtility.SetDirty(this);
+                Debug.LogWarning($"{name}: ancestor null đã tự gán = chính nó. Kiểm tra lại bằng Tools/Puzzle/Validate decor gắn len.", this);
+            }
+            // 0b) Tự gom decor con để tránh decorations rỗng khi quên kéo vào list
+            var foundDecos = GetComponentsInChildren<YarnDecoration>(true);
+            if ((decorations == null || decorations.Count == 0) && foundDecos.Length > 0)
+            {
+                decorations = new List<YarnDecoration>(foundDecos);
+                EditorUtility.SetDirty(this);
+                Debug.LogWarning($"{name}: decorations rỗng đã tự gom {foundDecos.Length} con. Nên lưu prefab.", this);
+            }
             // 1) Ensure inner-lists always match totalInnerCount:
             if (innerColorTypes == null) innerColorTypes = new List<InnerColorType>();
             if (innerFixedColors == null) innerFixedColors = new List<YarnColor>();
