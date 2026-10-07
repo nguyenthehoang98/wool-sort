@@ -27,7 +27,9 @@ public sealed class LevelDifficultyTool : EditorWindow
     private string report = "Bấm \"Quét độ khó\" để chấm điểm tất cả level.";
     private readonly List<DiffRow> rows = new List<DiffRow>();
 
+    private int selectedTab;
     private int selectedLevelIndex;
+    private int detailLastLoaded = -1;
     private readonly int[] thresholdEdit = new int[4] { 20, 40, 15, 25 };
 
     private sealed class DiffRow
@@ -36,11 +38,16 @@ public sealed class LevelDifficultyTool : EditorWindow
         public string path;
         public int colors;
         public int total;
+        public int outerCount;
+        public int innerFixedCount;
+        public int randomSlots;
+        public int poolCount;
         public int maxDepth;
         public float randomShare;
         public float score;
         public string rating;
         public int[] thresholds = new int[4];
+        public Dictionary<YarnColor, int> perColor = new Dictionary<YarnColor, int>();
     }
 
     [MenuItem("Tools/Puzzle/7. Do kho level (check + sua)", false, 7)]
@@ -56,16 +63,31 @@ public sealed class LevelDifficultyTool : EditorWindow
         GUILayout.Label("ĐỘ KHÓ LEVEL (check + sửa)", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "Điểm = Số màu x8 + Tổng sợi x0.25 + (Độ sâu-1) x6 + Tỉ lệ random x12.\n" +
-            "Dễ ≤70 | Trung bình ≤110 | Khó ≤160 | Cực khó >160. " +
-            "Độ khó nên tăng dần theo level — dòng nào tụt điểm sẽ báo.",
+            "Dễ ≤70 | Trung bình ≤110 | Khó ≤160 | Cực khó >160.",
             MessageType.Info);
 
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Quét độ khó", GUILayout.Height(30))) Scan();
-        if (GUILayout.Button("Chạy step 1 validator", GUILayout.Height(30)))
-            EditorApplication.ExecuteMenuItem("Tools/Puzzle/1. Quét level + box-ảnh");
-        EditorGUILayout.EndHorizontal();
+        selectedTab = GUILayout.Toolbar(selectedTab, new[] { "Độ khó level", "Chi tiết level" }, GUILayout.Height(50));
 
+        if (rows.Count == 0)
+        {
+            EditorGUILayout.TextArea(report, GUILayout.Height(60));
+            return;
+        }
+
+        if (selectedTab == 0) DrawOverviewTab();
+        else DrawDetailTab();
+
+        GUILayout.Space(4);
+        EditorGUILayout.TextArea(report, GUILayout.MinHeight(80));
+    }
+
+    // ---------------- Tab 1: tổng quan độ khó ----------------
+
+    private void DrawOverviewTab()
+    {
+        EditorGUILayout.HelpBox(
+            "Độ khó nên tăng dần theo level — dòng nào tụt điểm sẽ báo.",
+            MessageType.None);
         scroll = EditorGUILayout.BeginScrollView(scroll);
         DiffRow prev = null;
         foreach (var r in rows)
@@ -77,22 +99,69 @@ public sealed class LevelDifficultyTool : EditorWindow
             GUILayout.Label($"điểm {r.score:F0}", GUILayout.Width(70));
             GUILayout.Label($"{r.colors} màu | {r.total} sợi | sâu {r.maxDepth} | random {r.randomShare:P0}", EditorStyles.miniLabel);
             if (drop) GUILayout.Label("TỤT ĐỘ KHÓ!", EditorStyles.boldLabel);
+            if (GUILayout.Button("Chi tiết", GUILayout.Width(70)))
+            {
+                selectedLevelIndex = rows.IndexOf(r);
+                detailLastLoaded = -1; // ép nạp lại nhịp box của level này
+                selectedTab = 1;
+            }
             EditorGUILayout.EndHorizontal();
             prev = r;
         }
         EditorGUILayout.EndScrollView();
+    }
 
-        if (rows.Count == 0) { EditorGUILayout.TextArea(report, GUILayout.Height(60)); return; }
+    // ---------------- Tab 2: chi tiết + sửa 1 level ----------------
 
-        GUILayout.Space(4);
-        GUILayout.Label("SỬA ĐỘ KHÓ (chỉ chạm inner + nhịp box, ngoài giữ nguyên)", EditorStyles.boldLabel);
+    private void DrawDetailTab()
+    {
         string[] names = rows.Select(r => $"{r.levelName} ({r.rating} {r.score:F0})").ToArray();
         selectedLevelIndex = Mathf.Clamp(selectedLevelIndex, 0, rows.Count - 1);
-        selectedLevelIndex = EditorGUILayout.Popup("Level", selectedLevelIndex, names);
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label("Level:", GUILayout.Width(45));
+        selectedLevelIndex = EditorGUILayout.Popup(selectedLevelIndex, names);
+        EditorGUILayout.EndHorizontal();
         var sel = rows[selectedLevelIndex];
 
+        // Nạp nhịp box hiện tại của level vào ô sửa mỗi khi đổi level.
+        if (detailLastLoaded != selectedLevelIndex)
+        {
+            for (int i = 0; i < 4; i++) thresholdEdit[i] = sel.thresholds[i];
+            detailLastLoaded = selectedLevelIndex;
+        }
+
+        // Khối thông tin chi tiết
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.Label($"{sel.levelName} — {sel.rating} (điểm {sel.score:F1})", EditorStyles.boldLabel);
+        GUILayout.Label($"Màu: {sel.colors} | Sợi: {sel.total} (ngoài {sel.outerCount} + inner cố định {sel.innerFixedCount} + pool {sel.poolCount})", EditorStyles.miniLabel);
+        GUILayout.Label($"Độ sâu tối đa: {sel.maxDepth} | Ô random: {sel.randomSlots} | Tỉ lệ random: {sel.randomShare:P0} | Nhịp box: [{string.Join(",", sel.thresholds)}]", EditorStyles.miniLabel);
+        GUILayout.Label("Từng màu:", EditorStyles.miniBoldLabel);
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        foreach (var kv in sel.perColor.OrderByDescending(kv => kv.Value))
+        {
+            float pct = sel.total > 0 ? (float)kv.Value / sel.total * 100f : 0f;
+            var show = LevelColorMatrixUtility.RefColor(db, kv.Key);
+            show.a = 1f;
+            EditorGUILayout.BeginHorizontal();
+            var swatch = GUILayoutUtility.GetRect(16, 14, GUILayout.Width(16));
+            EditorGUI.DrawRect(swatch, show);
+            GUILayout.Label($"{kv.Key}", GUILayout.Width(80));
+            GUILayout.Label($"{kv.Value} sợi", GUILayout.Width(70));
+            GUILayout.Label($"{pct:F1}%", GUILayout.Width(55));
+            var rect = GUILayoutUtility.GetRect(0, 12, GUILayout.ExpandWidth(true));
+            EditorGUI.ProgressBar(rect, sel.total > 0 ? (float)kv.Value / sel.total : 0f, "");
+            EditorGUILayout.EndHorizontal();
+        }
+        EditorGUILayout.EndVertical();
+
+        GUILayout.Space(4);
+        GUILayout.Label("SỬA ĐỘ KHÓ", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Nhịp box không đổi cấu trúc sợi. Gộp/tách màu CÓ đổi sợi ngoài (đã tự UpdateDebugInfo + lưu prefab).",
+            MessageType.None);
+
+        GUILayout.Label("Nhịp box (tổng=100):", EditorStyles.miniBoldLabel);
         EditorGUILayout.BeginHorizontal();
-        GUILayout.Label("Nhịp box (tổng=100):", GUILayout.Width(130));
         for (int i = 0; i < 4; i++) thresholdEdit[i] = EditorGUILayout.IntField(thresholdEdit[i], GUILayout.Width(45));
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.BeginHorizontal();
@@ -107,13 +176,22 @@ public sealed class LevelDifficultyTool : EditorWindow
         if (GUILayout.Button("Giảm 1 màu (gộp 2 màu hiếm nhất)", GUILayout.Height(28))) MergeRarest(sel);
         if (GUILayout.Button("Tăng 1 màu (tách 3 sợi sang màu mới)", GUILayout.Height(28))) SplitNewColor(sel);
         EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.TextArea(report, GUILayout.MinHeight(80));
     }
 
     private void SetThresholdEdit(int a, int b, int c, int d)
     {
         thresholdEdit[0] = a; thresholdEdit[1] = b; thresholdEdit[2] = c; thresholdEdit[3] = d;
+    }
+
+    /// <summary>Cắt cụm số ở cuối tên level để sort theo số (Level2 trước Level10). Tên không có số xếp cuối.</summary>
+    private static int LevelSortKey(string path)
+    {
+        var name = Path.GetFileNameWithoutExtension(path);
+        int end = name.Length;
+        int start = end;
+        while (start > 0 && char.IsDigit(name[start - 1])) start--;
+        if (start < end && int.TryParse(name.Substring(start, end - start), out int n)) return n;
+        return int.MaxValue;
     }
 
     // ---------------- Check ----------------
@@ -123,7 +201,8 @@ public sealed class LevelDifficultyTool : EditorWindow
         rows.Clear();
         var sb = new StringBuilder();
         var paths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
-            .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p).ToList();
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .OrderBy(p => LevelSortKey(p)).ThenBy(p => p).ToList();
         foreach (var path in paths)
         {
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -134,7 +213,7 @@ public sealed class LevelDifficultyTool : EditorWindow
             if (holder == null) holder = go.GetComponentInChildren<LevelYarnInfoHolder>(true);
 
             var perColor = new Dictionary<YarnColor, int>();
-            int randomSlots = 0, maxDepth = 1;
+            int randomSlots = 0, innerFixed = 0, maxDepth = 1;
             foreach (var p in parts)
             {
                 AddCount(perColor, p.initColor, 1);
@@ -144,7 +223,10 @@ public sealed class LevelDifficultyTool : EditorWindow
                 for (int j = 0; j < lim; j++)
                 {
                     if (p.innerColorTypes[j] == InnerColorType.Fixed)
+                    {
                         AddCount(perColor, p.innerFixedColors[j], 1);
+                        innerFixed++;
+                    }
                     else randomSlots++;
                 }
                 maxDepth = Math.Max(maxDepth, 1 + p.totalInnerCount);
@@ -166,12 +248,17 @@ public sealed class LevelDifficultyTool : EditorWindow
                 path = path,
                 colors = perColor.Count,
                 total = total,
+                outerCount = parts.Length,
+                innerFixedCount = innerFixed,
+                randomSlots = randomSlots,
+                poolCount = pool,
                 maxDepth = maxDepth,
                 randomShare = rShare,
                 score = score,
                 rating = rating,
                 thresholds = holder != null && holder.boxSpawnThresholds != null && holder.boxSpawnThresholds.Length == 4
-                    ? (int[])holder.boxSpawnThresholds.Clone() : new int[4] { 20, 40, 15, 25 }
+                    ? (int[])holder.boxSpawnThresholds.Clone() : new int[4] { 20, 40, 15, 25 },
+                perColor = perColor
             });
         }
         for (int i = 0; i < rows.Count; i++)

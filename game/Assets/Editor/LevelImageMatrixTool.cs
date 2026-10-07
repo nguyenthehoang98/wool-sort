@@ -30,12 +30,16 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private int selectedLevelIndex;
     private List<string> levelNames = new List<string>();
 
+    private LevelColorMatrix cachedMatrix;
+    private string cachedLevel;
+
     [MenuItem("Tools/Puzzle/5. Extract ảnh thành ma trận màu", false, 5)]
     private static void Open() => GetWindow<LevelImageMatrixTool>("Extract ma trận màu");
 
     private void OnEnable()
     {
         RefreshLevelNames();
+        AutoLoadSourceTexture();
     }
 
     private void RefreshLevelNames()
@@ -46,6 +50,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
             .OrderBy(n => n)
             .ToList();
         selectedLevelIndex = Mathf.Clamp(selectedLevelIndex, 0, Mathf.Max(0, levelNames.Count - 1));
+        cachedLevel = null; // ép nạp lại preview
     }
 
     private void OnGUI()
@@ -57,16 +62,36 @@ public sealed class LevelImageMatrixTool : EditorWindow
             "Runtime JamImage ưu tiên đọc file này, không đọc trực tiếp ảnh nữa.",
             MessageType.Info);
 
-        EditorGUILayout.LabelField("Extract 1 level (kéo ảnh + chọn level)", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+
+        // TRÁI: chọn level + lưới preview
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(330));
+        GUILayout.Label("Ảnh (lưới matrix)", EditorStyles.boldLabel);
+        if (levelNames.Count > 0)
+        {
+            int pick = EditorGUILayout.Popup("Level", selectedLevelIndex, levelNames.ToArray());
+            if (pick != selectedLevelIndex)
+            {
+                selectedLevelIndex = pick;
+                AutoLoadSourceTexture();
+            }
+        }
+        else
+        {
+            EditorGUILayout.HelpBox("Không tìm thấy prefab nào trong " + LevelsFolder, MessageType.Warning);
+        }
+        DrawMatrixPreview();
+        EditorGUILayout.EndVertical();
+
+        // PHẢI: extract
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.Label("Extract", EditorStyles.boldLabel);
         sourceTexture = (Texture2D)EditorGUILayout.ObjectField("Ảnh nguồn", sourceTexture, typeof(Texture2D), false);
+        EditorGUILayout.HelpBox("Đổi level bên trái sẽ tự nạp ảnh Resources/Images/{Level}.png (nếu có). Không có thì kéo ảnh vào tay.", MessageType.None);
         if (GUILayout.Button("Tải lại danh sách level"))
             RefreshLevelNames();
-        if (levelNames.Count > 0)
-            selectedLevelIndex = EditorGUILayout.Popup("Level", selectedLevelIndex, levelNames.ToArray());
-        else
-            EditorGUILayout.HelpBox("Không tìm thấy prefab nào trong " + LevelsFolder, MessageType.Warning);
 
-        if (GUILayout.Button("Extract level đã chọn", GUILayout.Height(32)))
+        if (GUILayout.Button("Extract level đã chọn", GUILayout.Height(36)))
         {
             if (sourceTexture == null || levelNames.Count == 0)
             {
@@ -78,18 +103,64 @@ public sealed class LevelImageMatrixTool : EditorWindow
             }
         }
 
-        EditorGUILayout.Space();
-        if (GUILayout.Button("Extract tất cả levels", GUILayout.Height(32)))
-        {
-                if (EditorUtility.DisplayDialog("Extract ảnh?",
-                "Tạo/ghi đè ma trận color ID cho mọi level trong Assets/Resources/Levels?",
-                "Extract luôn", "Hủy"))
-                ExtractAll();
-        }
+        EditorGUILayout.EndVertical();
 
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
         scroll = EditorGUILayout.BeginScrollView(scroll);
         EditorGUILayout.TextArea(report, GUILayout.ExpandHeight(true));
         EditorGUILayout.EndScrollView();
+    }
+
+    /// <summary>Đổi level -> tự nạp ảnh nguồn đúng thứ tự fallback của JamImage (khỏi kéo tay).</summary>
+    private void AutoLoadSourceTexture()
+    {
+        if (levelNames.Count == 0) return;
+        string levelName = levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)];
+        Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.png");
+        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.jpg");
+        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/Level_{levelName}.png");
+        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/LevelImages/{levelName}.png");
+        if (tex != null) sourceTexture = tex;
+    }
+
+    private void DrawMatrixPreview()
+    {
+        if (levelNames.Count == 0)
+        {
+            EditorGUILayout.HelpBox("Không tìm thấy prefab nào trong " + LevelsFolder, MessageType.Warning);
+            return;
+        }
+        string levelName = levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)];
+        // Đổi level hoặc vừa extract xong thì nạp lại asset.
+        if (cachedLevel != levelName)
+        {
+            cachedLevel = levelName;
+            cachedMatrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{levelName}.asset");
+        }
+        if (cachedMatrix == null || !cachedMatrix.IsValid)
+        {
+            EditorGUILayout.HelpBox($"Chưa có matrix cho {levelName} (hoặc matrix hỏng) — bấm Extract để tạo.", MessageType.None);
+            return;
+        }
+        int g = cachedMatrix.gridSize;
+        GUILayout.Label($"{levelName}: {g}x{g} = {cachedMatrix.TotalCellCount} ô, {cachedMatrix.entries.Count} màu", EditorStyles.miniLabel);
+        const float cell = 10f;
+        float size = g * cell;
+        Rect r = GUILayoutUtility.GetRect(size, size, GUILayout.Width(size), GUILayout.Height(size));
+        EditorGUI.DrawRect(r, Color.black);
+        for (int y = 0; y < g; y++)
+        {
+            for (int x = 0; x < g; x++)
+            {
+                var c = cachedMatrix.GetDisplayColor(x, y);
+                // y = 0 là hàng dưới trong data -> lật lại cho giống ảnh nhìn từ trên xuống.
+                float px = r.x + x * cell;
+                float py = r.y + (g - 1 - y) * cell;
+                EditorGUI.DrawRect(new Rect(px + 0.5f, py + 0.5f, cell - 1f, cell - 1f), c);
+            }
+        }
     }
 
     private void ExtractSingle(string levelName, Texture2D tex)
@@ -113,61 +184,8 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+        cachedLevel = null; // ép vẽ lại preview với matrix mới
         Debug.Log(report);
-    }
-
-    private void ExtractAll()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("=== EXTRACT LEVEL IMAGE TO MATRIX ===");
-
-        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
-        if (db == null)
-        {
-            report = "[LỖI] Không thấy Database: " + DatabasePath;
-            return;
-        }
-        if (!AssetDatabase.IsValidFolder(MatrixFolder))
-            AssetDatabase.CreateFolder("Assets/Resources", "LevelColorMatrix");
-
-        var levelPaths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .OrderBy(p => p)
-            .ToList();
-
-        int ok = 0, fail = 0;
-        foreach (var path in levelPaths)
-        {
-            string levelName = Path.GetFileNameWithoutExtension(path);
-            try
-            {
-                sb.AppendLine(ExtractOne(levelName, db));
-                ok++;
-            }
-            catch (Exception ex)
-            {
-                sb.AppendLine("[LỖI] " + levelName + ": " + ex.Message);
-                Debug.LogException(ex);
-                fail++;
-            }
-        }
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        sb.AppendLine($"Xong: {ok} OK, {fail} lỗi.");
-        report = sb.ToString();
-        Debug.Log(report);
-    }
-
-    private static string ExtractOne(string levelName, YarnColorDatabase db)
-    {
-        // Ảnh gốc (đúng thứ tự fallback của JamImage.Initialize)
-        Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.png");
-        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/{levelName}.jpg");
-        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/Images/Level_{levelName}.png");
-        if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Resources/LevelImages/{levelName}.png");
-        if (tex == null) return "[LỖI] " + levelName + ": thiếu ảnh Resources/Images/" + levelName + ".png.";
-        return ExtractWithTexture(levelName, tex, db);
     }
 
     private static string ExtractWithTexture(string levelName, Texture2D tex, YarnColorDatabase db)
@@ -202,33 +220,57 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         if (available.Count == 0) return "[LỖI] " + levelName + ": level không có màu nào.";
         if (tex == null) return "[LỖI] " + levelName + ": chưa kéo ảnh vào.";
-        if (tex == null) return "[LỖI] " + levelName + ": thiếu ảnh Resources/Images/" + levelName + ".png.";
 
-        // 3. Ảnh phải đọc được pixel -> tự bật Read/Write
+        // 3. Ảnh phải đọc pixel CHÍNH XÁC: readable + không nén (nén DXT làm lem
+        // màu giữa các block -> vừa sai màu vừa nhòe hình) + tắt mipmap.
         string texPath = AssetDatabase.GetAssetPath(tex);
         var importer = AssetImporter.GetAtPath(texPath) as TextureImporter;
-        if (importer != null && !importer.isReadable)
+        if (importer != null)
         {
-            importer.isReadable = true;
-            importer.SaveAndReimport();
-            tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
-            sb.AppendLine("  (đã tự bật Read/Write cho ảnh)");
+            bool dirty = false;
+            if (!importer.isReadable) { importer.isReadable = true; dirty = true; }
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                dirty = true;
+            }
+            if (importer.mipmapEnabled) { importer.mipmapEnabled = false; dirty = true; }
+            if (dirty)
+            {
+                importer.SaveAndReimport();
+                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                sb.AppendLine("  (đã ép import: Read/Write + Uncompressed + tắt mipmap)");
+            }
         }
 
-        // 4. Duyệt từng ô, pixel không khớp 100% thì tìm màu gần nhất trong dataset
-        // (dùng helper chung LevelColorMatrixUtility để tool window tự viết sau này
-        // cho cùng 1 kết quả).
-        var ids = new int[Grid * Grid];
+        // 3b. Ảnh không vuông -> cắt vuông giữa trước khi chia lưới (tránh ép tỉ lệ làm méo hình).
         int w = tex.width, h = tex.height;
+        int side = Mathf.Min(w, h);
+        int cropX = (w - side) / 2, cropY = (h - side) / 2;
+        if (w != h) sb.AppendLine($"  (ảnh {w}x{h} không vuông -> cắt vuông giữa {side}x{side})");
+
+        // 4. Duyệt từng ô: TRUNG BÌNH cả block rồi mới tìm màu gần nhất trong dataset
+        // (lấy 1 điểm giữa ô dễ rơi vào hạt nhiễu/gradient của ảnh AI -> sai màu cả ô).
+        var ids = new int[Grid * Grid];
         for (int cy = 0; cy < Grid; cy++)
+        {
             for (int cx = 0; cx < Grid; cx++)
             {
-                int sx = Mathf.Clamp(Mathf.RoundToInt((cx + 0.5f) / Grid * w), 0, w - 1);
-                int sy = Mathf.Clamp(Mathf.RoundToInt((cy + 0.5f) / Grid * h), 0, h - 1);
-                var sample = tex.GetPixel(sx, sy);
+                int x0 = cropX + Mathf.FloorToInt((float)cx / Grid * side);
+                int x1 = cropX + Mathf.CeilToInt((float)(cx + 1) / Grid * side);
+                int y0 = cropY + Mathf.FloorToInt((float)cy / Grid * side);
+                int y1 = cropY + Mathf.CeilToInt((float)(cy + 1) / Grid * side);
+                x0 = Mathf.Clamp(x0, 0, w - 1); x1 = Mathf.Clamp(x1, x0 + 1, w);
+                y0 = Mathf.Clamp(y0, 0, h - 1); y1 = Mathf.Clamp(y1, y0 + 1, h);
+                var px = tex.GetPixels(x0, y0, x1 - x0, y1 - y0);
+                float r = 0f, g = 0f, b = 0f;
+                for (int i = 0; i < px.Length; i++) { r += px[i].r; g += px[i].g; b += px[i].b; }
+                float inv = 1f / Mathf.Max(1, px.Length);
+                var sample = new Color(r * inv, g * inv, b * inv, 1f);
                 var best = LevelColorMatrixUtility.FindClosest(sample, available, db);
                 ids[cy * Grid + cx] = (int)best;
             }
+        }
 
         // 4b. Khử nhiễu: ô lẻ loi giữa vùng 1 màu khác thì đổi theo số đông
         // (tránh pixel lẻ như trong ảnh test). Chạy 2 lượt trên snapshot.
@@ -286,6 +328,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
         matrix.levelName = levelName;
         matrix.gridSize = Grid;
         matrix.entries = builtEntries;
+        matrix.InvalidateLookup(); // entries mới -> xóa cache lookup cũ trong session
         EditorUtility.SetDirty(matrix);
 
         // 6. Báo cáo: ô/box đúng công thức runtime (3 sợi = 1 box)

@@ -60,6 +60,21 @@ namespace _Game.Scripts
         private void EnsureLookup()
         {
             if (_lookup != null) return;
+            BuildLookup();
+        }
+
+        /// <summary>
+        /// Xóa cache lookup để lần đọc tới build lại từ entries hiện tại.
+        /// BẮT BUỘC gọi sau khi code Editor sửa entries trực tiếp (Extract tool),
+        /// nếu không GetColorId/GetDisplayColor vẫn trả dữ liệu cũ trong session.
+        /// </summary>
+        public void InvalidateLookup()
+        {
+            _lookup = null;
+        }
+
+        private void BuildLookup()
+        {
             _lookup = new Dictionary<Vector2Int, int>();
             if (entries == null) return;
             for (int i = 0; i < entries.Count; i++)

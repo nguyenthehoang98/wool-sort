@@ -12,231 +12,312 @@ public enum PromptStyle { Detailed, Minimal, Technical }
 [Serializable]
 public class SavedPromptData
 {
-    public string promptTemplate = @"# STRICT 28×28 CELL PIXEL ART
+    public string promptTemplate = @"# RANDOM 28×28 CELL PIXEL ART
 
 Create **one random cute cartoon/chibi pixel-art illustration**.
 
-The subject and composition are completely random. You may create animals, characters, objects, plants, scenery, food, toys, monsters, or any other cute subject.
+The subject, objects, composition, and visual arrangement are completely random. You may create animals, characters, monsters, plants, food, toys, objects, scenery, fantasy creatures, or any other suitable subject.
 
-The content is random, but the following technical constraints are **ABSOLUTE**.
-
----
-
-## 1. EXACT 28×28 LOGICAL CELL GRID
-
-The entire image is constructed on exactly:
-
-**28 columns × 28 rows = 784 logical cells**
-
-Think of the image as a physical grid:
-
-- 28 cells wide
-- 28 cells high
-- 784 cells total
-- Every cell is exactly one square unit
-- Every cell contains exactly one solid color
-- Every shape must align to whole cells
-- No partial cells
-- No sub-cell details
-- No anti-aliasing
-- No smoothing
-- No blur
-- No gradients
-- No transparency
-- No blended pixels
-- No intermediate colors
-
-The artwork must look as if it was manually drawn directly on a **28×28 pixel grid**.
-
-Do NOT create a normal smooth illustration and then apply a pixel-art filter.
+The artwork must follow the **exact 28×28 logical cell grid** and the color requirements provided below.
 
 ---
 
-## 2. EXACT COLOR PALETTE
+## 1. EXACT 28×28 LOGICAL GRID
 
-Use **ONLY** the following colors:
+The artwork must be constructed on exactly:
 
-| Color | HEX | Required Cell Count |
-|---|---|---:|
-| Green | `#9ECA27` | 302 |
-| Orange | `#FF943E` | 151 |
-| Gray | `#9E9E9E` | 91 |
-| Magenta | `#F57DC7` | 73 |
-| Purple | `#D162EC` | 61 |
-| Yellow | `#F5D025` | 58 |
-| Blue | `#41D3F0` | 48 |
-| **TOTAL** | | **784** |
+**28 columns × 28 rows**
 
-These seven colors are the **complete color palette**.
+Each position in this grid represents exactly **one logical cell**.
 
-No other colors are permitted.
+Rules:
 
----
+- Exactly 28 cells horizontally.
+- Exactly 28 cells vertically.
+- Every visual element must align to this grid.
+- Each logical cell contains exactly one solid color.
+- Do not create shapes smaller than one logical cell.
+- Do not place details between cells.
+- Do not use sub-cell positioning.
+- Do not change the grid size.
 
-## 3. EXACT COLOR CELL COUNTS
-
-The final 28×28 image must contain exactly:
-
-- `#9ECA27` → **302 cells**
-- `#FF943E` → **151 cells**
-- `#9E9E9E` → **91 cells**
-- `#F57DC7` → **73 cells**
-- `#D162EC` → **61 cells**
-- `#F5D025` → **58 cells**
-- `#41D3F0` → **48 cells**
-
-Total:
-
-**302 + 151 + 91 + 73 + 61 + 58 + 48 = 784 cells**
-
-Therefore every one of the 784 cells must belong to exactly one of these seven colors.
-
-Do not interpret these numbers as approximate percentages.
-
-They are **exact cell counts**.
+The artwork must look as if it was created directly on a **28×28 logical pixel grid**.
 
 ---
 
-## 4. RANDOM CONTENT
+## 2. COLOR REQUIREMENTS
 
-The subject is intentionally random.
+The number of colors, the colors themselves, and the required number of cells for each color are specified below:
 
-Each generation may contain a completely different composition.
+**{0}**
 
-Examples:
+These color requirements are **exact**.
 
-- cute animal
-- chibi character
-- small monster
-- fruit
-- toy
-- house
-- tree
-- flower
+For every color specified above:
+
+- Use exactly the specified color.
+- Use exactly the specified number of logical cells.
+- Do not add additional colors.
+- Do not remove any required color cells.
+- Do not substitute one color for another.
+- Every one of the 28×28 cells must belong to one of the specified colors.
+
+The specified cell counts must add up to exactly **784 cells**.
+
+Do not interpret the specified cell counts as percentages or approximate values.
+
+---
+
+## 3. RANDOM CONTENT
+
+The content is intentionally random.
+
+Possible subjects include, but are not limited to:
+
+- animals
+- cute characters
+- monsters
+- plants
+- flowers
 - food
-- fantasy creature
-- game character
-- small landscape
-- combination of several cute objects
+- toys
+- buildings
+- objects
+- vehicles
+- fantasy creatures
+- scenery
+- combinations of multiple objects
 
-Do not repeatedly use the same subject.
+Each generation may use a completely different subject and composition.
 
-The content is random, but the **28×28 grid and color counts must never change**.
+Do not repeatedly use the same subject unless it happens randomly.
+
+The subject and composition are flexible, but must remain readable within the **28×28 grid**.
 
 ---
 
-## 5. STYLE
+## 4. PIXEL ART STYLE
 
 Use a:
 
-**cute cartoon + chibi + chunky pixel-art style**
+**cute + cartoon/chibi + pixel-art style**
 
-Visual characteristics:
+The visual design should be:
 
 - cute
 - playful
-- friendly
-- colorful
-- chunky
+- readable
 - simplified
-- readable silhouette
-- large simple shapes
-- stepped edges
-- square pixel construction
-- minimal but expressive details
-- casual mobile-game aesthetic
+- suitable for a casual game
+- clearly constructed from logical cells
 
-Avoid:
+The exact shapes, proportions, composition, and detail level may vary between generations.
 
-- photorealism
-- realistic rendering
-- painterly style
-- smooth vector art
-- realistic lighting
-- gradients
-- soft shadows
-- glow
-- bloom
-- texture noise
-- anti-aliased edges
+Do not prioritize visual complexity over the required grid and color constraints.
 
 ---
 
-## 6. COLOR USAGE
+## 5. GRID-BASED CONSTRUCTION
 
-The required cell counts are more important than visual realism.
-
-Do NOT introduce additional shades to make the image prettier.
-
-For example:
-
-Allowed:
-
-`#9ECA27`
-
-Not allowed:
-
-`#8FB923`
-
-`#A8D52B`
-
-`#B5E03A`
-
-The same rule applies to every palette color.
-
-If shading is needed, use another color from the approved palette.
-
-Never create a new shade.
-
----
-
-## 7. IMPORTANT INTERPRETATION
-
-The word **pixel** means one logical cell.
-
-One logical cell = one solid color.
-
-The image should be understood as:
+Think of the artwork as a matrix:
 
 ```text
-28 columns
-×
-28 rows
-=
-784 cells
+28 × 28 cells
 ```
 
-Each cell has exactly one of the seven approved colors.
+Each cell is an independent color unit.
 
-The final result is therefore a **28×28 color-cell artwork**.
+All shapes, outlines, patterns, and details must be constructed by placing colors into these cells.
+
+Do not create a smooth illustration first and then apply a pixel-art effect.
 
 ---
 
-## 8. PRIORITY ORDER
+## 6. PRIORITY ORDER
 
 If requirements conflict, follow this priority:
 
-1. **Exactly 28×28 cells**
-2. **Exactly 784 cells**
-3. **Exactly 7 colors**
-4. **Exact cell count for every color**
-5. Cute cartoon/chibi pixel-art style
-6. Random subject and composition
-7. Visual detail
+1. **Exactly 28×28 logical cells**
+2. **Exactly the specified color-cell counts in {0}**
+3. **Use only the colors specified in {0}**
+4. Cute cartoon/chibi pixel-art appearance
+5. Random subject and composition
+6. Visual detail and attractiveness
 
-Never sacrifice the technical constraints for visual quality.
+Never sacrifice the grid or exact color requirements for visual quality.
 
 ---
 
 ## FINAL REQUIREMENT
 
-Create a **random cute cartoon/chibi pixel-art illustration** directly on a **28×28 logical cell grid**.
+Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 28×28 logical cell grid**.
 
-Use **exactly 7 colors** and exactly the specified number of cells for each color.
+Follow the color palette and exact cell counts specified in:
 
-Every cell must contain exactly one solid approved color.
+**{0}**
 
-**No other colors. No extra cells. No partial cells. No gradients. No anti-aliasing.**";
+Every one of the 784 logical cells must contain exactly one of the specified colors.
+
+No additional colors, no missing cells, and no changed grid dimensions.";
+    public string promptExample = @"# RANDOM 28×28 CELL PIXEL ART
+
+Create **one random cute cartoon/chibi pixel-art illustration**.
+
+The subject, objects, composition, and visual arrangement are completely random. You may create animals, characters, monsters, plants, food, toys, objects, scenery, fantasy creatures, or any other suitable subject.
+
+The artwork must follow the **exact 28×28 logical cell grid** and the color requirements provided below.
+
+---
+
+## 1. EXACT 28×28 LOGICAL GRID
+
+The artwork must be constructed on exactly:
+
+**28 columns × 28 rows**
+
+Each position in this grid represents exactly **one logical cell**.
+
+Rules:
+
+- Exactly 28 cells horizontally.
+- Exactly 28 cells vertically.
+- Every visual element must align to this grid.
+- Each logical cell contains exactly one solid color.
+- Do not create shapes smaller than one logical cell.
+- Do not place details between cells.
+- Do not use sub-cell positioning.
+- Do not change the grid size.
+
+The artwork must look as if it was created directly on a **28×28 logical pixel grid**.
+
+---
+
+## 2. COLOR REQUIREMENTS
+
+The number of colors, the colors themselves, and the required number of cells for each color are specified below:
+
+**Number of colors: 5**
+
+- `#1E1E2E` — exactly **120 cells**
+- `#F2F0E6` — exactly **280 cells**
+- `#E85D75` — exactly **160 cells**
+- `#4DA6FF` — exactly **140 cells**
+- `#72C472` — exactly **84 cells**
+
+**Total: 784 cells**
+
+These color requirements are **exact**.
+
+For every color specified above:
+
+- Use exactly the specified color.
+- Use exactly the specified number of logical cells.
+- Do not add additional colors.
+- Do not remove any required color cells.
+- Do not substitute one color for another.
+- Every one of the 28×28 cells must belong to one of the specified colors.
+
+Do not interpret the cell counts as percentages or approximate values.
+
+---
+
+## 3. RANDOM CONTENT
+
+The content is intentionally random.
+
+Possible subjects include, but are not limited to:
+
+- animals
+- cute characters
+- monsters
+- plants
+- flowers
+- food
+- toys
+- buildings
+- objects
+- vehicles
+- fantasy creatures
+- scenery
+- combinations of multiple objects
+
+Each generation may use a completely different subject and composition.
+
+Do not repeatedly use the same subject unless it happens randomly.
+
+The subject and composition are flexible, but must remain readable within the **28×28 grid**.
+
+---
+
+## 4. PIXEL ART STYLE
+
+Use a:
+
+**cute + cartoon/chibi + pixel-art style**
+
+The visual design should be:
+
+- cute
+- playful
+- readable
+- simplified
+- suitable for a casual game
+- clearly constructed from logical cells
+
+The exact shapes, proportions, composition, and detail level may vary between generations.
+
+Do not prioritize visual complexity over the required grid and color constraints.
+
+---
+
+## 5. GRID-BASED CONSTRUCTION
+
+Think of the artwork as a matrix:
+
+```text
+28 × 28 cells
+```
+
+Each cell is an independent color unit.
+
+All shapes, outlines, patterns, and details must be constructed by placing colors into these cells.
+
+Do not create a smooth illustration first and then apply a pixel-art effect.
+
+---
+
+## 6. PRIORITY ORDER
+
+If requirements conflict, follow this priority:
+
+1. **Exactly 28×28 logical cells**
+2. **Exactly the specified color-cell counts**
+3. **Use only the specified colors**
+4. Cute cartoon/chibi pixel-art appearance
+5. Random subject and composition
+6. Visual detail and attractiveness
+
+Never sacrifice the grid or exact color requirements for visual quality.
+
+---
+
+## FINAL REQUIREMENT
+
+Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 28×28 logical cell grid**.
+
+Use exactly these 5 colors:
+
+`#1E1E2E`
+`#F2F0E6`
+`#E85D75`
+`#4DA6FF`
+`#72C472`
+
+Use exactly the specified number of cells for each color.
+
+Every one of the **784 logical cells** must contain exactly one of these colors.
+
+No additional colors, no missing cells, and no changed grid dimensions.";
     public PromptStyle style = PromptStyle.Detailed;
     public int imageWidth = 784;
     public int imageHeight = 784;
@@ -311,11 +392,10 @@ public class ColorPromptWindow : EditorWindow
         EditorGUILayout.HelpBox("Prompt chung o tren se duoc pin va luu lai. Moi level ben duoi co nut Copy rieng. Ti le mau tinh chinh xac theo YarnPart (outer + fixed-inner + random) giong LevelYarnInfoHolder.UpdateDebugInfo, khop voi model/material.", MessageType.Info);
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        GUILayout.Label("Prompt Template (pin on top - co the chinh & luu):", EditorStyles.miniBoldLabel);
-        GUILayout.Label("Static template: random subject + fixed 7-color cell counts (302/151/91/73/61/58/48 = 784). Same prompt for every level.", EditorStyles.miniLabel);
-        if (!_savedData.promptTemplate.Contains("28×28") || !_savedData.promptTemplate.Contains("784"))
+        GUILayout.Label("Prompt Template - {0} = khoi yeu cau mau (tu dien theo tung level):", EditorStyles.miniBoldLabel);
+        if (!_savedData.promptTemplate.Contains("{0}"))
         {
-            EditorGUILayout.HelpBox("Template cu chua theo cau truc STATIC 28x28 moi (random subject + so cell co dinh). Bam 'Reset Pixel Template' de dung mau moi.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Template thieu placeholder {0}. Bam 'Reset Pixel Template' de dung mau moi.", MessageType.Warning);
         }
         EditorGUI.BeginChangeCheck();
         _savedData.promptTemplate = EditorGUILayout.TextArea(_savedData.promptTemplate, GUILayout.Height(110));
@@ -337,6 +417,22 @@ public class ColorPromptWindow : EditorWindow
         }
         if (GUILayout.Button("Luu", GUILayout.Width(50))) { SaveData(); EditorUtility.DisplayDialog("Da luu", $"Da luu vao {SavedDataPath}", "OK"); }
         if (GUILayout.Button("Refresh", GUILayout.Width(60))) RefreshLevels();
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.Label("Ban vi du da dien mau san (copy gui kem AI / tham khao):", EditorStyles.miniBoldLabel);
+        EditorGUI.BeginChangeCheck();
+        _savedData.promptExample = EditorGUILayout.TextArea(_savedData.promptExample ?? "", GUILayout.Height(110));
+        if (EditorGUI.EndChangeCheck()) SaveData();
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Copy vi du", GUILayout.Width(100))) { GUIUtility.systemCopyBuffer = _savedData.promptExample ?? ""; }
+        if (GUILayout.Button("Reset vi du", GUILayout.Width(100)))
+        {
+            _savedData.promptExample = new SavedPromptData().promptExample;
+            SaveData();
+        }
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.EndVertical();
 
@@ -474,6 +570,35 @@ public class ColorPromptWindow : EditorWindow
         };
     }
 
+    private static string BuildColorParams(List<(string name, string hex, int balls)> merged, int totalBalls)
+    {
+        // Khối {0} cho template prompt: tỉ lệ sợi của level quy ra số cell, tổng đúng 784.
+        const int totalCells = 28 * 28;
+        var usable = merged.Where(m => m.balls > 0).OrderByDescending(m => m.balls).ToList();
+        if (usable.Count == 0 || totalBalls <= 0)
+            return "**Number of colors: 0**\n\n(no colors)\n\n**Total: 784 cells**";
+        // Largest remainder để tổng đúng 784.
+        var floors = new int[usable.Count];
+        var rem = new double[usable.Count];
+        int assigned = 0;
+        for (int i = 0; i < usable.Count; i++)
+        {
+            double q = (double)usable[i].balls / totalBalls * totalCells;
+            floors[i] = Mathf.FloorToInt((float)q);
+            rem[i] = q - floors[i];
+            assigned += floors[i];
+        }
+        int left = totalCells - assigned;
+        var order = Enumerable.Range(0, usable.Count).OrderByDescending(i => rem[i]).ToList();
+        for (int k = 0; k < left && k < order.Count; k++) floors[order[k]]++;
+        var lines = new List<string> { $"**Number of colors: {usable.Count}**", "" };
+        for (int i = 0; i < usable.Count; i++)
+            lines.Add($"- `{usable[i].hex}` — exactly **{floors[i]} cells**");
+        lines.Add("");
+        lines.Add($"**Total: {totalCells} cells**");
+        return string.Join("\n", lines);
+    }
+
     private string GeneratePrompt(LevelColorStats stats)
     {
         var sorted = stats.colorCounts.OrderByDescending(kv => kv.Value).ToList();
@@ -514,6 +639,8 @@ public class ColorPromptWindow : EditorWindow
         }
         // colorDistribution: short form for spec lines, e.g. "24 Green + 9 Orange + 3 Gray = 48"
         string colorDist = merged.Count == 0 ? "no yarn" : string.Join(" + ", merged.Select(m => $"{m.balls} {m.name}")) + $" = {stats.totalOccurrences}";
+        // colorParams: khối {0} cho template prompt (legacy placeholders khác giữ nguyên để tương thích)
+        string colorParams = BuildColorParams(merged, stats.totalOccurrences);
         // colorList: "Green, Blue, Pink"
         string colorList = sorted.Count == 0 ? "none" : string.Join(", ", sorted.Select(kv => $"{kv.Key} {GetHexForYarnColor(kv.Key)}"));
         // filteredPalette: chi lay mau co xuat hien, kem ti le % va so luong
@@ -562,6 +689,7 @@ public class ColorPromptWindow : EditorWindow
         };
 
         string prompt = _savedData.promptTemplate
+            .Replace("{0}", colorParams)
             .Replace("{colorTable}", colorTable)
             .Replace("{filteredPalette}", filteredPalette)
             .Replace("{colorDistribution}", colorDist)
