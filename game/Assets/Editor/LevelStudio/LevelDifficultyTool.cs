@@ -237,6 +237,7 @@ public sealed class LevelDifficultyTool : EditorWindow
     private YarnColor manualSrc = YarnColor.Green;
     private YarnColor manualDst = YarnColor.Orange;
     private int manualCount = 3;
+    private int keepSmallInner = 1;
 
     /// <summary>
     /// Chỉnh tay: +-3 sợi từng màu (thêm/bớt inner Fixed, giữ %3) + đổi màu tùy chọn.
@@ -245,6 +246,15 @@ public sealed class LevelDifficultyTool : EditorWindow
     {
         GUILayout.Space(4);
         GUILayout.Label("CHỈNH TAY TỪNG MÀU", EditorStyles.boldLabel);
+        if (GUILayout.Button("❓ Muốn 1 màu ra box nhiều thì setup sao?", GUILayout.Height(26)))
+            EditorUtility.DisplayDialog("Cho 1 màu ra nhiều",
+                "Box mới ưu tiên màu có nhiều sợi chờ ở LỚP NGOÀI (số sum3 nhỏ nhất).\n\n" +
+                "Muốn màu X ra dày:\n" +
+                "1. Nhiều part ngoài màu X: mục 'Đổi part ngoài sang màu khác' bên dưới (đổi vài part sang X).\n" +
+                "2. Bớt màu khác: mỗi dòng màu bấm -3 vài lần, hoặc 'Gộp 2 màu hiếm nhất'.\n" +
+                "3. Nhịp box phase đầu lấy ít màu (preset Mở nhanh/Dồn cuối).\n\n" +
+                "Nhớ giữ mỗi màu chia hết cho 3 (1 box = 3 sợi), xong chạy Validate.",
+                "Đã hiểu");
         EditorGUILayout.HelpBox(
             "+3/-3 sợi = thêm/bớt 3 lớp inner Fixed (lớp ngoài giữ nguyên, tổng vẫn %3).\n" +
             "Đổi màu: chuyển part ngoài sang màu khác (có thể lẻ %3 -> chạy lại Validate tab 3).",
@@ -281,6 +291,20 @@ public sealed class LevelDifficultyTool : EditorWindow
         if (GUILayout.Button("Đổi N part ngoài", GUILayout.Height(26))) RecolorManual(sel, false);
         if (GUILayout.Button("Đổi TẤT CẢ (ngoài+inner+pool)", GUILayout.Height(26))) RecolorManual(sel, true);
         EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(2);
+        GUILayout.Label("Ưu tiên part to (dồn inner Fixed từ part nhỏ sang part to):", EditorStyles.miniBoldLabel);
+        EditorGUILayout.HelpBox(
+            "Gameplay sẽ xoay quanh part to (nhiều lớp), part nhỏ vẫn giữ lại vài lớp để không bị bỏ qua.\n" +
+            "Chỉ chuyển chỗ inner Fixed — tổng sợi và từng màu giữ nguyên nên %3 không vỡ.",
+            MessageType.None);
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label("Part nhỏ giữ lại tối đa:", GUILayout.Width(170));
+        keepSmallInner = Mathf.Max(0, EditorGUILayout.IntField(keepSmallInner, GUILayout.Width(45)));
+        GUILayout.Label("inner/part", GUILayout.Width(70));
+        EditorGUILayout.EndHorizontal();
+        if (GUILayout.Button("Dồn inner sang part to (giữ nguyên màu/tổng)", GUILayout.Height(28)))
+            RebalanceToBigParts(sel, keepSmallInner);
     }
 
     /// <summary>Thêm (delta=+3) hoặc bớt (delta=-3) sợi 1 màu bằng inner Fixed.</summary>
@@ -346,8 +370,81 @@ public sealed class LevelDifficultyTool : EditorWindow
         finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
     }
 
-    private static void NormalizeInnerLists(YarnPart p)
+    /// <summary>
+    /// Dồn inner Fixed từ nửa part nhỏ sang nửa part to (to nhất nhận trước).
+    /// Màu/tổng sợi giữ nguyên nên %3 không vỡ; part nhỏ giữ lại `keep` inner.
+    /// </summary>
+    private void RebalanceToBigParts(DiffRow row, int keep)
     {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var parts = root.GetComponentsInChildren<YarnPart>(true).ToList();
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+            if (parts.Count < 2) { report = "[LỖI] Level ít hơn 2 part."; return; }
+            foreach (var p in parts) NormalizeInnerLists(p);
+
+            var sized = parts.Select(p =>
+            {
+                var r = p.GetComponent<Renderer>();
+                float s = r != null ? r.bounds.size.magnitude : 0f;
+                return new { part = p, size = s };
+            }).OrderBy(t => t.size).ToList();
+            int half = Mathf.Max(1, sized.Count / 2);
+            var small = sized.Take(half).ToList();
+            var big = sized.Skip(half).OrderByDescending(t => t.size).ToList();
+            int cap = parts.Max(p => p.totalInnerCount) + 2;
+
+            // Gom inner Fixed thừa trên part nhỏ (giữ lại `keep` cái đầu).
+            var moving = new List<YarnColor>();
+            foreach (var t in small)
+            {
+                var p = t.part;
+                var fixedIdx = new List<int>();
+                for (int j = 0; j < p.innerColorTypes.Count && j < p.innerFixedColors.Count; j++)
+                    if (p.innerColorTypes[j] == InnerColorType.Fixed) fixedIdx.Add(j);
+                foreach (int j in fixedIdx.Skip(keep).OrderByDescending(x => x))
+                {
+                    moving.Add(p.innerFixedColors[j]);
+                    p.innerColorTypes.RemoveAt(j);
+                    p.innerFixedColors.RemoveAt(j);
+                    p.totalInnerCount = Mathf.Max(0, p.totalInnerCount - 1);
+                    EditorUtility.SetDirty(p);
+                }
+            }
+            if (moving.Count == 0) { report = $"[OK] {row.levelName}: part nhỏ không còn inner Fixed thừa để dồn."; return; }
+
+            // Chia đều cho part to (to nhất trước, không vượt cap).
+            int bi = 0, placed = 0;
+            foreach (var c in moving)
+            {
+                int guard = 0;
+                while (big[bi % big.Count].part.totalInnerCount >= cap && guard++ < big.Count) bi++;
+                var target = big[bi % big.Count].part;
+                bi++;
+                target.totalInnerCount++;
+                target.innerColorTypes.Add(InnerColorType.Fixed);
+                target.innerFixedColors.Add(c);
+                EditorUtility.SetDirty(target);
+                placed++;
+            }
+
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            int newMax = parts.Max(p => p.totalInnerCount);
+            report = $"[OK] {row.levelName}: dồn {placed} inner sang {big.Count} part to (nhỏ giữ ≤{keep}). Sâu tối đa giờ {newMax}. Chạy Validate rồi test.";
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    private static void NormalizeInnerLists(YarnPart p)    {
         if (p.innerColorTypes == null) p.innerColorTypes = new List<InnerColorType>();
         if (p.innerFixedColors == null) p.innerFixedColors = new List<YarnColor>();
         while (p.innerColorTypes.Count < p.totalInnerCount) p.innerColorTypes.Add(InnerColorType.Random);

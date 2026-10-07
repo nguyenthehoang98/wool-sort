@@ -524,61 +524,13 @@ public class ColorPromptWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
-    private static string GetHexForYarnColor(YarnColor c)
+    /// <summary>Hex chuẩn từng YarnColor (đọc _MainColor trong Database, không gộp).</summary>
+    private static string GetHexExact(YarnColor c)
     {
-        // STRICT 7-color palette only. No outline color, no white/cream/black/variants.
-        return c switch
-        {
-            YarnColor.Yellow => "#F5D025",
-            YarnColor.Cream => "#F5D025",   // cream banned -> Yellow
-            YarnColor.Snow => "#F5D025",    // snow/white banned -> Yellow
-            YarnColor.Pink => "#F57DC7",
-            YarnColor.Magenta => "#F57DC7",
-            YarnColor.Sky => "#41D3F0",
-            YarnColor.Teal => "#41D3F0",
-            YarnColor.Blue => "#41D3F0",
-            YarnColor.Green => "#9ECA27",
-            YarnColor.Forest => "#9ECA27",
-            YarnColor.Lime => "#9ECA27",    // lime variant banned -> Green
-            YarnColor.Orange => "#FF943E",
-            YarnColor.Coral => "#FF943E",
-            YarnColor.Purple => "#D162EC",
-            YarnColor.Plum => "#D162EC",
-            YarnColor.Crimson => "#FF943E", // crimson banned -> Orange
-            YarnColor.Brown => "#FF943E",   // brown banned -> Orange
-            YarnColor.Charcoal => "#9E9E9E",// outline banned -> Gray
-            YarnColor.Gray => "#9E9E9E",
-            YarnColor.Steel => "#9E9E9E",   // steel banned -> Gray
-            YarnColor.Deep => "#9E9E9E",    // deep banned -> Gray (no outline)
-            _ => "#9ECA27"
-        };
-    }
-
-    private static string GetDisplayName(YarnColor c)
-    {
-        // Orange and Coral share the same HEX, keep distinct label but same color.
-        return c switch
-        {
-            YarnColor.Coral => "Coral / Orange",
-            YarnColor.Orange => "Coral / Orange",
-            _ => c.ToString()
-        };
-    }
-
-    private static string GetCanonicalName(string hex)
-    {
-        // Canonical display name for each of the 7 strict HEX colors.
-        return hex switch
-        {
-            "#9ECA27" => "Green",
-            "#FF943E" => "Orange",
-            "#9E9E9E" => "Gray",
-            "#F57DC7" => "Magenta",
-            "#D162EC" => "Purple",
-            "#F5D025" => "Yellow",
-            "#41D3F0" => "Blue",
-            _ => hex
-        };
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>("Assets/_Game/Configs/YarnColorDatabase.asset");
+        var col = LevelColorMatrixUtility.RefColor(db, c);
+        col.a = 1f;
+        return "#" + ColorUtility.ToHtmlStringRGB(col);
     }
 
     private static string BuildColorParams(List<(string name, string hex, int balls)> merged, int totalBalls)
@@ -613,23 +565,11 @@ public class ColorPromptWindow : EditorWindow
     private string GeneratePrompt(LevelColorStats stats)
     {
         var sorted = stats.colorCounts.OrderByDescending(kv => kv.Value).ToList();
-        // Merge counts by HEX: same HEX = same color (Orange+Coral, Pink+Magenta,
-        // Sky+Teal+Blue, Green+Forest+Lime, Purple+Plum...). Canonical spec order.
-        var byHex = new Dictionary<string, int>();
-        foreach (var kv in sorted)
-        {
-            string hex = GetHexForYarnColor(kv.Key);
-            if (!byHex.ContainsKey(hex)) byHex[hex] = 0;
-            byHex[hex] += kv.Value;
-        }
-        string[] canonicalOrder = { "#9ECA27", "#FF943E", "#9E9E9E", "#F57DC7", "#D162EC", "#F5D025", "#41D3F0" };
+        // Liệt kê đúng màu level đang có: mỗi YarnColor 1 dòng, hex chuẩn từ Database.
+        // Không gộp cứng theo số lượng nào — level mấy màu thì prompt mấy màu.
         var merged = new List<(string name, string hex, int balls)>();
-        foreach (var hex in canonicalOrder)
-            if (byHex.TryGetValue(hex, out var b) && b > 0)
-                merged.Add((GetCanonicalName(hex), hex, b));
-        foreach (var kv in byHex)
-            if (Array.IndexOf(canonicalOrder, kv.Key) < 0 && kv.Value > 0)
-                merged.Add((GetCanonicalName(kv.Key), kv.Key, kv.Value));
+        foreach (var kv in sorted)
+            merged.Add((kv.Key.ToString(), GetHexExact(kv.Key), kv.Value));
         // colorTable: markdown table matching spec section 4 (Color | HEX | Balls + TOTAL)
         string colorTable;
         if (merged.Count == 0)
@@ -653,11 +593,11 @@ public class ColorPromptWindow : EditorWindow
         // colorParams: khối {0} cho template prompt (legacy placeholders khác giữ nguyên để tương thích)
         string colorParams = BuildColorParams(merged, stats.totalOccurrences);
         // colorList: "Green, Blue, Pink"
-        string colorList = sorted.Count == 0 ? "none" : string.Join(", ", sorted.Select(kv => $"{kv.Key} {GetHexForYarnColor(kv.Key)}"));
+        string colorList = sorted.Count == 0 ? "none" : string.Join(", ", sorted.Select(kv => $"{kv.Key} {GetHexExact(kv.Key)}"));
         // filteredPalette: chi lay mau co xuat hien, kem ti le % va so luong
         string filteredPalette = sorted.Count == 0 ? "- none" : string.Join("\n", sorted.Select(kv => {
             float pct = stats.totalOccurrences > 0 ? (float)kv.Value / stats.totalOccurrences * 100f : 0f;
-            return $"- {kv.Key}: {GetHexForYarnColor(kv.Key)} - {pct:F1}% ({kv.Value} balls)";
+            return $"- {kv.Key}: {GetHexExact(kv.Key)} - {pct:F1}% ({kv.Value} balls)";
         }));
         // pixelDistribution: tinh pixel dua tren 784 logical pixels (legacy, template static hien khong dung)
         const int totalLogical = 28 * 28; // 784
@@ -684,7 +624,7 @@ public class ColorPromptWindow : EditorWindow
                 float pct = (float)kv.Value / stats.totalOccurrences * 100f;
                 int logical = pixels[i];
                 int physical = logical * 28 * 28; // moi logical = 784 physical pixels
-                string hex = GetHexForYarnColor(kv.Key);
+                string hex = GetHexExact(kv.Key);
                 lines.Add($"- {kv.Key} {hex}: {pct:F1}% ({kv.Value} balls) = {logical} logical pixels ({logical} x 28x28 = {physical} physical pixels)");
             }
             lines.Add($"- Total: {totalLogical} logical pixels = 784x784 physical canvas");

@@ -483,24 +483,23 @@ namespace _Game.Scripts.Gameplay
             if (_renderer == null)
                 _renderer = GetComponent<MeshRenderer>();
 
-            // 2) detect từ sharedMaterial → initColor
-            if (_renderer.sharedMaterial != null &&
-                YarnColorManager.Instance != null &&
-                YarnColorManager.Instance.TryGetColorFromMaterial(_renderer.sharedMaterial, out var detectedColor))
+            // 2) initColor là chuẩn: ép material theo initColor (đổi init là mesh đổi theo).
+            // (Bản cũ làm ngược: đọc material rồi ghi đè initColor -> đổi init tay bị trả về.)
             {
-                // chỉ gán khi khác
-                if (initColor != detectedColor)
+                var db = AssetDatabase.LoadAssetAtPath<_Game.Scripts.YarnColorDatabase>("Assets/_Game/Configs/YarnColorDatabase.asset");
+                var mat = db != null ? db.GetMaterial(initColor) : null;
+                var rend = _renderer != null ? _renderer : GetComponent<MeshRenderer>();
+                if (mat != null && rend != null)
                 {
-                    // 3) gán vào field để Unity serialize
-                    initColor = detectedColor;
-
-                    // 4) update luôn sharedMaterial để preview (nếu muốn)
-                    _renderer.sharedMaterial = YarnColorManager.Instance.GetYarnMaterial(detectedColor);
-
-                    // 5) đánh dấu dirty để Unity lưu giá trị initColor
-                    EditorUtility.SetDirty(this);
-                    if (!Application.isPlaying)
-                        EditorSceneManager.MarkSceneDirty(gameObject.scene);
+                    var mats = rend.sharedMaterials;
+                    bool diff = mats == null || mats.Length == 0;
+                    if (!diff) foreach (var m in mats) if (m != mat) { diff = true; break; }
+                    if (diff)
+                    {
+                        if (mats == null || mats.Length == 0) mats = new Material[1];
+                        for (int i = 0; i < mats.Length; i++) mats[i] = mat;
+                        rend.sharedMaterials = mats;
+                    }
                 }
             }
 
