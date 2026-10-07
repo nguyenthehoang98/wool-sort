@@ -270,12 +270,15 @@ private YarnColor boxColor;
             for (int i = slots.Count - 1; i >= 0; i--)
             {
                 Slot slot = slots[i];
+                if (slot == null) continue;
 
                 float time = Mathf.Max(totalTime / Mathf.Max(1, slots.Count), 0.01f);
                 float clipLength = slot.RingDisappearClip != null ? slot.RingDisappearClip.length : time;
                 float speed = clipLength / time;
 
                 slot.DoRingDisappearAnim(speed);
+                // 3 vòng thu nhỏ cùng nhịp (đồng bộ với dây bay lên board, Cylinder giữ nguyên).
+                slot.PlayRingsShrink(time);
                 StartCoroutine(UpdateTargetRopePos(slot.GetAnchorTransform(), clipLength));
                 yield return new WaitForSeconds(time);
             }

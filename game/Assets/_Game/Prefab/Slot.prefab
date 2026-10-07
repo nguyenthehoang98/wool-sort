@@ -722,6 +722,10 @@ MonoBehaviour:
   slotBaseRenderer: {fileID: 3794167758729462596}
   slotSpoolRenderer: {fileID: 2408082887950378697}
   slotShadowRenderer: {fileID: 9135516868317805945}
+  shrinkRings:
+  - {fileID: 3787827543924228470}
+  - {fileID: 802038435769622199}
+  - {fileID: 6282424176715599445}
   warningVFX: {fileID: 2936548240994199453}
   ropeTopAnchor: {fileID: 874403016286315931}
 --- !u!1 &9106171774390097485

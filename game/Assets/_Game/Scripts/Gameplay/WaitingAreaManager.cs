@@ -136,8 +136,14 @@ namespace _Game.Scripts.Gameplay
             //    boxSlot.ShowFullStateVisual();
             //});
 
+            float ropeTime = 0.5f;
+            if (waitSlot.RingDisappearClip != null)
+                ropeTime = waitSlot.RingDisappearClip.length;
+            else
+                Debug.LogError($"[Refill] {waitSlot.name}: RingDisappearClip null nên dây waiting->box bay {ropeTime}s mặc định (thay vì đúng nhịp animation).", waitSlot);
+            Debug.Log($"[Refill] Bắn dây {waitSlot.name} -> {boxSlot.name} màu {part.CurrentColor} trong {ropeTime}s.");
             YarnRopeController.Instance.SpawnRopeBoard(waitSlot.GetAnchorTransform(), boxSlot.GetAnchorTransform()
-                , part.CurrentColor, waitSlot.RingDisappearClip.length);
+                , part.CurrentColor, ropeTime);
 
             if (Time.time - lastTimeThreadSfx > 0.1f) // check multiple play sfx
             {

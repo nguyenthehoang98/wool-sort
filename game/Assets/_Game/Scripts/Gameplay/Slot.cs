@@ -2,6 +2,9 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEventBus;
@@ -28,6 +31,9 @@ namespace _Game.Scripts.Gameplay
         [SerializeField] private MeshRenderer slotBaseRenderer;
         [SerializeField] private MeshRenderer slotSpoolRenderer;
         [SerializeField] private MeshRenderer slotShadowRenderer;
+
+        [Header("Vòng co khi yarn bay đi (giữ Cylinder, chỉ co các vòng này)")]
+        [SerializeField] private MeshRenderer[] shrinkRings;
 
         [Header("Warning VFX (Waiting-only)")]
         [SerializeField] private GameObject warningVFX;
@@ -57,6 +63,10 @@ namespace _Game.Scripts.Gameplay
 
         public AnimationClip RingDisappearClip => ringDisappearClip;
 
+        // Scale gốc của các vòng co (để co vòng khi yarn bay đi rồi trả lại khi fill mới).
+        // Cylinder (spool) giữ nguyên, không co.
+        private readonly Dictionary<Transform, Vector3> ringInitialScales = new Dictionary<Transform, Vector3>();
+
         public void Initialize(YarnColor color, Box parentBox = null)
         {
             FilledColor = color;
@@ -65,11 +75,64 @@ namespace _Game.Scripts.Gameplay
             IsFilled = false;
             CurrentPart = null;
             IsAnimationFilled = false;
+            RestoreRingsScale();
 
             if (color != YarnColor.None)
             {
                 ApplyColor(color);
             }
+        }
+
+        private MeshRenderer[] GetShrinkRings()
+        {
+            if (shrinkRings != null && shrinkRings.Length > 0) return shrinkRings;
+            // Fallback: dùng allRings lọc đúng SM_vong1/2/3 (bỏ vong4/base).
+            if (allRings == null) return null;
+            return allRings.Where(r => r != null &&
+                    (r.name.Contains("vong1") || r.name.Contains("vong2") || r.name.Contains("vong3")))
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Co các vòng nối tiếp SM_vong3 -> vong2 -> vong1 trong duration
+        /// (dây bay lên + vòng thu nhỏ cùng lúc). Cylinder giữ nguyên.
+        /// </summary>
+        public void PlayRingsShrink(float duration)
+        {
+            var rings = GetShrinkRings();
+            if (rings == null) return;
+            var ordered = rings.Where(r => r != null).OrderByDescending(r => r.name).ToArray();
+            if (ordered.Length == 0) return;
+            float step = Mathf.Max(0.01f, duration) / ordered.Length;
+            var seq = DOTween.Sequence();
+            foreach (var r in ordered)
+            {
+                var t = r.transform;
+                CacheRingScale(t);
+                t.DOKill();
+                seq.Append(t.DOScale(Vector3.zero, step).SetEase(Ease.OutQuad));
+            }
+        }
+
+        /// <summary>Trả các vòng về scale gốc (khi fill mới / reuse slot).</summary>
+        public void RestoreRingsScale()
+        {
+            var rings = GetShrinkRings();
+            if (rings == null) return;
+            foreach (var r in rings)
+            {
+                if (r == null) continue;
+                var t = r.transform;
+                CacheRingScale(t);
+                t.DOKill();
+                t.localScale = ringInitialScales[t];
+            }
+        }
+
+        private void CacheRingScale(Transform t)
+        {
+            if (ringInitialScales.ContainsKey(t)) return;
+            ringInitialScales[t] = t.localScale.sqrMagnitude > 0.0001f ? t.localScale : Vector3.one;
         }
 
         public bool CanAccept(YarnColor c)
@@ -94,9 +157,10 @@ namespace _Game.Scripts.Gameplay
             IsFilled = true;
             FilledColor = color;
             CurrentPart = part;
+            RestoreRingsScale();
             ApplyColor(FilledColor);
 
-            if (animator != null)
+            if (animator != null && ringAppearClip != null)
             {
                 animator.Play(ringAppearClip.name);
 
@@ -107,6 +171,19 @@ namespace _Game.Scripts.Gameplay
                 }
 
                 StartCoroutine(WaitAndTriggerBoxBounce(isDoubleSpeed));
+            }
+            else
+            {
+                // Không có animator/clip (VD prefab bị gỡ) thì hoàn thành ngay,
+                // nếu không IsAnimationFilled mãi false -> refill waiting->box không bao giờ chạy.
+                if (animator == null || ringAppearClip == null)
+                    Debug.LogError($"[Slot] {name}: thiếu Animator/RingAppearClip nên bỏ qua animation fill (fill logic vẫn chạy).", this);
+                IsAnimationFilled = true;
+                OnAnimationFilled?.Invoke();
+                if (Area == AreaType.Waiting)
+                {
+                    WaitingAreaManager.Instance.TryRefillSlot(this);
+                }
             }
 
             // *** Raise sự kiện tương ứng ***
@@ -129,6 +206,12 @@ namespace _Game.Scripts.Gameplay
 
         IEnumerator WaitAndTriggerBoxBounce(bool isDoubleSpeed)
         {
+            if (ringAppearClip == null)
+            {
+                IsAnimationFilled = true;
+                OnAnimationFilled?.Invoke();
+                yield break;
+            }
             float duration = ringAppearClip.length;
 
             if (isDoubleSpeed)
@@ -172,6 +255,7 @@ namespace _Game.Scripts.Gameplay
         {
             IsFilled = false;
             IsAnimationFilled = false;
+            RestoreRingsScale();
             if (animator != null)
             {
                 animator.speed = 1;
@@ -258,11 +342,21 @@ namespace _Game.Scripts.Gameplay
                 CurrentPart = null;
             }
 
-            if (animator != null)
+            if (animator != null && ringDisappearClip != null)
             {
                 animator.Play(ringDisappearClip.name);
+                // 3 vòng thu nhỏ cùng nhịp clip biến mất (đồng bộ với dây bay, Cylinder giữ nguyên).
+                PlayRingsShrink(ringDisappearClip.length);
 
                 StartCoroutine(WaitForUnfill(callback));
+            }
+            else
+            {
+                // Không có animator/clip thì gọi callback ngay, nếu không slot waiting
+                // không bao giờ được đăng ký lại (mất slot, kẹt lose).
+                if (animator == null || ringDisappearClip == null)
+                    Debug.LogError($"[Slot] {name}: thiếu Animator/RingDisappearClip nên bỏ qua animation unfill.", this);
+                callback?.Invoke();
             }
         }
 
@@ -282,6 +376,11 @@ namespace _Game.Scripts.Gameplay
 
         public void DoRingDisappearAnim(float speed)
         {
+            if (animator == null || ringDisappearClip == null)
+            {
+                Debug.LogError($"[Slot] {name}: thiếu Animator/RingDisappearClip nên bỏ qua animation vòng.", this);
+                return;
+            }
             animator.speed = speed;
             animator.Play(ringDisappearClip.name);
         }

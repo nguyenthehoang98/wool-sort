@@ -12,45 +12,234 @@ public enum PromptStyle { Detailed, Minimal, Technical }
 [Serializable]
 public class SavedPromptData
 {
-    public string promptTemplate = @"Create a cute chunky pixel-art illustration in the exact visual style of a 36x36 logical pixel grid.
+    public string promptTemplate = @"# STRICT 28×28 CELL PIXEL ART
 
-PIXEL GRID:
-- Logical resolution: 36x36 pixels (1296 logical pixels total)
-- Final canvas: 1296x1296 pixels
-- Each logical pixel must be exactly 36x36 physical pixels
-- Use hard-edged square pixels only
-- Every shape must align perfectly to the 36x36 pixel grid
-- No sub-pixels, No anti-aliasing, No smooth edges, No blur, No gradients, No semi-transparent pixels
-- Nearest-neighbor pixel rendering
+Create **one random cute cartoon/chibi pixel-art illustration**.
 
-ART STYLE:
-- Very chunky, low-resolution pixel art, simple geometric silhouettes, large blocks of flat colors, stepped pixel contours
-- Cute casual mobile-game aesthetic, bright cheerful highly saturated colors, minimal but expressive details
-- Use color blocks for shading instead of gradients, thick dark brown-gray pixel outlines #685155 following same grid
+The subject and composition are completely random. You may create animals, characters, objects, plants, scenery, food, toys, monsters, or any other cute subject.
 
-COLOR STYLE - Use ONLY these {colorCount} colors from this level (filtered palette - MUST follow exact ratio, do NOT add other colors):
-{filteredPalette}
-- Outline: Dark brown-gray #685155 for thick outlines only (not counted in ratio)
+The content is random, but the following technical constraints are **ABSOLUTE**.
 
-COMPOSITION:
-- Large simple central subject, strong readable silhouette
-- Background from large flat pixel shapes, decorative elements from chunky square pixels
-- Visually clean and uncluttered, avoid tiny details that would not survive at 36x36
+---
 
-LEVEL COLOR DISTRIBUTION - MUST FOLLOW EXACTLY (pixel ratio approx color %):
-Level: {levelName} | Yarn balls: {totalCells} (outer {outerCount}, total spawns {totalSpawns}) | {colorCount} colors
-Total logical pixels: 1296 (36x36) -> physical canvas 1296x1296
-{pixelDistribution}
+## 1. EXACT 28×28 LOGICAL CELL GRID
 
-IMPORTANT:
-- Image must look as if originally designed on 36x36 and enlarged to 1296x1296 via nearest-neighbor
-- Do NOT create high-res and pixelate after, construct directly from 36x36 grid
-- Colors: {colorList} with exact %: {colorDistribution}
+The entire image is constructed on exactly:
 
-NO: photorealism, smooth vector art, anti-aliasing, gradients, soft shadows, realistic lighting, fine line art, detailed textures, painterly effects, 3D rendering, glossy effects.";
+**28 columns × 28 rows = 784 logical cells**
+
+Think of the image as a physical grid:
+
+- 28 cells wide
+- 28 cells high
+- 784 cells total
+- Every cell is exactly one square unit
+- Every cell contains exactly one solid color
+- Every shape must align to whole cells
+- No partial cells
+- No sub-cell details
+- No anti-aliasing
+- No smoothing
+- No blur
+- No gradients
+- No transparency
+- No blended pixels
+- No intermediate colors
+
+The artwork must look as if it was manually drawn directly on a **28×28 pixel grid**.
+
+Do NOT create a normal smooth illustration and then apply a pixel-art filter.
+
+---
+
+## 2. EXACT COLOR PALETTE
+
+Use **ONLY** the following colors:
+
+| Color | HEX | Required Cell Count |
+|---|---|---:|
+| Green | `#9ECA27` | 302 |
+| Orange | `#FF943E` | 151 |
+| Gray | `#9E9E9E` | 91 |
+| Magenta | `#F57DC7` | 73 |
+| Purple | `#D162EC` | 61 |
+| Yellow | `#F5D025` | 58 |
+| Blue | `#41D3F0` | 48 |
+| **TOTAL** | | **784** |
+
+These seven colors are the **complete color palette**.
+
+No other colors are permitted.
+
+---
+
+## 3. EXACT COLOR CELL COUNTS
+
+The final 28×28 image must contain exactly:
+
+- `#9ECA27` → **302 cells**
+- `#FF943E` → **151 cells**
+- `#9E9E9E` → **91 cells**
+- `#F57DC7` → **73 cells**
+- `#D162EC` → **61 cells**
+- `#F5D025` → **58 cells**
+- `#41D3F0` → **48 cells**
+
+Total:
+
+**302 + 151 + 91 + 73 + 61 + 58 + 48 = 784 cells**
+
+Therefore every one of the 784 cells must belong to exactly one of these seven colors.
+
+Do not interpret these numbers as approximate percentages.
+
+They are **exact cell counts**.
+
+---
+
+## 4. RANDOM CONTENT
+
+The subject is intentionally random.
+
+Each generation may contain a completely different composition.
+
+Examples:
+
+- cute animal
+- chibi character
+- small monster
+- fruit
+- toy
+- house
+- tree
+- flower
+- food
+- fantasy creature
+- game character
+- small landscape
+- combination of several cute objects
+
+Do not repeatedly use the same subject.
+
+The content is random, but the **28×28 grid and color counts must never change**.
+
+---
+
+## 5. STYLE
+
+Use a:
+
+**cute cartoon + chibi + chunky pixel-art style**
+
+Visual characteristics:
+
+- cute
+- playful
+- friendly
+- colorful
+- chunky
+- simplified
+- readable silhouette
+- large simple shapes
+- stepped edges
+- square pixel construction
+- minimal but expressive details
+- casual mobile-game aesthetic
+
+Avoid:
+
+- photorealism
+- realistic rendering
+- painterly style
+- smooth vector art
+- realistic lighting
+- gradients
+- soft shadows
+- glow
+- bloom
+- texture noise
+- anti-aliased edges
+
+---
+
+## 6. COLOR USAGE
+
+The required cell counts are more important than visual realism.
+
+Do NOT introduce additional shades to make the image prettier.
+
+For example:
+
+Allowed:
+
+`#9ECA27`
+
+Not allowed:
+
+`#8FB923`
+
+`#A8D52B`
+
+`#B5E03A`
+
+The same rule applies to every palette color.
+
+If shading is needed, use another color from the approved palette.
+
+Never create a new shade.
+
+---
+
+## 7. IMPORTANT INTERPRETATION
+
+The word **pixel** means one logical cell.
+
+One logical cell = one solid color.
+
+The image should be understood as:
+
+```text
+28 columns
+×
+28 rows
+=
+784 cells
+```
+
+Each cell has exactly one of the seven approved colors.
+
+The final result is therefore a **28×28 color-cell artwork**.
+
+---
+
+## 8. PRIORITY ORDER
+
+If requirements conflict, follow this priority:
+
+1. **Exactly 28×28 cells**
+2. **Exactly 784 cells**
+3. **Exactly 7 colors**
+4. **Exact cell count for every color**
+5. Cute cartoon/chibi pixel-art style
+6. Random subject and composition
+7. Visual detail
+
+Never sacrifice the technical constraints for visual quality.
+
+---
+
+## FINAL REQUIREMENT
+
+Create a **random cute cartoon/chibi pixel-art illustration** directly on a **28×28 logical cell grid**.
+
+Use **exactly 7 colors** and exactly the specified number of cells for each color.
+
+Every cell must contain exactly one solid approved color.
+
+**No other colors. No extra cells. No partial cells. No gradients. No anti-aliasing.**";
     public PromptStyle style = PromptStyle.Detailed;
-    public int imageWidth = 1296;
-    public int imageHeight = 1296;
+    public int imageWidth = 784;
+    public int imageHeight = 784;
 }
 
 public class ColorPromptWindow : EditorWindow
@@ -123,10 +312,10 @@ public class ColorPromptWindow : EditorWindow
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         GUILayout.Label("Prompt Template (pin on top - co the chinh & luu):", EditorStyles.miniBoldLabel);
-        GUILayout.Label("Placeholder: {levelName} {colorList} {filteredPalette} {colorDistribution} {pixelDistribution} {totalCells} {outerCount} {totalSpawns} {colorCount} {style}", EditorStyles.miniLabel);
-        if (!_savedData.promptTemplate.Contains("PIXEL GRID") || !_savedData.promptTemplate.Contains("{filteredPalette}"))
+        GUILayout.Label("Static template: random subject + fixed 7-color cell counts (302/151/91/73/61/58/48 = 784). Same prompt for every level.", EditorStyles.miniLabel);
+        if (!_savedData.promptTemplate.Contains("28×28") || !_savedData.promptTemplate.Contains("784"))
         {
-            EditorGUILayout.HelpBox("Template cu chua co palette loc theo mau + ti le. Bam 'Reset Pixel Template' de dung mau moi chi lay mau co xuat hien kem % va pixel.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Template cu chua theo cau truc STATIC 28x28 moi (random subject + so cell co dinh). Bam 'Reset Pixel Template' de dung mau moi.", MessageType.Warning);
         }
         EditorGUI.BeginChangeCheck();
         _savedData.promptTemplate = EditorGUILayout.TextArea(_savedData.promptTemplate, GUILayout.Height(110));
@@ -143,7 +332,7 @@ public class ColorPromptWindow : EditorWindow
         if (GUILayout.Button("Reset Pixel Template", GUILayout.Width(140)))
         {
             _savedData.promptTemplate = new SavedPromptData().promptTemplate;
-            _savedData.imageWidth = 1296; _savedData.imageHeight = 1296;
+            _savedData.imageWidth = 784; _savedData.imageHeight = 784;
             SaveData();
         }
         if (GUILayout.Button("Luu", GUILayout.Width(50))) { SaveData(); EditorUtility.DisplayDialog("Da luu", $"Da luu vao {SavedDataPath}", "OK"); }
@@ -230,11 +419,12 @@ public class ColorPromptWindow : EditorWindow
 
     private static string GetHexForYarnColor(YarnColor c)
     {
+        // STRICT 7-color palette only. No outline color, no white/cream/black/variants.
         return c switch
         {
             YarnColor.Yellow => "#F5D025",
-            YarnColor.Cream => "#FFEABD",
-            YarnColor.Snow => "#FFEABD",
+            YarnColor.Cream => "#F5D025",   // cream banned -> Yellow
+            YarnColor.Snow => "#F5D025",    // snow/white banned -> Yellow
             YarnColor.Pink => "#F57DC7",
             YarnColor.Magenta => "#F57DC7",
             YarnColor.Sky => "#41D3F0",
@@ -242,29 +432,88 @@ public class ColorPromptWindow : EditorWindow
             YarnColor.Blue => "#41D3F0",
             YarnColor.Green => "#9ECA27",
             YarnColor.Forest => "#9ECA27",
-            YarnColor.Lime => "#5CD94A",
+            YarnColor.Lime => "#9ECA27",    // lime variant banned -> Green
             YarnColor.Orange => "#FF943E",
             YarnColor.Coral => "#FF943E",
             YarnColor.Purple => "#D162EC",
             YarnColor.Plum => "#D162EC",
-            YarnColor.Crimson => "#F14E17",
-            YarnColor.Brown => "#8B4513",
-            YarnColor.Charcoal => "#685155",
+            YarnColor.Crimson => "#FF943E", // crimson banned -> Orange
+            YarnColor.Brown => "#FF943E",   // brown banned -> Orange
+            YarnColor.Charcoal => "#9E9E9E",// outline banned -> Gray
             YarnColor.Gray => "#9E9E9E",
-            YarnColor.Steel => "#607D8B",
-            YarnColor.Deep => "#3F2A2A",
+            YarnColor.Steel => "#9E9E9E",   // steel banned -> Gray
+            YarnColor.Deep => "#9E9E9E",    // deep banned -> Gray (no outline)
             _ => "#9ECA27"
+        };
+    }
+
+    private static string GetDisplayName(YarnColor c)
+    {
+        // Orange and Coral share the same HEX, keep distinct label but same color.
+        return c switch
+        {
+            YarnColor.Coral => "Coral / Orange",
+            YarnColor.Orange => "Coral / Orange",
+            _ => c.ToString()
+        };
+    }
+
+    private static string GetCanonicalName(string hex)
+    {
+        // Canonical display name for each of the 7 strict HEX colors.
+        return hex switch
+        {
+            "#9ECA27" => "Green",
+            "#FF943E" => "Orange",
+            "#9E9E9E" => "Gray",
+            "#F57DC7" => "Magenta",
+            "#D162EC" => "Purple",
+            "#F5D025" => "Yellow",
+            "#41D3F0" => "Blue",
+            _ => hex
         };
     }
 
     private string GeneratePrompt(LevelColorStats stats)
     {
         var sorted = stats.colorCounts.OrderByDescending(kv => kv.Value).ToList();
-        // colorDistribution: "35.2% Green (9 balls)"
-        string colorDist = sorted.Count == 0 ? "no yarn" : string.Join(", ", sorted.Select(kv => {
-            float pct = stats.totalOccurrences > 0 ? (float)kv.Value / stats.totalOccurrences * 100f : 0f;
-            return $"{pct:F1}% {kv.Key} {GetHexForYarnColor(kv.Key)} ({kv.Value} balls)";
-        }));
+        // Merge counts by HEX: same HEX = same color (Orange+Coral, Pink+Magenta,
+        // Sky+Teal+Blue, Green+Forest+Lime, Purple+Plum...). Canonical spec order.
+        var byHex = new Dictionary<string, int>();
+        foreach (var kv in sorted)
+        {
+            string hex = GetHexForYarnColor(kv.Key);
+            if (!byHex.ContainsKey(hex)) byHex[hex] = 0;
+            byHex[hex] += kv.Value;
+        }
+        string[] canonicalOrder = { "#9ECA27", "#FF943E", "#9E9E9E", "#F57DC7", "#D162EC", "#F5D025", "#41D3F0" };
+        var merged = new List<(string name, string hex, int balls)>();
+        foreach (var hex in canonicalOrder)
+            if (byHex.TryGetValue(hex, out var b) && b > 0)
+                merged.Add((GetCanonicalName(hex), hex, b));
+        foreach (var kv in byHex)
+            if (Array.IndexOf(canonicalOrder, kv.Key) < 0 && kv.Value > 0)
+                merged.Add((GetCanonicalName(kv.Key), kv.Key, kv.Value));
+        // colorTable: markdown table matching spec section 4 (Color | HEX | Balls + TOTAL)
+        string colorTable;
+        if (merged.Count == 0)
+        {
+            colorTable = "| Color | HEX | Balls |\n|---|---|---:|\n| **TOTAL** | | **0** |";
+        }
+        else
+        {
+            var rows = new List<string>
+            {
+                "| Color | HEX | Balls |",
+                "|---|---|---:|"
+            };
+            foreach (var m in merged)
+                rows.Add($"| {m.name} | `{m.hex}` | **{m.balls}** |");
+            rows.Add($"| **TOTAL** | | **{stats.totalOccurrences}** |");
+            colorTable = string.Join("\n", rows);
+        }
+        // colorDistribution: short form for spec lines, e.g. "24 Green + 9 Orange + 3 Gray = 48"
+        string colorDist = merged.Count == 0 ? "no yarn" : string.Join(" + ", merged.Select(m => $"{m.balls} {m.name}")) + $" = {stats.totalOccurrences}";
         // colorList: "Green, Blue, Pink"
         string colorList = sorted.Count == 0 ? "none" : string.Join(", ", sorted.Select(kv => $"{kv.Key} {GetHexForYarnColor(kv.Key)}"));
         // filteredPalette: chi lay mau co xuat hien, kem ti le % va so luong
@@ -272,13 +521,13 @@ public class ColorPromptWindow : EditorWindow
             float pct = stats.totalOccurrences > 0 ? (float)kv.Value / stats.totalOccurrences * 100f : 0f;
             return $"- {kv.Key}: {GetHexForYarnColor(kv.Key)} - {pct:F1}% ({kv.Value} balls)";
         }));
-        // pixelDistribution: tinh pixel dua tren 1296 logical pixels
-        const int totalLogical = 36 * 36; // 1296
+        // pixelDistribution: tinh pixel dua tren 784 logical pixels (legacy, template static hien khong dung)
+        const int totalLogical = 28 * 28; // 784
         string pixelDist;
         if (sorted.Count == 0) pixelDist = "- No colors";
         else
         {
-            // tinh so pixel lam tron, dieu chinh de tong =1296
+            // tinh so pixel lam tron, dieu chinh de tong =784
             var pixels = new List<int>();
             int sum = 0;
             foreach (var kv in sorted)
@@ -296,12 +545,11 @@ public class ColorPromptWindow : EditorWindow
                 var kv = sorted[i];
                 float pct = (float)kv.Value / stats.totalOccurrences * 100f;
                 int logical = pixels[i];
-                int physical = logical * 36 * 36; // moi logical = 1296 physical pixels
+                int physical = logical * 28 * 28; // moi logical = 784 physical pixels
                 string hex = GetHexForYarnColor(kv.Key);
-                lines.Add($"- {kv.Key} {hex}: {pct:F1}% ({kv.Value} balls) = {logical} logical pixels ({logical} x 36x36 = {physical} physical pixels)");
+                lines.Add($"- {kv.Key} {hex}: {pct:F1}% ({kv.Value} balls) = {logical} logical pixels ({logical} x 28x28 = {physical} physical pixels)");
             }
-            lines.Add($"- Outline #685155: used for thick outlines, not counted in %");
-            lines.Add($"- Total: {totalLogical} logical pixels = 1296x1296 physical canvas");
+            lines.Add($"- Total: {totalLogical} logical pixels = 784x784 physical canvas");
             pixelDist = string.Join("\n", lines);
         }
 
@@ -314,6 +562,7 @@ public class ColorPromptWindow : EditorWindow
         };
 
         string prompt = _savedData.promptTemplate
+            .Replace("{colorTable}", colorTable)
             .Replace("{filteredPalette}", filteredPalette)
             .Replace("{colorDistribution}", colorDist)
             .Replace("{pixelDistribution}", pixelDist)

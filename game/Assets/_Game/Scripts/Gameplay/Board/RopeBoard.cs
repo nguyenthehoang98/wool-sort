@@ -127,14 +127,25 @@ namespace _Game.Scripts.Gameplay
             }
 
             _firstFrame = true;
+            _nullLogged = false;
             if (meshRenderer != null) meshRenderer.enabled = false;
 
         }
 
+        private bool _nullLogged;
+
         void Update()
         {
             // Nếu chưa khởi tạo spline hoặc điểm bắt đầu/kết thúc thì bỏ qua
-            if (spline == null || botPoint == null || topPoint == null) return;
+            if (spline == null || botPoint == null || topPoint == null)
+            {
+                if (!_nullLogged)
+                {
+                    _nullLogged = true;
+                    Debug.LogError($"[RopeBoard] {name}: spline/botPoint/topPoint null nên dây không hiện. Kiểm tra anchor truyền vào SpawnRopeBoard.", this);
+                }
+                return;
+            }
 
             Vector3 topWorld = ComputePos(topPoint, false);
             _ropeFlyElapsed += Time.deltaTime;
