@@ -25,6 +25,10 @@ namespace _Game.Scripts.Gameplay
         [Tooltip("Số lớp con tối đa (không kể lớp gốc)")]
         public int totalInnerCount = 0; // default là không có lớp con nào
 
+        [Header("––– Khóa random (tool) –––")]
+        [Tooltip("true: tool random/tự động được đụng inner của part này. false (khóa): mọi tool inner bỏ qua part này.")]
+        public bool allowRandomInner = true;
+
         [Header("Cấu hình từng inner layer")]
         public List<InnerColorType> innerColorTypes = new List<InnerColorType>();
         public List<YarnColor> innerFixedColors = new List<YarnColor>();

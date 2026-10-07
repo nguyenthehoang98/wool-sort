@@ -530,8 +530,9 @@ public sealed class BoxImageColorValidator : EditorWindow
                 int deficit = (3 - total % 3) % 3;
                 if (deficit == 0) continue;
 
-                // Thêm lớp Fixed cùng màu vào part có ít lớp nhất (thay đổi gameplay ít nhất)
-                var target = parts.OrderBy(p => p.totalInnerCount).First();
+                // Thêm lớp Fixed cùng màu vào part mở khóa có ít lớp nhất (thay đổi gameplay ít nhất)
+                var target = parts.Where(p => p.allowRandomInner).OrderBy(p => p.totalInnerCount).FirstOrDefault();
+                if (target == null) { sb.AppendLine($"[BỎ QUA] {Path.GetFileNameWithoutExtension(path)}: mọi part đều khóa random."); continue; }
                 if (target.innerColorTypes == null) target.innerColorTypes = new List<InnerColorType>();
                 if (target.innerFixedColors == null) target.innerFixedColors = new List<YarnColor>();
                 for (int i = 0; i < deficit; i++)
@@ -639,7 +640,8 @@ public sealed class BoxImageColorValidator : EditorWindow
                     int need = (3 - kv.Value % 3) % 3;
                     for (int i = 0; i < need; i++)
                     {
-                        var target = parts.OrderBy(p => p.totalInnerCount).First();
+                        var target = parts.Where(p => p.allowRandomInner).OrderBy(p => p.totalInnerCount).FirstOrDefault();
+                        if (target == null) { sb.AppendLine($"[BỎ QUA] {levelName}: mọi part đều khóa random, còn thiếu {need - i} sợi {kv.Key}."); break; }
                         target.totalInnerCount++;
                         target.innerColorTypes.Add(InnerColorType.Fixed);
                         target.innerFixedColors.Add(kv.Key);

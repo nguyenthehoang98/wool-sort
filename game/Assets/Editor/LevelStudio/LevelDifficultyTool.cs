@@ -240,6 +240,7 @@ public sealed class LevelDifficultyTool : EditorWindow
     private YarnColor manualDst = YarnColor.Orange;
     private int manualCount = 3;
     private int keepSmallInner = 1;
+    private int maxDepthCap = 2;
 
     /// <summary>
     /// Chỉnh tay: +-3 sợi từng màu (thêm/bớt inner Fixed, giữ %3) + đổi màu tùy chọn.
@@ -307,6 +308,13 @@ public sealed class LevelDifficultyTool : EditorWindow
         EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Dồn inner sang part to (giữ nguyên màu/tổng)", GUILayout.Height(28)))
             RebalanceToBigParts(sel, keepSmallInner);
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label("Chặn sâu tối đa:", GUILayout.Width(130));
+        maxDepthCap = Mathf.Max(0, EditorGUILayout.IntField(maxDepthCap, GUILayout.Width(45)));
+        GUILayout.Label("lớp/part", GUILayout.Width(60));
+        if (GUILayout.Button("Liệt kê part sâu", GUILayout.Height(26))) ListDeepParts(sel);
+        if (GUILayout.Button("Chặn sâu", GUILayout.Height(26))) CapInnerDepth(sel, maxDepthCap);
+        EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Random lại inner (giữ ngoài, giữ tổng từng màu)", GUILayout.Height(28)))
             RandomizeInners(sel);
     }
@@ -327,8 +335,8 @@ public sealed class LevelDifficultyTool : EditorWindow
 
             if (delta > 0)
             {
-                // Thêm vào part cùng màu, ít lớp nhất trước (chia đều).
-                var cands = parts.Where(p => p.initColor == color).OrderBy(p => p.totalInnerCount).ToList();
+                // Thêm vào part cùng màu, ít lớp nhất trước (chia đều). Bỏ qua part khóa.
+                var cands = parts.Where(p => p.allowRandomInner && p.initColor == color).OrderBy(p => p.totalInnerCount).ToList();
                 if (cands.Count == 0) { report = $"[LỖI] Không có part ngoài màu {color} để thêm inner."; return; }
                 for (int i = 0; i < delta; i++)
                 {
@@ -343,7 +351,7 @@ public sealed class LevelDifficultyTool : EditorWindow
             {
                 // Bớt inner Fixed màu đó, lấy từ part nhiều lớp nhất trước.
                 int need = -delta, removed = 0;
-                foreach (var p in parts.OrderByDescending(p => p.totalInnerCount))
+                foreach (var p in parts.Where(p => p.allowRandomInner).OrderByDescending(p => p.totalInnerCount))
                 {
                     for (int j = p.innerFixedColors.Count - 1; j >= 0 && removed < need; j--)
                     {
@@ -390,12 +398,13 @@ public sealed class LevelDifficultyTool : EditorWindow
             if (parts.Count < 2) { report = "[LỖI] Level ít hơn 2 part."; return; }
             foreach (var p in parts) NormalizeInnerLists(p);
 
-            var sized = parts.Select(p =>
+            var sized = parts.Where(p => p.allowRandomInner).Select(p =>
             {
                 var r = p.GetComponent<Renderer>();
                 float s = r != null ? r.bounds.size.magnitude : 0f;
                 return new { part = p, size = s };
             }).OrderBy(t => t.size).ToList();
+            if (sized.Count < 2) { report = "[LỖI] Không đủ part mở khóa để dồn (cần ≥ 2)."; return; }
             int half = Mathf.Max(1, sized.Count / 2);
             var small = sized.Take(half).ToList();
             var big = sized.Skip(half).OrderByDescending(t => t.size).ToList();
@@ -466,6 +475,7 @@ public sealed class LevelDifficultyTool : EditorWindow
             var slots = new List<(YarnPart part, int idx)>();
             foreach (var p in parts)
             {
+                if (!p.allowRandomInner) continue; // part khóa thì tool không đụng
                 int lim = System.Math.Min(p.totalInnerCount, System.Math.Min(p.innerColorTypes.Count, p.innerFixedColors.Count));
                 for (int j = 0; j < lim; j++)
                     if (p.innerColorTypes[j] == InnerColorType.Fixed)
@@ -494,6 +504,72 @@ public sealed class LevelDifficultyTool : EditorWindow
             PrefabUtility.SaveAsPrefabAsset(root, row.path);
             AssetDatabase.SaveAssets();
             report = $"[OK] {row.levelName}: đã xáo {slots.Count} inner Fixed giữa các part (ngoài + tổng màu giữ nguyên). Chạy Validate rồi test.";
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Liệt kê part theo độ sâu (để biết model nào đang nhiều lớp thì fix trong prefab).
+    /// </summary>
+    private void ListDeepParts(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var parts = root.GetComponentsInChildren<YarnPart>(true)
+                .OrderByDescending(p => p.totalInnerCount).ToList();
+            var sb = new StringBuilder();
+            sb.AppendLine($"[SÂU] {row.levelName}: {parts.Count} part (sâu nhất {parts[0].totalInnerCount}):");
+            foreach (var p in parts.Take(20))
+                sb.AppendLine($"  - {p.name}: {p.totalInnerCount} lớp trong (ngoài {p.initColor})");
+            if (parts.Count > 20) sb.AppendLine($"  ... và {parts.Count - 20} part khác.");
+            sb.AppendLine("Muốn fix 1 model: mở prefab, chọn part đó, sửa Total Inner Count, lưu.");
+            report = sb.ToString();
+            Debug.Log(report);
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Chặn sâu: part nào quá cap thì cắt bớt lớp trong cùng (sâu nhất).
+    /// LƯU Ý: cắt làm đổi tổng từng màu -> xong BẮT BUỘC Validate + vá %3.
+    /// </summary>
+    private void CapInnerDepth(DiffRow row, int cap)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var parts = root.GetComponentsInChildren<YarnPart>(true).ToList();
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+            foreach (var p in parts) NormalizeInnerLists(p);
+            int cut = 0;
+            foreach (var p in parts)
+            {
+                if (!p.allowRandomInner) continue; // part khóa thì không cắt
+                while (p.totalInnerCount > cap && p.innerColorTypes.Count > 0)
+                {
+                    int last = p.innerColorTypes.Count - 1;
+                    p.innerColorTypes.RemoveAt(last);
+                    if (p.innerFixedColors.Count > last) p.innerFixedColors.RemoveAt(last);
+                    else if (p.innerFixedColors.Count > 0) p.innerFixedColors.RemoveAt(p.innerFixedColors.Count - 1);
+                    p.totalInnerCount = Mathf.Max(0, p.totalInnerCount - 1);
+                    EditorUtility.SetDirty(p);
+                    cut++;
+                }
+            }
+            if (cut == 0) { report = $"[OK] {row.levelName}: không part nào quá {cap} lớp."; return; }
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            report = $"[OK] {row.levelName}: đã cắt {cut} lớp trong (trần {cap}/part). " +
+                     "Tổng màu đã đổi — BẮT BUỘC chạy Validate + vá %3/pool rồi mới test!";
             Debug.Log(report);
             Scan();
         }
