@@ -38,3 +38,5 @@ game/Assets/Plugins/Android/FirebaseApp.androidlib/res/values/google-services.xm
 game/Assets/Editor/.idea
 game/obj
 game/WoolSortDebugLogs
+game/Assets/_Game/Mesh/Level Image
+game/Assets/MatrixExport

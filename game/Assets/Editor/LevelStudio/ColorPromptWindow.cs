@@ -12,28 +12,28 @@ public enum PromptStyle { Detailed, Minimal, Technical }
 [Serializable]
 public class SavedPromptData
 {
-    public string promptTemplate = @"# RANDOM 28×28 CELL PIXEL ART
+    public string promptTemplate = @"# RANDOM 84×84 CELL PIXEL ART
 
 Create **one random cute cartoon/chibi pixel-art illustration**.
 
 The subject, objects, composition, and visual arrangement are completely random. You may create animals, characters, monsters, plants, food, toys, objects, scenery, fantasy creatures, or any other suitable subject.
 
-The artwork must follow the **exact 28×28 logical cell grid** and the color requirements provided below.
+The artwork must follow the **exact 84×84 logical cell grid** and the color requirements provided below.
 
 ---
 
-## 1. EXACT 28×28 LOGICAL GRID
+## 1. EXACT 84×84 LOGICAL GRID
 
 The artwork must be constructed on exactly:
 
-**28 columns × 28 rows**
+**84 columns × 84 rows**
 
 Each position in this grid represents exactly **one logical cell**.
 
 Rules:
 
-- Exactly 28 cells horizontally.
-- Exactly 28 cells vertically.
+- Exactly 84 cells horizontally.
+- Exactly 84 cells vertically.
 - Every visual element must align to this grid.
 - Each logical cell contains exactly one solid color.
 - Do not create shapes smaller than one logical cell.
@@ -41,7 +41,7 @@ Rules:
 - Do not use sub-cell positioning.
 - Do not change the grid size.
 
-The artwork must look as if it was created directly on a **28×28 logical pixel grid**.
+The artwork must look as if it was created directly on a **84×84 logical pixel grid**.
 
 ---
 
@@ -60,9 +60,9 @@ For every color specified above:
 - Do not add additional colors.
 - Do not remove any required color cells.
 - Do not substitute one color for another.
-- Every one of the 28×28 cells must belong to one of the specified colors.
+- Every one of the 84×84 cells must belong to one of the specified colors.
 
-The specified cell counts must add up to exactly **784 cells**.
+The specified cell counts must add up to exactly **7056 cells**.
 
 Do not interpret the specified cell counts as percentages or approximate values.
 
@@ -92,7 +92,7 @@ Each generation may use a completely different subject and composition.
 
 Do not repeatedly use the same subject unless it happens randomly.
 
-The subject and composition are flexible, but must remain readable within the **28×28 grid**.
+The subject and composition are flexible, but must remain readable within the **84×84 grid**.
 
 ---
 
@@ -122,7 +122,7 @@ Do not prioritize visual complexity over the required grid and color constraints
 Think of the artwork as a matrix:
 
 ```text
-28 × 28 cells
+84 × 84 cells
 ```
 
 Each cell is an independent color unit.
@@ -137,7 +137,7 @@ Do not create a smooth illustration first and then apply a pixel-art effect.
 
 If requirements conflict, follow this priority:
 
-1. **Exactly 28×28 logical cells**
+1. **Exactly 84×84 logical cells**
 2. **Exactly the specified color-cell counts in {0}**
 3. **Use only the colors specified in {0}**
 4. Cute cartoon/chibi pixel-art appearance
@@ -150,37 +150,37 @@ Never sacrifice the grid or exact color requirements for visual quality.
 
 ## FINAL REQUIREMENT
 
-Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 28×28 logical cell grid**.
+Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 84×84 logical cell grid**.
 
 Follow the color palette and exact cell counts specified in:
 
 **{0}**
 
-Every one of the 784 logical cells must contain exactly one of the specified colors.
+Every one of the 7056 logical cells must contain exactly one of the specified colors.
 
 No additional colors, no missing cells, and no changed grid dimensions.";
-    public string promptExample = @"# RANDOM 28×28 CELL PIXEL ART
+    public string promptExample = @"# RANDOM 84×84 CELL PIXEL ART
 
 Create **one random cute cartoon/chibi pixel-art illustration**.
 
 The subject, objects, composition, and visual arrangement are completely random. You may create animals, characters, monsters, plants, food, toys, objects, scenery, fantasy creatures, or any other suitable subject.
 
-The artwork must follow the **exact 28×28 logical cell grid** and the color requirements provided below.
+The artwork must follow the **exact 84×84 logical cell grid** and the color requirements provided below.
 
 ---
 
-## 1. EXACT 28×28 LOGICAL GRID
+## 1. EXACT 84×84 LOGICAL GRID
 
 The artwork must be constructed on exactly:
 
-**28 columns × 28 rows**
+**84 columns × 84 rows**
 
 Each position in this grid represents exactly **one logical cell**.
 
 Rules:
 
-- Exactly 28 cells horizontally.
-- Exactly 28 cells vertically.
+- Exactly 84 cells horizontally.
+- Exactly 84 cells vertically.
 - Every visual element must align to this grid.
 - Each logical cell contains exactly one solid color.
 - Do not create shapes smaller than one logical cell.
@@ -188,7 +188,7 @@ Rules:
 - Do not use sub-cell positioning.
 - Do not change the grid size.
 
-The artwork must look as if it was created directly on a **28×28 logical pixel grid**.
+The artwork must look as if it was created directly on a **84×84 logical pixel grid**.
 
 ---
 
@@ -198,13 +198,13 @@ The number of colors, the colors themselves, and the required number of cells fo
 
 **Number of colors: 5**
 
-- `#1E1E2E` — exactly **120 cells**
-- `#F2F0E6` — exactly **280 cells**
-- `#E85D75` — exactly **160 cells**
-- `#4DA6FF` — exactly **140 cells**
-- `#72C472` — exactly **84 cells**
+- `#1E1E2E` — exactly **1080 cells**
+- `#F2F0E6` — exactly **2520 cells**
+- `#E85D75` — exactly **1440 cells**
+- `#4DA6FF` — exactly **1260 cells**
+- `#72C472` — exactly **756 cells**
 
-**Total: 784 cells**
+**Total: 7056 cells**
 
 These color requirements are **exact**.
 
@@ -215,7 +215,7 @@ For every color specified above:
 - Do not add additional colors.
 - Do not remove any required color cells.
 - Do not substitute one color for another.
-- Every one of the 28×28 cells must belong to one of the specified colors.
+- Every one of the 84×84 cells must belong to one of the specified colors.
 
 Do not interpret the cell counts as percentages or approximate values.
 
@@ -245,7 +245,7 @@ Each generation may use a completely different subject and composition.
 
 Do not repeatedly use the same subject unless it happens randomly.
 
-The subject and composition are flexible, but must remain readable within the **28×28 grid**.
+The subject and composition are flexible, but must remain readable within the **84×84 grid**.
 
 ---
 
@@ -275,7 +275,7 @@ Do not prioritize visual complexity over the required grid and color constraints
 Think of the artwork as a matrix:
 
 ```text
-28 × 28 cells
+84 × 84 cells
 ```
 
 Each cell is an independent color unit.
@@ -290,7 +290,7 @@ Do not create a smooth illustration first and then apply a pixel-art effect.
 
 If requirements conflict, follow this priority:
 
-1. **Exactly 28×28 logical cells**
+1. **Exactly 84×84 logical cells**
 2. **Exactly the specified color-cell counts**
 3. **Use only the specified colors**
 4. Cute cartoon/chibi pixel-art appearance
@@ -303,7 +303,7 @@ Never sacrifice the grid or exact color requirements for visual quality.
 
 ## FINAL REQUIREMENT
 
-Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 28×28 logical cell grid**.
+Create **one random cute cartoon/chibi pixel-art illustration** directly on an **exact 84×84 logical cell grid**.
 
 Use exactly these 5 colors:
 
@@ -319,8 +319,8 @@ Every one of the **784 logical cells** must contain exactly one of these colors.
 
 No additional colors, no missing cells, and no changed grid dimensions.";
     public PromptStyle style = PromptStyle.Detailed;
-    public int imageWidth = 784;
-    public int imageHeight = 784;
+    public int imageWidth = 756;
+    public int imageHeight = 756;
 }
 
 public class ColorPromptWindow : EditorWindow
@@ -423,7 +423,7 @@ public class ColorPromptWindow : EditorWindow
         if (GUILayout.Button("Reset Pixel Template", GUILayout.Width(140)))
         {
             _savedData.promptTemplate = new SavedPromptData().promptTemplate;
-            _savedData.imageWidth = 784; _savedData.imageHeight = 784;
+            _savedData.imageWidth = 756; _savedData.imageHeight = 756;
             SaveData();
         }
         if (GUILayout.Button("Luu", GUILayout.Width(50))) { SaveData(); EditorUtility.DisplayDialog("Da luu", $"Da luu vao {SavedDataPath}", "OK"); }
@@ -520,7 +520,7 @@ public class ColorPromptWindow : EditorWindow
     private static string BuildColorParams(List<(string name, string hex, int balls)> merged, int totalBalls)
     {
         // Khối {0} cho template prompt: tỉ lệ sợi của level quy ra số cell, tổng đúng 784.
-        const int totalCells = 28 * 28;
+        const int totalCells = 84 * 84;
         var usable = merged.Where(m => m.balls > 0).OrderByDescending(m => m.balls).ToList();
         if (usable.Count == 0 || totalBalls <= 0)
             return "**Number of colors: 0**\n\n(no colors)\n\n**Total: 784 cells**";
@@ -584,7 +584,7 @@ public class ColorPromptWindow : EditorWindow
             return $"- {kv.Key}: {GetHexExact(kv.Key)} - {pct:F1}% ({kv.Value} balls)";
         }));
         // pixelDistribution: tinh pixel dua tren 784 logical pixels (legacy, template static hien khong dung)
-        const int totalLogical = 28 * 28; // 784
+        const int totalLogical = 84 * 84; // 7056
         string pixelDist;
         if (sorted.Count == 0) pixelDist = "- No colors";
         else
@@ -607,11 +607,11 @@ public class ColorPromptWindow : EditorWindow
                 var kv = sorted[i];
                 float pct = (float)kv.Value / stats.totalOccurrences * 100f;
                 int logical = pixels[i];
-                int physical = logical * 28 * 28; // moi logical = 784 physical pixels
+                int physical = logical * 9 * 9; // moi logical = 81 physical pixels (khop PNG xuat 756)
                 string hex = GetHexExact(kv.Key);
-                lines.Add($"- {kv.Key} {hex}: {pct:F1}% ({kv.Value} balls) = {logical} logical pixels ({logical} x 28x28 = {physical} physical pixels)");
+                lines.Add($"- {kv.Key} {hex}: {pct:F1}% ({kv.Value} balls) = {logical} logical pixels ({logical} x 9x9 = {physical} physical pixels)");
             }
-            lines.Add($"- Total: {totalLogical} logical pixels = 784x784 physical canvas");
+            lines.Add($"- Total: {totalLogical} logical pixels = 756x756 physical canvas");
             pixelDist = string.Join("\n", lines);
         }
 

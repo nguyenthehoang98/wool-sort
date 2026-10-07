@@ -1256,6 +1256,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 611427318011533988, guid: afed34a74c7d9d84cb344a0a9d6d16f3,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1730899327068809395, guid: afed34a74c7d9d84cb344a0a9d6d16f3,
         type: 3}
       propertyPath: m_Name
@@ -1315,6 +1320,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5281249771832411748, guid: afed34a74c7d9d84cb344a0a9d6d16f3,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.88
+      objectReference: {fileID: 0}
+    - target: {fileID: 5281249771832411748, guid: afed34a74c7d9d84cb344a0a9d6d16f3,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.88
       objectReference: {fileID: 0}
     - target: {fileID: 6425902480314709329, guid: afed34a74c7d9d84cb344a0a9d6d16f3,
         type: 3}
@@ -4683,7 +4698,7 @@ MonoBehaviour:
   boxManager: {fileID: 1488103024}
   boxUnlockStart: 2
   decorationRoot: {fileID: 1180980792}
-  debugStartLevel: 3
+  debugStartLevel: 1
 --- !u!1 &2009665440
 GameObject:
   m_ObjectHideFlags: 0

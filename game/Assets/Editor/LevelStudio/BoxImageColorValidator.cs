@@ -377,7 +377,7 @@ public sealed class BoxImageColorValidator : EditorWindow
                 errs.Add($"Ma trận {levelName} thiếu màu hiển thị từng ô — extract lại để dời ảnh khỏi Resources.");
         }
 
-        // Mô phỏng BuildCellOwners 28x28 của JamImage để báo màu bị gom sai ô (cần ảnh gốc)
+        // Mô phỏng BuildCellOwners của JamImage để báo màu bị gom sai ô (cần ảnh gốc)
         if (tex != null)
             errs.AddRange(SimulateCellOwners(levelName, tex, holder, parts, db));
         return errs;
@@ -410,7 +410,7 @@ public sealed class BoxImageColorValidator : EditorWindow
             if (available.Count == 0) { errs.Add("Level không có màu nào."); return errs; }
 
             var refColors = available.ToDictionary(c => c, c => EditorRefColor(db, c));
-            const int grid = 28;
+            const int grid = LevelColorMatrix.DefaultGrid;
             var ownerCounts = available.ToDictionary(c => c, _ => 0);
             int w = tex.width, h = tex.height;
             for (int cy = 0; cy < grid; cy++)

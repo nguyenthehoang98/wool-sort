@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Extract ảnh level thành ma trận color ID (28x28 ô = 1 YarnColor).
+/// Extract ảnh level thành ma trận color ID (lưới chuẩn DefaultGrid, mỗi ô = 1 YarnColor).
 /// Vì pixel ảnh gốc hay lệch màu len (nén/gamma/lấy mẫu), mỗi ô được duyệt
 /// tìm màu GẦN NHẤT trong dataset (các màu level đang dùng, chuẩn màu lấy
 /// từ ThreadMat._MainColor). Runtime JamImage đọc file này thay vì đọc ảnh.
@@ -22,7 +22,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private const string DatabasePath = "Assets/_Game/Configs/YarnColorDatabase.asset";
     private const string LevelsFolder = "Assets/Resources/Levels";
     private const string MatrixFolder = "Assets/Resources/LevelColorMatrix";
-    private const int Grid = 28;
+    private const int Grid = LevelColorMatrix.DefaultGrid;
 
     private Vector2 scroll;
     private Vector2 reportScroll;
@@ -69,7 +69,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
     {
         GUILayout.Label("EXTRACT ẢNH -> MATRIX COLOR ID", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Mỗi ảnh được extract thành lưới 28x28, mỗi ô = 1 YarnColor gần nhất\n" +
+            "Mỗi ảnh được extract thành lưới chuẩn (mỗi ô = 1 YarnColor gần nhất)\n" +
             "(pixel không khớp 100% dataset sẽ được duyệt tìm màu gần nhất).\n" +
             "Runtime JamImage ưu tiên đọc file này, không đọc trực tiếp ảnh nữa.",
             MessageType.Info);
@@ -198,7 +198,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
         {
             jsonText = BuildSampleJson();
             EditorGUIUtility.systemCopyBuffer = jsonText;
-            report = "[OK] Đã copy JSON mẫu 28x28 (4 màu: Green/Orange/Pink/Pink-shading) vào clipboard + nạp vào ô text. Sửa matrix/owners rồi bấm Import.";
+            report = $"[OK] Đã copy JSON mẫu {Grid}x{Grid} (4 màu: Green/Orange/Pink/Pink-shading) vào clipboard + nạp vào ô text. Sửa matrix/owners rồi bấm Import.";
         }
         if (GUILayout.Button("Nạp mẫu vào ô text", GUILayout.Height(28)))
         {
@@ -212,6 +212,13 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 report = "[LỖI] Chưa có level nào.";
             else
                 FixMissingColors(levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)]);
+        }
+        if (GUILayout.Button("Xuất ảnh PNG 784x784 (sửa ở PTS)", GUILayout.Height(30)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else
+                ExportPng(levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)]);
         }
 
         EditorGUILayout.EndVertical();
@@ -258,8 +265,8 @@ public sealed class LevelImageMatrixTool : EditorWindow
             return;
         }
         int g = cachedMatrix.gridSize;
-        GUILayout.Label($"{levelName}: {g}x{g} = {cachedMatrix.TotalCellCount} ô, {cachedMatrix.entries.Count} màu", EditorStyles.miniLabel);
-        const float cell = 10f;
+        GUILayout.Label($"{levelName}: {g}x{g} = {cachedMatrix.TotalCellCount} ô, {cachedMatrix.GetColors().Count} màu", EditorStyles.miniLabel);
+        float cell = Mathf.Max(2f, 320f / g);
         float size = g * cell;
         Rect r = GUILayoutUtility.GetRect(size, size, GUILayout.Width(size), GUILayout.Height(size));
         EditorGUI.DrawRect(r, Color.black);
@@ -404,7 +411,9 @@ public sealed class LevelImageMatrixTool : EditorWindow
 
         // 4. Duyệt từng ô: TRUNG BÌNH cả block rồi mới tìm màu gần nhất trong dataset
         // (lấy 1 điểm giữa ô dễ rơi vào hạt nhiễu/gradient của ảnh AI -> sai màu cả ô).
+        // GIỮ MÀU GỐC: display từng ô = màu ảnh trung bình thật, owner = màu dataset gần nhất.
         var ids = new int[Grid * Grid];
+        var shots = new Color[Grid * Grid];
         for (int cy = 0; cy < Grid; cy++)
         {
             for (int cx = 0; cx < Grid; cx++)
@@ -422,6 +431,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 var sample = new Color(r * inv, g * inv, b * inv, 1f);
                 var best = LevelColorMatrixUtility.FindClosest(sample, available, db);
                 ids[cy * Grid + cx] = (int)best;
+                shots[cy * Grid + cx] = sample;
             }
         }
 
@@ -465,10 +475,21 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         if (denoised > 0) sb.AppendLine($"  (đã khử {denoised} ô nhiễu lẻ)");
 
-        // 4c. Gom thành entries sparse: mỗi màu 1 entry (màu + màu hiển thị
-        // chuẩn + danh sách ô) — file nhẹ, Inspector đọc được màu nào ở đâu.
-        var builtEntries = LevelColorMatrixUtility.BuildEntries(ids, Grid, db);
-        var ownerCounts = builtEntries.ToDictionary(e => e.colorId, e => e.cells != null ? e.cells.Count : 0);
+        // 4c. Mảng phẳng: owner từng ô = màu dataset gần nhất (để matching),
+        // display từng ô = màu ảnh gốc (để in lên đẹp, không ép về màu chuẩn).
+        var flatOwners = new YarnColor[Grid * Grid];
+        var flatShows = new Color[Grid * Grid];
+        var ownerCounts = new Dictionary<YarnColor, int>();
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var c = (YarnColor)ids[i];
+            flatOwners[i] = c;
+            var show = shots[i];
+            show.a = 1f;
+            flatShows[i] = show;
+            if (!ownerCounts.ContainsKey(c)) ownerCounts[c] = 0;
+            ownerCounts[c]++;
+        }
 
         // 5. Lưu file matrix
         string assetPath = $"{MatrixFolder}/{levelName}.asset";
@@ -480,12 +501,11 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         matrix.levelName = levelName;
         matrix.gridSize = Grid;
-        matrix.entries = builtEntries;
-        matrix.InvalidateLookup(); // entries mới -> xóa cache lookup cũ trong session
+        matrix.BakeFlatArrays(flatOwners, flatShows);
         EditorUtility.SetDirty(matrix);
 
         // 6. Báo cáo: ô/box đúng công thức runtime (3 sợi = 1 box)
-        sb.AppendLine("[OK] " + levelName + " -> " + assetPath + $" ({builtEntries.Count} màu)");
+        sb.AppendLine("[OK] " + levelName + " -> " + assetPath + $" ({ownerCounts.Count} màu gốc, display giữ màu ảnh)");
         foreach (var kv in ownerCounts.OrderByDescending(kv => kv.Value))
         {
             int yarn = yarnCounts.TryGetValue(kv.Key, out var y) ? y : 0;
@@ -506,17 +526,17 @@ public sealed class LevelImageMatrixTool : EditorWindow
 
     private sealed class MatrixJsonDto
     {
-        public int width = 28;
-        public int height = 28;
+        public int width = LevelColorMatrix.DefaultGrid;
+        public int height = LevelColorMatrix.DefaultGrid;
         public Dictionary<string, string> palette = new Dictionary<string, string>();
         public Dictionary<string, string> owners; // optional: "4" -> "Pink"
         public List<List<int>> matrix = new List<List<int>>();
     }
 
-    /// <summary>Tạo JSON mẫu 28x28 copy sẵn: 1=Green nền, 2=Orange viền, 3=Pink, 4=Pink đậm (shading của Pink).</summary>
+    /// <summary>Tạo JSON mẫu copy sẵn: 1=Green nền, 2=Orange viền, 3=Pink, 4=Pink đậm (shading của Pink).</summary>
     private static string BuildSampleJson()
     {
-        const int g = 28;
+        const int g = LevelColorMatrix.DefaultGrid;
         var dto = new MatrixJsonDto
         {
             width = g,
@@ -537,16 +557,17 @@ public sealed class LevelImageMatrixTool : EditorWindow
             },
             matrix = new List<List<int>>()
         };
-        // Nền 1, khối hoa ở giữa: viền 2, cánh 3, nhụy đậm 4.
+        // Nền 1, khối hoa ở giữa: viền 2, cánh 3, nhụy đậm 4 (tỉ lệ theo grid).
+        int q = g / 4, h = g / 2;
         for (int r = 0; r < g; r++)
         {
             var row = new List<int>();
             for (int c = 0; c < g; c++)
             {
                 int id = 1;
-                bool inBox = r >= 8 && r < 20 && c >= 8 && c < 20;
-                bool inInner = r >= 11 && r < 17 && c >= 11 && c < 17;
-                bool inCore = r >= 13 && r < 15 && c >= 13 && c < 15;
+                bool inBox = r >= h - q && r < h + q && c >= h - q && c < h + q;
+                bool inInner = r >= h - q / 2 && r < h + q / 2 && c >= h - q / 2 && c < h + q / 2;
+                bool inCore = r >= h - 2 && r < h + 2 && c >= h - 2 && c < h + 2;
                 if (inCore) id = 4;
                 else if (inInner) id = 3;
                 else if (inBox) id = 2;
@@ -761,8 +782,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
             sb2.AppendLine($"  - {m} ({yarnCounts[m]} sợi): lấy {take} ô từ {donor}.");
         }
 
-        matrix.entries = LevelColorMatrixUtility.BuildEntriesPreservingDisplay(owners, displays, g);
-        matrix.InvalidateLookup();
+        matrix.BakeFlatArrays(owners, displays);
         EditorUtility.SetDirty(matrix);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -842,7 +862,6 @@ public sealed class LevelImageMatrixTool : EditorWindow
             }
         }
 
-        var entries = LevelColorMatrixUtility.BuildEntriesPreservingDisplay(owners, displays, Grid);
         if (!AssetDatabase.IsValidFolder(MatrixFolder))
             AssetDatabase.CreateFolder("Assets/Resources", "LevelColorMatrix");
         string assetPath = $"{MatrixFolder}/{levelName}.asset";
@@ -854,24 +873,24 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         matrix.levelName = levelName;
         matrix.gridSize = Grid;
-        matrix.entries = entries;
-        matrix.InvalidateLookup();
+        matrix.BakeFlatArrays(owners, displays);
         EditorUtility.SetDirty(matrix);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         cachedLevel = null;
 
         var sb = new StringBuilder();
-        sb.AppendLine($"[OK-JSON] {levelName} -> {assetPath} ({entries.Count} entry, {Grid}x{Grid})");
-        foreach (var e in entries)
-            sb.AppendLine($"  - gốc {e.colorId} | in #{ColorUtility.ToHtmlStringRGB(e.displayColor)} | {e.cells.Count} ô");
+        sb.AppendLine($"[OK-JSON] {levelName} -> {assetPath} ({Grid}x{Grid})");
         // Tổng theo màu gốc (đúng số runtime dùng để chia batch).
         var sum = new Dictionary<YarnColor, int>();
-        foreach (var e in entries)
+        var showOf = new Dictionary<YarnColor, Color>();
+        for (int i = 0; i < owners.Length; i++)
         {
-            if (!sum.ContainsKey(e.colorId)) sum[e.colorId] = 0;
-            sum[e.colorId] += e.cells.Count;
+            if (!sum.ContainsKey(owners[i])) { sum[owners[i]] = 0; showOf[owners[i]] = displays[i]; }
+            sum[owners[i]]++;
         }
+        foreach (var kv in sum.OrderByDescending(kv => kv.Value))
+            sb.AppendLine($"  - gốc {kv.Key} | in #{ColorUtility.ToHtmlStringRGB(showOf[kv.Key])} | {kv.Value} ô");
         foreach (var kv in sum.OrderByDescending(kv => kv.Value))
             sb.AppendLine($"  = {kv.Key}: tổng {kv.Value} ô (gồm mọi shading)");
         // Đủ màu chưa: màu nào của level mà 0 ô thì box màu đó đầy sẽ lỗi PrintImage.
@@ -933,6 +952,46 @@ public sealed class LevelImageMatrixTool : EditorWindow
         }
         jsonText = BuildMatrixJsonString(dto);
         report = $"[OK] Đã xuất {levelName} ra ô JSON ({palette.Count} palette id, {keyToId.Count} entry). Sửa hex/owners/matrix rồi bấm Import.";
+        Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Xuất matrix ra PNG (mỗi ô = khối vuông nét, màu đúng display từng ô).
+    /// Sửa ở PTS xong thì Extract lại ảnh đó (hoặc vẽ lại JSON) để cập nhật matrix.
+    /// </summary>
+    private void ExportPng(string levelName)
+    {
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{levelName}.asset");
+        if (matrix == null || !matrix.IsValid) { report = "[LỖI] Chưa có matrix hợp lệ cho " + levelName + " — Extract/Import trước."; return; }
+        int g = matrix.gridSize;
+        int block = Mathf.Max(1, 756 / g);
+        var tex = new Texture2D(g * block, g * block, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        for (int y = 0; y < g; y++)
+            for (int x = 0; x < g; x++)
+            {
+                var c = matrix.GetDisplayColor(x, y);
+                c.a = 1f;
+                // SetPixel y=0 là đáy texture, encoder đưa đáy xuống đáy ảnh
+                // -> map thẳng data y vào texture y là ảnh ra đúng chiều preview.
+                int py = y * block;
+                for (int by = 0; by < block; by++)
+                    for (int bx = 0; bx < block; bx++)
+                        tex.SetPixel(x * block + bx, py + by, c);
+            }
+        tex.Apply(false, false);
+        const string folder = "Assets/MatrixExport";
+        if (!AssetDatabase.IsValidFolder(folder))
+            AssetDatabase.CreateFolder("Assets", "MatrixExport");
+        string path = $"{folder}/{levelName}.png";
+        System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+        DestroyImmediate(tex);
+        AssetDatabase.Refresh();
+        var saved = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        if (saved != null) EditorGUIUtility.PingObject(saved);
+        cachedLevel = null;
+        report = $"[OK] Đã xuất ảnh {levelName} -> {path} ({g * block}x{g * block}, mỗi ô {block}px).\n" +
+                 "Sửa ở PTS (giữ đúng lưới ô, tô tràn từng ô, không chống răng cưa viền), lưu đè rồi bấm Extract level để nạp lại.";
         Debug.Log(report);
     }
 }

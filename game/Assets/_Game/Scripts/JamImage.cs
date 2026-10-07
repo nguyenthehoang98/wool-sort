@@ -5,7 +5,7 @@ using UnityEngine;
 namespace _Game.Scripts
 {
     /// <summary>
-    /// Reveals the 28x28 target image when a box is completed.
+    /// Reveals the target image (DefaultGrid x DefaultGrid) when a box is completed.
     /// The imported image is kept in Resources so the existing Board prefab needs no new wiring.
     /// </summary>
     public sealed class JamImage : MonoBehaviour
@@ -15,7 +15,7 @@ namespace _Game.Scripts
         [SerializeField] private SpriteRenderer colorTexture;
         [SerializeField] private Transform pointer;
 
-        private const int GridSize = 28;
+        private const int GridSize = LevelColorMatrix.DefaultGrid;
         private const int SourceBlockSize = 28;
 
         private readonly List<YarnColor> cellOwners = new();
@@ -74,7 +74,7 @@ namespace _Game.Scripts
             if (runtimeTexture != null)
                 Destroy(runtimeTexture);
 
-            // The board is a 28x28 pixel grid. The source image stores each grid pixel as a 28x28 block.
+            // The board is a DefaultGrid x DefaultGrid pixel grid.
             runtimeTexture = new Texture2D(GridSize, GridSize, TextureFormat.RGBA32, false);
             runtimeTexture.name = "BoardImageRuntime";
             runtimeTexture.filterMode = FilterMode.Point;

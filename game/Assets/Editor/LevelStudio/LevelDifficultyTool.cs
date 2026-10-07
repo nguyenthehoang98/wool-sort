@@ -227,6 +227,8 @@ public sealed class LevelDifficultyTool : EditorWindow
             ResyncModelMaterials(sel);
         if (GUILayout.Button($"Chẩn đoán lệch màu ({sel.levelName})", GUILayout.Height(28)))
             DiagnoseColors(sel);
+        if (GUILayout.Button($"Quét tràn mesh inner ({sel.levelName})", GUILayout.Height(28)))
+            DiagnoseMeshOverflow(sel);
         EditorGUILayout.HelpBox(
             "Nếu model nhìn sai màu so với dataset/preview: bấm Đồng bộ material (nó ép mọi MeshRenderer về đúng material của initColor trong Database).",
             MessageType.None);
@@ -305,6 +307,8 @@ public sealed class LevelDifficultyTool : EditorWindow
         EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Dồn inner sang part to (giữ nguyên màu/tổng)", GUILayout.Height(28)))
             RebalanceToBigParts(sel, keepSmallInner);
+        if (GUILayout.Button("Random lại inner (giữ ngoài, giữ tổng từng màu)", GUILayout.Height(28)))
+            RandomizeInners(sel);
     }
 
     /// <summary>Thêm (delta=+3) hoặc bớt (delta=-3) sợi 1 màu bằng inner Fixed.</summary>
@@ -438,6 +442,58 @@ public sealed class LevelDifficultyTool : EditorWindow
             AssetDatabase.SaveAssets();
             int newMax = parts.Max(p => p.totalInnerCount);
             report = $"[OK] {row.levelName}: dồn {placed} inner sang {big.Count} part to (nhỏ giữ ≤{keep}). Sâu tối đa giờ {newMax}. Chạy Validate rồi test.";
+            Debug.Log(report);
+            Scan();
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Random lại màu inner Fixed giữa các part (ngoài giữ nguyên).
+    /// Chỉ xáo vị trí màu — tổng từng màu không đổi nên %3 an toàn.
+    /// </summary>
+    private void RandomizeInners(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var parts = root.GetComponentsInChildren<YarnPart>(true).ToList();
+            var holder = root.GetComponent<LevelYarnInfoHolder>() ?? root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) { report = "[LỖI] Thiếu LevelYarnInfoHolder."; return; }
+            foreach (var p in parts) NormalizeInnerLists(p);
+
+            var slots = new List<(YarnPart part, int idx)>();
+            foreach (var p in parts)
+            {
+                int lim = System.Math.Min(p.totalInnerCount, System.Math.Min(p.innerColorTypes.Count, p.innerFixedColors.Count));
+                for (int j = 0; j < lim; j++)
+                    if (p.innerColorTypes[j] == InnerColorType.Fixed)
+                        slots.Add((p, j));
+            }
+            if (slots.Count == 0) { report = $"[OK] {row.levelName}: không có inner Fixed nào để random."; return; }
+
+            var colors = slots.Select(s => s.part.innerFixedColors[s.idx]).ToList();
+            var rng = new System.Random();
+            for (int i = colors.Count - 1; i > 0; i--)
+            {
+                int k = rng.Next(i + 1);
+                var tmp = colors[i];
+                colors[i] = colors[k];
+                colors[k] = tmp;
+            }
+            for (int i = 0; i < slots.Count; i++)
+            {
+                slots[i].part.innerFixedColors[slots[i].idx] = colors[i];
+                EditorUtility.SetDirty(slots[i].part);
+            }
+
+            holder.totalYarnPartCount = holder.GetTotalYarnPartCount(holder.allBaseYarnParts);
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, row.path);
+            AssetDatabase.SaveAssets();
+            report = $"[OK] {row.levelName}: đã xáo {slots.Count} inner Fixed giữa các part (ngoài + tổng màu giữ nguyên). Chạy Validate rồi test.";
             Debug.Log(report);
             Scan();
         }
@@ -932,5 +988,124 @@ public sealed class LevelDifficultyTool : EditorWindow
             Debug.Log(report);
         }
         finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    /// <summary>
+    /// Quét tràn mesh: mô phỏng đúng runtime hiện tại (inner giữ nguyên vị trí gốc,
+    /// chỉ thu scale theo growScale/initialInnerScale), check bằng HÌNH MESH thật
+    /// (bounds trước, raycast parity trên đỉnh thật cho ca nghi ngờ).
+    /// </summary>
+    private void DiagnoseMeshOverflow(DiffRow row)
+    {
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(row.path);
+            var cfg = AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/_Game/Configs/GameConfig.asset");
+            float grow = cfg != null ? cfg.growScale : 0.72f;
+            float init = cfg != null ? cfg.initialInnerScale : 0.9f;
+            var parts = root.GetComponentsInChildren<YarnPart>(true).Where(p => p.layerIndex == 1 && p.totalInnerCount > 0).ToList();
+            var sb = new StringBuilder();
+            sb.AppendLine($"[TRÀN MESH] {row.levelName}: {parts.Count} part có inner (grow={grow}, initInner={init})");
+            int checkedCount = 0, overflowCount = 0;
+            foreach (var p in parts)
+            {
+                var mf = p.GetComponent<MeshFilter>();
+                var mesh = mf != null ? mf.sharedMesh : null;
+                if (mesh == null) { sb.AppendLine($"  [?] {p.name}: không có mesh."); continue; }
+                if (!mesh.isReadable)
+                {
+                    sb.AppendLine($"  [?] {p.name}: mesh chưa Readable (bật Read/Write trong import settings để check đỉnh).");
+                    continue;
+                }
+                // Khung chứa ancestor (local frame, pivot tại gốc).
+                var b0 = mesh.bounds;
+                for (int layer = 2; layer <= p.totalInnerCount + 1; layer++)
+                {
+                    float fSpawn = Mathf.Pow(grow, layer - 1) * init;
+                    float fGrow = Mathf.Pow(grow, layer - 1);
+                    foreach (var f in new[] { fSpawn, fGrow })
+                    {
+                        checkedCount++;
+                        // Tầng 1: bounds chứa?
+                        var bi = new Bounds(b0.center * f, b0.size * f);
+                        bool inBounds = b0.Contains(bi.min) && b0.Contains(bi.max);
+                        if (inBounds) continue;
+                        // Tầng 2: đếm đỉnh thật lọt ra ngoài (parity raycast, mẫu 200 đỉnh).
+                        var res = CountOutsideVerts(mesh, f, 200);
+                        if (res.outside > res.tested * 0.02f)
+                        {
+                            overflowCount++;
+                            sb.AppendLine($"  [TRÀN] {p.name} L{layer} f={f:F3}: {res.outside}/{res.tested} đỉnh ngoài vỏ " +
+                                $"({(f == fGrow ? "lúc grow" : "lúc spawn")}) — thu growScale hoặc sửa mesh.");
+                        }
+                    }
+                }
+            }
+            sb.AppendLine($"=> đã check {checkedCount} lượt inner, {overflowCount} ca tràn mesh thật.");
+            if (overflowCount == 0)
+                sb.AppendLine("Không tràn theo hình mesh — chồng nhìn thấy là do model xếp sát (bounds chạm), không phải ruột lòi vỏ.");
+            report = sb.ToString();
+            Debug.Log(report);
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    private struct VertCheck
+    {
+        public int outside;
+        public int tested;
+    }
+
+    /// <summary>
+    /// Đếm đỉnh của mesh (scale f quanh pivot) nằm ngoài mesh gốc bằng parity raycast.
+    /// </summary>
+    private static VertCheck CountOutsideVerts(Mesh mesh, float f, int maxSamples)
+    {
+        var res = new VertCheck();
+        var verts = mesh.vertices;
+        var tris = mesh.triangles;
+        if (verts == null || verts.Length == 0 || tris == null || tris.Length == 0) return res;
+        int step = Mathf.Max(1, verts.Length / Mathf.Max(1, maxSamples));
+        for (int i = 0; i < verts.Length; i += step)
+        {
+            var q = verts[i] * f;
+            res.tested++;
+            if (!PointInMesh(q, verts, tris)) res.outside++;
+        }
+        return res;
+    }
+
+    /// <summary>Parity: tia +X từ p cắt mặt tam giác lẻ lần thì p nằm trong.</summary>
+    private static bool PointInMesh(Vector3 p, Vector3[] verts, int[] tris)
+    {
+        int hits = 0;
+        var dir = new Vector3(1f, 0.12345f, 0.23456f).normalized; // xiên nhẹ tránh trúng cạnh
+        for (int t = 0; t < tris.Length; t += 3)
+        {
+            if (RayTri(p, dir, verts[tris[t]], verts[tris[t + 1]], verts[tris[t + 2]], out float dist)
+                && dist > 1e-5f) hits++;
+        }
+        return (hits & 1) == 1;
+    }
+
+    /// <summary>Möller–Trumbore, có cull mặt sau theo hướng tia.</summary>
+    private static bool RayTri(Vector3 orig, Vector3 dir, Vector3 v0, Vector3 v1, Vector3 v2, out float t)
+    {
+        t = 0f;
+        var e1 = v1 - v0;
+        var e2 = v2 - v0;
+        var pvec = Vector3.Cross(dir, e2);
+        float det = Vector3.Dot(e1, pvec);
+        if (det > -1e-8f && det < 1e-8f) return false;
+        float inv = 1f / det;
+        var tvec = orig - v0;
+        float u = Vector3.Dot(tvec, pvec) * inv;
+        if (u < 0f || u > 1f) return false;
+        var qvec = Vector3.Cross(tvec, e1);
+        float v = Vector3.Dot(dir, qvec) * inv;
+        if (v < 0f || u + v > 1f) return false;
+        t = Vector3.Dot(e2, qvec) * inv;
+        return t >= 0f;
     }
 }

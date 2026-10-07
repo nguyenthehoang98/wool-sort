@@ -34,9 +34,18 @@ namespace _Game.Scripts
         order = 103)]
     public class LevelColorMatrix : ScriptableObject
     {
+        /// <summary>Lưới chuẩn toàn game (đổi 1 chỗ này là đổi khắp runtime + tool).</summary>
+        public const int DefaultGrid = 84;
+
         public string levelName;
-        public int gridSize = 28;
+        public int gridSize = DefaultGrid;
         public List<ColorCellEntry> entries = new List<ColorCellEntry>();
+
+        [Header("Tầng phẳng (tool tự bake — runtime đọc ở đây)")]
+        [Tooltip("ownerId từng ô, index = y * gridSize + x. Tool tự bake sau Import/Extract/Vá.")]
+        public int[] ownerIds = new int[0];
+        [Tooltip("Màu hiển thị từng ô, index = y * gridSize + x.")]
+        public Color32[] displayPx = new Color32[0];
 
         // Lookup runtime, không serialize.
         private Dictionary<Vector2Int, int> _lookup;
@@ -45,6 +54,7 @@ namespace _Game.Scripts
         {
             get
             {
+                if (HasFlat) return gridSize * gridSize;
                 int n = 0;
                 if (entries != null)
                     foreach (var e in entries)
@@ -54,11 +64,65 @@ namespace _Game.Scripts
         }
 
         public bool IsValid => gridSize > 0
-            && entries != null
-            && entries.Count > 0
-            && TotalCellCount == gridSize * gridSize;
+            && (HasFlat || (entries != null && entries.Count > 0 && TotalCellCount == gridSize * gridSize));
 
         public bool HasDisplayColors => IsValid;
+
+        /// <summary>Tầng phẳng đủ dùng không (đúng grid*grid cả 2 mảng).</summary>
+        public bool HasFlat =>
+            ownerIds != null && displayPx != null &&
+            gridSize > 0 &&
+            ownerIds.Length == gridSize * gridSize &&
+            displayPx.Length == ownerIds.Length;
+
+        /// <summary>
+        /// Bake tầng phẳng từ entries (tool gọi sau mỗi lần ghi).
+        /// index = y * gridSize + x; y = index / gridSize; x = index % gridSize.
+        /// </summary>
+        public void BakeFlat()
+        {
+            int n = gridSize * gridSize;
+            ownerIds = new int[n];
+            displayPx = new Color32[n];
+            for (int i = 0; i < n; i++) { ownerIds[i] = (int)YarnColor.None; displayPx[i] = new Color32(255, 255, 255, 255); }
+            if (entries == null) return;
+            foreach (var e in entries)
+            {
+                if (e.cells == null) continue;
+                var px = e.displayColor;
+                px.a = 1f;
+                var c32 = (Color32)px;
+                foreach (var cell in e.cells)
+                {
+                    if (cell.x < 0 || cell.y < 0 || cell.x >= gridSize || cell.y >= gridSize) continue;
+                    int idx = cell.y * gridSize + cell.x;
+                    ownerIds[idx] = (int)e.colorId;
+                    displayPx[idx] = c32;
+                }
+            }
+            _lookup = null;
+        }
+
+        /// <summary>
+        /// Bake tầng phẳng TRỰC TIẾP từ mảng (không qua list Vector2).
+        /// owners[i]/displays[i] với i = y * gridSize + x. Tool gọi sau mỗi lần ghi.
+        /// </summary>
+        public void BakeFlatArrays(YarnColor[] owners, Color[] displays)
+        {
+            int n = gridSize * gridSize;
+            ownerIds = new int[n];
+            displayPx = new Color32[n];
+            for (int i = 0; i < n; i++)
+            {
+                ownerIds[i] = (owners != null && i < owners.Length) ? (int)owners[i] : (int)YarnColor.None;
+                var c = (displays != null && i < displays.Length) ? displays[i] : Color.white;
+                c.a = 1f;
+                displayPx[i] = (Color32)c;
+            }
+            if (entries == null) entries = new List<ColorCellEntry>();
+            else entries.Clear(); // bỏ list Vector2 — phẳng là nguồn thật
+            _lookup = null;
+        }
 
         private void EnsureLookup()
         {
@@ -92,9 +156,10 @@ namespace _Game.Scripts
         public YarnColor GetColorId(int x, int y)
         {
             if (!IsValid) return YarnColor.None;
-            EnsureLookup();
             x = Mathf.Clamp(x, 0, gridSize - 1);
             y = Mathf.Clamp(y, 0, gridSize - 1);
+            if (HasFlat) return (YarnColor)ownerIds[y * gridSize + x];
+            EnsureLookup();
             if (_lookup.TryGetValue(new Vector2Int(x, y), out int i)
                 && i >= 0 && i < entries.Count)
                 return entries[i].colorId;
@@ -104,9 +169,15 @@ namespace _Game.Scripts
         public Color GetDisplayColor(int x, int y)
         {
             if (!IsValid) return Color.white;
-            EnsureLookup();
             x = Mathf.Clamp(x, 0, gridSize - 1);
             y = Mathf.Clamp(y, 0, gridSize - 1);
+            if (HasFlat)
+            {
+                var c = (Color)displayPx[y * gridSize + x];
+                c.a = 1f;
+                return c;
+            }
+            EnsureLookup();
             if (_lookup.TryGetValue(new Vector2Int(x, y), out int i)
                 && i >= 0 && i < entries.Count)
             {
@@ -117,24 +188,42 @@ namespace _Game.Scripts
             return Color.white;
         }
 
-        /// <summary>Các màu có trong ma trận (theo thứ tự entries).</summary>
+        /// <summary>Các màu có trong ma trận (đếm thẳng mảng id phẳng).</summary>
         public List<YarnColor> GetColors()
         {
             var list = new List<YarnColor>();
+            if (HasFlat)
+            {
+                foreach (var id in ownerIds)
+                {
+                    var c = (YarnColor)id;
+                    if (!list.Contains(c)) list.Add(c);
+                }
+                list.Sort((a, b) => ((int)a).CompareTo((int)b));
+                return list;
+            }
             if (entries == null) return list;
             foreach (var e in entries)
                 if (!list.Contains(e.colorId)) list.Add(e.colorId);
             return list;
         }
 
-        /// <summary>Số ô của 1 màu GỐC (cộng dồn mọi entry shading cùng colorId).</summary>
+        /// <summary>Số ô của 1 màu GỐC (đếm thẳng mảng id phẳng).</summary>
         public int GetCellCount(YarnColor color)
         {
+            if (HasFlat)
+            {
+                int n = 0;
+                int id = (int)color;
+                foreach (var o in ownerIds)
+                    if (o == id) n++;
+                return n;
+            }
             if (entries == null) return 0;
-            int n = 0;
+            int m = 0;
             foreach (var e in entries)
-                if (e.colorId == color) n += e.cells != null ? e.cells.Count : 0;
-            return n;
+                if (e.colorId == color) m += e.cells != null ? e.cells.Count : 0;
+            return m;
         }
 
 #if UNITY_EDITOR

@@ -26,3 +26,4 @@ MonoBehaviour:
   holdThreshold: 0.3
   numRotate: 1
   timeRotate: 1.5
+  failOfferLevel: 10

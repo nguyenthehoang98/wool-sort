@@ -11,7 +11,7 @@ namespace _Game.Scripts
 
         [Header("Spawn Yarn Part Scale")]
         [Tooltip("Scale so với layer trước")]
-        public float growScale = 0.96f;
+        public float growScale = 0.72f;
         [Tooltip("Scale ngay khi mới khởi tạo so với khi grow")]
         public float initialInnerScale = 0.8f;
         [Tooltip("Thời gian animation grow (giây)")]

@@ -388,9 +388,18 @@ namespace _Game.Scripts.Gameplay
                     leanPinchScale.enabled = true;
                 });
 
-            // --- Reposition tween ---
-            // 1) tính center
-            Vector3 centerLocal = CalculateCenterOfActiveParts();
+            // --- Reposition tween (KHÓA CỨNG: chỉ zoom, model đứng yên.
+            // Muốn dời lại thì bật AutoZoomRecenter = true.)
+            const bool AutoZoomRecenter = false;
+            if (!AutoZoomRecenter)
+                return;
+            // 1) tính center (hết part hoặc còn ≤2 part sót thì giữ nguyên vị trí)
+            if (!TryGetActiveCenter(out Vector3 centerLocal, out int centerCount) || centerCount <= 2)
+            {
+                _Game.Scripts.LevelDebugLog.Log($"[AutoZoom] Recenter bỏ qua (centerCount={centerCount}) — giữ nguyên vị trí.");
+                return;
+            }
+            _Game.Scripts.LevelDebugLog.Log($"[AutoZoom] Dời model theo {centerCount} part, tâm=({centerLocal.x:F2},{centerLocal.y:F2}).");
             centerToDraw = targetModelTransform.TransformPoint(centerLocal);
 
             // 2) Tính vị trí mới 
@@ -413,8 +422,14 @@ namespace _Game.Scripts.Gameplay
         }
 #endif
 
-        private Vector3 CalculateCenterOfActiveParts()
+        /// <summary>
+        /// Tính tâm các part ngoài đang hoạt động. Hết part thì trả false
+        /// (caller giữ nguyên vị trí, không được rào về origin).
+        /// </summary>
+        private bool TryGetActiveCenter(out Vector3 centerLocal, out int partCount)
         {
+            centerLocal = Vector3.zero;
+            partCount = 0;
             partCache.Clear();
             // Lấy tất cả YarnPart active dưới model
             partCache.AddRange(
@@ -432,9 +447,10 @@ namespace _Game.Scripts.Gameplay
                 .ToList();
 
             var useList = outerParts.Count > 0 ? outerParts : partCache;
-            // 2) Nếu vẫn không có phần tử nào thì center = (0,0)
+            // 2) Vẫn không có phần tử nào -> báo hết, caller tự giữ vị trí cũ
             if (useList.Count == 0)
-                return Vector3.zero;
+                return false;
+            partCount = useList.Count;
 
             // 3) Tính trung bình world-space (vì nếu dùng local thì bị ảnh hưởng bởi group)
             Vector3 sum = Vector3.zero;
@@ -444,7 +460,8 @@ namespace _Game.Scripts.Gameplay
 
             // 4) Convert về local của targetModelTransform, và zero luôn z
             var local = targetModelTransform.InverseTransformPoint(worldCenter);
-            return new Vector3(local.x, local.y, 0f);
+            centerLocal = new Vector3(local.x, local.y, 0f);
+            return true;
         }
 
         public void React(in SlotFilledEvent e)
