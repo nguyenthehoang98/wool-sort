@@ -30,7 +30,7 @@ public sealed class LevelImageMatrixTool : EditorWindow
     private int selectedLevelIndex;
     private List<string> levelNames = new List<string>();
 
-    [MenuItem("Tools/Puzzle/Extract ảnh thành ma trận màu", false, 12)]
+    [MenuItem("Tools/Puzzle/5. Extract ảnh thành ma trận màu", false, 5)]
     private static void Open() => GetWindow<LevelImageMatrixTool>("Extract ma trận màu");
 
     private void OnEnable()

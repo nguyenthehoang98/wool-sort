@@ -63,7 +63,7 @@ public class ColorPromptWindow : EditorWindow
     private Vector2 _scrollPosition;
     private string _search = "";
 
-    [MenuItem("Tools/Color Prompt Generator")]
+    [MenuItem("Tools/Puzzle/6. Tao prompt anh level (copy)", false, 6)]
     public static void ShowWindow()
     {
         var window = GetWindow<ColorPromptWindow>();
@@ -164,12 +164,13 @@ public class ColorPromptWindow : EditorWindow
 
         var filtered = string.IsNullOrEmpty(_search) ? _levels : _levels.Where(s => s.levelName.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 
-        foreach (var stats in filtered)
+        for (int i = 0; i < filtered.Count; i++)
         {
+            var stats = filtered[i];
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            // Header
+            // Header (đánh số thứ tự để chọn nhanh)
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label($"{stats.levelName}", EditorStyles.boldLabel, GUILayout.Width(130));
+            GUILayout.Label($"{i + 1}. {stats.levelName}", EditorStyles.boldLabel, GUILayout.Width(130));
             GUILayout.Label($"outer:{stats.outerPartCount} spawn:{stats.totalSpawnCount} mau:{stats.totalOccurrences}", EditorStyles.miniLabel, GUILayout.Width(180));
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Copy Prompt", GUILayout.Width(100), GUILayout.Height(22)))
