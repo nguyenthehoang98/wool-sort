@@ -104,6 +104,14 @@ public sealed class BoxImageColorValidator : EditorWindow
                 AutoFixRandomPool();
         }
 
+        if (GUILayout.Button("Vá màu thiếu vào matrix (lấy ô từ màu nhiều nhất)", GUILayout.Height(28)))
+        {
+            if (EditorUtility.DisplayDialog("Vá màu thiếu?",
+                "Với mỗi level có màu 0 ô (box màu đó đầy sẽ bắn rỗng), tool lấy vài ô từ màu nhiều nhất sang (vài pixel, mắt thường không thấy).\nMuốn đặt đúng vị trí thì sang tab 5 sửa JSON tay.\nTiếp tục?",
+                "Vá luôn", "Hủy"))
+                AutoFixMissingColors();
+        }
+
         GUILayout.Space(4);
         GUILayout.Label("BƯỚC 2 — BOX ẢNH (ma trận màu, texture, chia ô)", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
@@ -380,7 +388,7 @@ public sealed class BoxImageColorValidator : EditorWindow
                     errs.Add($"Ma trận có màu {c} ({matrix.GetCellCount(c)} ô) nhưng level không có sợi nào màu đó — extract lại sau khi sửa level.");
             foreach (var kv in realForMatrix)
                 if (!matrixColors.Contains(kv.Key))
-                    errs.Add($"Màu {kv.Key} ({kv.Value} sợi) không có trong ma trận — bắn lên sẽ rỗng, extract lại ảnh.");
+                    errs.Add($"Màu {kv.Key} ({kv.Value} sợi) không có trong ma trận — box màu này đầy sẽ bắn rỗng (không crash, chỉ thiếu pixel ảnh). Sửa ở MA TRẬN: tab 5 bấm 'Vá màu thiếu' (lấy 1 ô từ màu nhiều nhất) hoặc Export JSON -> gán vài ô sang {kv.Key} -> Import. Extract lại chỉ có tác dụng nếu ảnh gốc vốn có vùng {kv.Key}.");
             if (!matrixDisplay)
                 errs.Add($"Ma trận {levelName} thiếu màu hiển thị từng ô — extract lại để dời ảnh khỏi Resources.");
         }
@@ -744,6 +752,134 @@ public sealed class BoxImageColorValidator : EditorWindow
         AssetDatabase.Refresh();
         sb.AppendLine(fixedLevelCount == 0 ? "Pool mọi level đã khớp demand." : $"Đã sửa pool {fixedLevelCount} level. Bấm Quét full để kiểm tra lại (có thể còn lẻ %3 -> chạy tiếp Sửa %3).");
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Wrapper UI (tab 3): vá màu thiếu cho TẤT CẢ level (chung lõi với nút Vá ở tab 5).
+    /// </summary>
+    private void AutoFixMissingColors()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("=== VÁ MÀU THIẾU VÀO MATRIX (mọi level) ===");
+        int fixedLevelCount = 0;
+        var levelPaths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .OrderBy(p => p)
+            .ToList();
+        foreach (var path in levelPaths)
+        {
+            string levelName = Path.GetFileNameWithoutExtension(path);
+            var (patched, log) = FixMissingColorSingle(levelName);
+            if (!string.IsNullOrEmpty(log)) sb.Append(log);
+            if (patched) fixedLevelCount++;
+        }
+        sb.AppendLine(fixedLevelCount == 0 ? "Mọi level đã đủ màu." : $"Đã vá {fixedLevelCount} level. Bấm Quét full để kiểm tra lại.");
+        report = sb.ToString() + "\n" + ScanAllLevels(out okLevelCount, out errorLevelCount);
+        Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Lõi dùng chung tab 3 + tab 5: màu nào của level mà 0 ô thì lấy ô từ màu nhiều nhất sang.
+    /// Mỗi màu cần ít nhất (sợi/3) ô để mỗi box đều có batch để tô.
+    /// Trả (patched, log): patched=true khi thật sự sửa matrix; log=null khi không thiếu gì.
+    /// </summary>
+    public static (bool patched, string log) FixMissingColorSingle(string levelName)
+    {
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        if (db == null) return (false, $"[LỖI] Không thấy Database: {DatabasePath}\n");
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"Assets/Resources/LevelColorMatrix/{levelName}.asset");
+        if (matrix == null || !matrix.IsValid) return (false, $"[BỎ QUA] {levelName}: chưa có matrix hợp lệ — Extract/Import trước.\n");
+        var sb = new StringBuilder();
+        if (!RefreshHolderCountsForFix(levelName, out var yarnCounts, sb))
+            return (false, $"[LỖI] {levelName}: level không có màu nào.\n");
+        int g = matrix.gridSize;
+
+        var owners = new YarnColor[g * g];
+        var displays = new Color[g * g];
+        var cellsOf = new Dictionary<YarnColor, List<Vector2Int>>();
+        for (int y = 0; y < g; y++)
+            for (int x = 0; x < g; x++)
+            {
+                owners[y * g + x] = matrix.GetColorId(x, y);
+                displays[y * g + x] = matrix.GetDisplayColor(x, y);
+                var o = owners[y * g + x];
+                if (!cellsOf.ContainsKey(o)) cellsOf[o] = new List<Vector2Int>();
+                cellsOf[o].Add(new Vector2Int(x, y));
+            }
+        int Cells(YarnColor c) => cellsOf.TryGetValue(c, out var l) ? l.Count : 0;
+
+        var missing = new List<YarnColor>();
+        foreach (var kv in yarnCounts)
+            if (kv.Value > 0 && Cells(kv.Key) == 0) missing.Add(kv.Key);
+        if (missing.Count == 0) return (false, null);
+
+        var sb2 = new StringBuilder();
+        sb2.AppendLine($"[VÁ] {levelName}: thiếu {missing.Count} màu.");
+        foreach (var m in missing.OrderByDescending(m => yarnCounts[m]))
+        {
+            int need = Math.Max(1, Mathf.CeilToInt(yarnCounts[m] / 3f));
+            // Màu cho: nhiều ô nhất mà sau khi cho vẫn đủ batch của nó.
+            YarnColor donor = YarnColor.None;
+            int donorCells = -1;
+            foreach (var kv in cellsOf)
+            {
+                int yarn = yarnCounts.TryGetValue(kv.Key, out var y) ? y : 0;
+                int keep = Math.Max(1, Mathf.CeilToInt(yarn / 3f));
+                if (kv.Value.Count - need >= keep && kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
+            }
+            if (donor == YarnColor.None)
+            {
+                // Không ai đủ cho mà vẫn đủ batch -> lấy của đứa nhiều nhất (báo rõ).
+                foreach (var kv in cellsOf)
+                    if (kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
+                sb2.AppendLine($"  [CHÚ Ý] {m} lấy {need} ô của {donor} nhưng {donor} có thể thiếu batch — kiểm tra lại.");
+            }
+            var show = LevelColorMatrixUtility.RefColor(db, m);
+            show.a = 1f;
+            int take = Math.Min(need, cellsOf[donor].Count);
+            for (int i = 0; i < take; i++)
+            {
+                var cell = cellsOf[donor][0];
+                cellsOf[donor].RemoveAt(0);
+                owners[cell.y * g + cell.x] = m;
+                displays[cell.y * g + cell.x] = show;
+                if (!cellsOf.ContainsKey(m)) cellsOf[m] = new List<Vector2Int>();
+                cellsOf[m].Add(cell);
+            }
+            sb2.AppendLine($"  - {m} ({yarnCounts[m]} sợi): lấy {take} ô từ {donor}.");
+        }
+
+        matrix.BakeFlatArrays(owners, displays);
+        EditorUtility.SetDirty(matrix);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        sb2.AppendLine("[OK] Đã vá xong — quét Validate lại. Muốn đẹp thì sang tab 5 Export JSON sửa tay vị trí ô.");
+        return (true, sb.ToString() + sb2.ToString());
+    }
+
+    /// <summary>Đếm lại holder từ part thật + lưu prefab (chống holder stale). Dùng riêng cho vá matrix.</summary>
+    private static bool RefreshHolderCountsForFix(string levelName, out Dictionary<YarnColor, int> yarnCounts, StringBuilder log)
+    {
+        yarnCounts = new Dictionary<YarnColor, int>();
+        string path = $"Assets/Resources/Levels/{levelName}.prefab";
+        GameObject root = null;
+        try
+        {
+            root = PrefabUtility.LoadPrefabContents(path);
+            if (root == null) return false;
+            var holder = root.GetComponent<LevelYarnInfoHolder>();
+            if (holder == null) holder = root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+            if (holder == null) return false;
+            holder.UpdateDebugInfo();
+            EditorUtility.SetDirty(holder);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            if (holder.colorCountEntries != null)
+                foreach (var e in holder.colorCountEntries)
+                    if (e.count > 0) yarnCounts[e.color] = e.count;
+            log?.AppendLine($"  (holder {levelName} đã tự đếm lại + lưu)");
+            return yarnCounts.Count > 0;
+        }
+        finally { if (root != null) PrefabUtility.UnloadPrefabContents(root); }
     }
 
     private static string AutoFixPerColorDiv3Core()

@@ -71,6 +71,8 @@ public sealed class LevelImageMatrixTool : EditorWindow
         EditorGUILayout.HelpBox(
             "Mỗi ảnh được extract thành lưới chuẩn (mỗi ô = 1 YarnColor gần nhất)\n" +
             "(pixel không khớp 100% dataset sẽ được duyệt tìm màu gần nhất).\n" +
+            "Extract tự gom điểm ảnh giống nhau thành index + palette gọn như JSON mẫu\n" +
+            "(đồng thời nạp JSON đó vào ô text + copy clipboard để sửa tiếp).\n" +
             "Runtime JamImage ưu tiên đọc file này, không đọc trực tiếp ảnh nữa.",
             MessageType.Info);
 
@@ -108,6 +110,8 @@ public sealed class LevelImageMatrixTool : EditorWindow
         if (GUILayout.Button("Tải lại danh sách level"))
             RefreshLevelNames();
 
+        quantizeThreshold = EditorGUILayout.Slider("Ngưỡng gom màu (cao = ít nhóm)", quantizeThreshold, 0.03f, 0.30f);
+        EditorGUILayout.HelpBox("Ảnh AI nhiều nhiễu/gradient: ngưỡng 0.07 ra ~100 nhóm, 0.15 ra ~20 nhóm (đo trên Level1). Kéo cao nếu palette còn lẻ tẻ, kéo thấp nếu shading đẹp bị gộp mất.", MessageType.None);
         if (GUILayout.Button("Extract level đã chọn", GUILayout.Height(36)))
         {
             if (sourceTexture == null || levelNames.Count == 0)
@@ -386,7 +390,14 @@ public sealed class LevelImageMatrixTool : EditorWindow
             AssetDatabase.CreateFolder("Assets/Resources", "LevelColorMatrix");
         try
         {
-            report = ExtractWithTexture(levelName, tex, db);
+            report = ExtractWithTexture(levelName, tex, db, out string groupedJson, quantizeThreshold);
+            if (!string.IsNullOrEmpty(groupedJson))
+            {
+                // Extract ra JSON gom nhóm đúng format mẫu: nạp vào ô text + copy clipboard để sửa tiếp.
+                jsonText = groupedJson;
+                EditorGUIUtility.systemCopyBuffer = groupedJson;
+                report += "\n[JSON] Đã nạp JSON gom nhóm vào ô text + copy clipboard (giống mẫu). Sửa hex/owners rồi Import nếu muốn.";
+            }
         }
         catch (Exception ex)
         {
@@ -399,9 +410,10 @@ public sealed class LevelImageMatrixTool : EditorWindow
         Debug.Log(report);
     }
 
-    private static string ExtractWithTexture(string levelName, Texture2D tex, YarnColorDatabase db)
+    private static string ExtractWithTexture(string levelName, Texture2D tex, YarnColorDatabase db, out string groupedJson, float quantizeThreshold)
     {
         var sb = new StringBuilder();
+        groupedJson = null;
 
         // 1. Dataset = các màu level đang dùng (đúng nguồn runtime JamImage.Initialize dùng).
         // Tự đếm lại + lưu holder trước (chống stale).
@@ -519,6 +531,20 @@ public sealed class LevelImageMatrixTool : EditorWindow
             ownerCounts[c]++;
         }
 
+        // 4d. Gom màu giống nhau -> palette gọn như JSON mẫu:
+        // mỗi (màu gốc + cụm shade gần nhau) thành 1 index. Display lưu centroid cụm
+        // để JSON extract ra gọn (vài id thay vì hàng nghìn hex lẻ từng ô),
+        // Export JSON sau này cũng gọn, runtime in đúng màu đã gom.
+        QuantizeShows(flatOwners, flatShows, quantizeThreshold, out var cellId, out var centroidById, out var ownerById);
+        for (int i = 0; i < flatShows.Length; i++)
+        {
+            var c = centroidById[cellId[i]];
+            c.a = 1f;
+            flatShows[i] = c;
+        }
+        groupedJson = BuildGroupedJson(cellId, centroidById, ownerById);
+        sb.AppendLine($"  (đã gom {centroidById.Count} nhóm màu giống nhau -> JSON mẫu, ngưỡng {quantizeThreshold:0.00})");
+
         // 5. Lưu file matrix
         string assetPath = $"{MatrixFolder}/{levelName}.asset";
         var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>(assetPath);
@@ -551,6 +577,85 @@ public sealed class LevelImageMatrixTool : EditorWindow
     // ---------- JSON tay: palette (màu in) + owners (màu gốc matching) ----------
     // LƯU Ý: Unity JsonUtility KHÔNG serialize Dictionary {"1":"#..."} nên
     // import/export bên dưới tự parse/build chuỗi JSON tay (Regex + StringBuilder).
+
+    /// <summary>Ngưỡng gom shade (khoảng cách RGB 0-1). Cùng màu gốc + gần nhau hơn ngưỡng thì chung 1 palette id.</summary>
+    private float quantizeThreshold = 0.15f;
+
+    /// <summary>
+    /// Gom display từng ô thành cụm: cùng owner + màu gần nhau (euclidean RGB &lt; ngưỡng) -> chung id.
+    /// Trả cellId từng ô (1-based như JSON mẫu), centroid + owner từng cụm.
+    /// </summary>
+    private static void QuantizeShows(YarnColor[] owners, Color[] shows, float threshold, out int[] cellId, out Dictionary<int, Color> centroidById, out Dictionary<int, YarnColor> ownerById)
+    {
+        int n = owners.Length;
+        cellId = new int[n];
+        centroidById = new Dictionary<int, Color>();
+        ownerById = new Dictionary<int, YarnColor>();
+        var centroids = new List<Color>();
+        var centroidOwners = new List<YarnColor>();
+        var counts = new List<int>();
+        float th2 = threshold * threshold;
+        for (int i = 0; i < n; i++)
+        {
+            var o = owners[i];
+            var c = shows[i];
+            int best = -1;
+            float bestD = th2;
+            for (int k = 0; k < centroids.Count; k++)
+            {
+                if (centroidOwners[k] != o) continue;
+                var ce = centroids[k];
+                float dr = c.r - ce.r, dg = c.g - ce.g, db = c.b - ce.b;
+                float d = dr * dr + dg * dg + db * db;
+                if (d < bestD) { bestD = d; best = k; }
+            }
+            if (best < 0)
+            {
+                best = centroids.Count;
+                centroids.Add(c);
+                centroidOwners.Add(o);
+                counts.Add(0);
+            }
+            // Cập nhật centroid = trung bình chạy của cụm.
+            int cnt = counts[best];
+            centroids[best] = new Color(
+                (centroids[best].r * cnt + c.r) / (cnt + 1),
+                (centroids[best].g * cnt + c.g) / (cnt + 1),
+                (centroids[best].b * cnt + c.b) / (cnt + 1), 1f);
+            counts[best] = cnt + 1;
+            cellId[i] = best + 1;
+        }
+        for (int k = 0; k < centroids.Count; k++)
+        {
+            centroidById[k + 1] = centroids[k];
+            ownerById[k + 1] = centroidOwners[k];
+        }
+    }
+
+    /// <summary>Dựng JSON đúng format mẫu (palette + owners + matrix hàng trên trước) từ cụm đã gom.</summary>
+    private static string BuildGroupedJson(int[] cellId, Dictionary<int, Color> centroidById, Dictionary<int, YarnColor> ownerById)
+    {
+        var dto = new MatrixJsonDto
+        {
+            width = Grid,
+            height = Grid,
+            palette = new Dictionary<string, string>(),
+            owners = new Dictionary<string, string>(),
+            matrix = new List<List<int>>()
+        };
+        foreach (var kv in centroidById)
+            dto.palette[kv.Key.ToString()] = "#" + ColorUtility.ToHtmlStringRGB(kv.Value);
+        foreach (var kv in ownerById)
+            dto.owners[kv.Key.ToString()] = kv.Value.ToString();
+        for (int r = 0; r < Grid; r++)
+        {
+            int y = Grid - 1 - r; // hàng 0 = trên cùng như JSON mẫu
+            var row = new List<int>();
+            for (int x = 0; x < Grid; x++) row.Add(cellId[y * Grid + x]);
+            dto.matrix.Add(row);
+        }
+        return BuildMatrixJsonString(dto);
+    }
 
     private sealed class MatrixJsonDto
     {
@@ -741,82 +846,16 @@ public sealed class LevelImageMatrixTool : EditorWindow
     }
 
     /// <summary>
-    /// Vá màu thiếu: màu nào của level mà 0 ô thì lấy ô từ màu nhiều nhất sang.
-    /// Mỗi màu cần ít nhất (sợi/3) ô để mỗi box đều có batch để tô.
+    /// Vá màu thiếu cho 1 level (tab 5): gọi chung lõi tab 3 để khỏi lệch logic 2 nơi.
     /// </summary>
     private void FixMissingColors(string levelName)
     {
-        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
-        if (db == null) { report = "[LỖI] Không thấy Database: " + DatabasePath; return; }
-        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{levelName}.asset");
-        if (matrix == null || !matrix.IsValid) { report = "[LỖI] Chưa có matrix hợp lệ cho " + levelName + " — Extract/Import trước."; return; }
-        var sb = new StringBuilder();
-        if (!RefreshHolderCounts(levelName, out _, out var yarnCounts, sb))
-        { report = "[LỖI] " + levelName + ": level không có màu nào."; return; }
-        int g = matrix.gridSize;
-
-        var owners = new YarnColor[g * g];
-        var displays = new Color[g * g];
-        var cellsOf = new Dictionary<YarnColor, List<Vector2Int>>();
-        for (int y = 0; y < g; y++)
-            for (int x = 0; x < g; x++)
-            {
-                owners[y * g + x] = matrix.GetColorId(x, y);
-                displays[y * g + x] = matrix.GetDisplayColor(x, y);
-                var o = owners[y * g + x];
-                if (!cellsOf.ContainsKey(o)) cellsOf[o] = new List<Vector2Int>();
-                cellsOf[o].Add(new Vector2Int(x, y));
-            }
-        int Cells(YarnColor c) => cellsOf.TryGetValue(c, out var l) ? l.Count : 0;
-
-        var missing = new List<YarnColor>();
-        foreach (var kv in yarnCounts)
-            if (kv.Value > 0 && Cells(kv.Key) == 0) missing.Add(kv.Key);
-        if (missing.Count == 0) { report = $"[OK] {levelName}: không thiếu màu nào."; return; }
-
-        var sb2 = new StringBuilder();
-        sb2.AppendLine($"[VÁ] {levelName}: thiếu {missing.Count} màu.");
-        foreach (var m in missing.OrderByDescending(m => yarnCounts[m]))
-        {
-            int need = Math.Max(1, Mathf.CeilToInt(yarnCounts[m] / 3f));
-            // Cho màu cho: nhiều ô nhất mà sau khi cho vẫn đủ batch của nó.
-            YarnColor donor = YarnColor.None;
-            int donorCells = -1;
-            foreach (var kv in cellsOf)
-            {
-                int yarn = yarnCounts.TryGetValue(kv.Key, out var y) ? y : 0;
-                int keep = Math.Max(1, Mathf.CeilToInt(yarn / 3f));
-                if (kv.Value.Count - need >= keep && kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
-            }
-            if (donor == YarnColor.None)
-            {
-                // Không ai đủ cho mà vẫn đủ batch -> lấy của đứa nhiều nhất (báo rõ).
-                foreach (var kv in cellsOf)
-                    if (kv.Value.Count > donorCells) { donor = kv.Key; donorCells = kv.Value.Count; }
-                sb2.AppendLine($"  [CHÚ Ý] {m} lấy {need} ô của {donor} nhưng {donor} có thể thiếu batch — kiểm tra lại.");
-            }
-            var show = LevelColorMatrixUtility.RefColor(db, m);
-            show.a = 1f;
-            int take = Math.Min(need, cellsOf[donor].Count);
-            for (int i = 0; i < take; i++)
-            {
-                var cell = cellsOf[donor][0];
-                cellsOf[donor].RemoveAt(0);
-                owners[cell.y * g + cell.x] = m;
-                displays[cell.y * g + cell.x] = show;
-                if (!cellsOf.ContainsKey(m)) cellsOf[m] = new List<Vector2Int>();
-                cellsOf[m].Add(cell);
-            }
-            sb2.AppendLine($"  - {m} ({yarnCounts[m]} sợi): lấy {take} ô từ {donor}.");
-        }
-
-        matrix.BakeFlatArrays(owners, displays);
-        EditorUtility.SetDirty(matrix);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        cachedLevel = null;
-        sb2.AppendLine("[OK] Đã vá xong — quét Validate lại. Muốn đẹp thì Export JSON sửa tay vị trí ô.");
-        report = sb.ToString() + sb2.ToString();
+        var (_, log) = BoxImageColorValidator.FixMissingColorSingle(levelName);
+        cachedLevel = null; // ép vẽ lại preview với matrix mới
+        if (string.IsNullOrEmpty(log))
+            report = $"[OK] {levelName}: không thiếu màu nào.";
+        else
+            report = log;
         Debug.Log(report);
     }
 
