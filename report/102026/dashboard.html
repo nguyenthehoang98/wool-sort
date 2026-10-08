@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wool Sort — Dashboard báo cáo T10/2026</title>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--ink:#1c2433;--mut:#64748b;--line:#e5e9f2;--green:#16a34a;--amber:#d97706;--red:#dc2626;--blue:#2563eb;--violet:#7c3aed}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+  header{background:linear-gradient(120deg,#1e293b,#334155 60%,#7c3aed);color:#fff;padding:28px 24px}
+  header h1{font-size:24px} header p{opacity:.85;font-size:14px;margin-top:4px}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .kpi b{font-size:26px;display:block} .kpi span{font-size:12px;color:var(--mut)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
+  .card h2{font-size:17px;margin-bottom:10px}
+  .bar{height:12px;background:#e8ecf4;border-radius:8px;overflow:hidden;margin:6px 0 2px}
+  .bar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--violet))}
+  .grow{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;padding:5px 0;font-size:14px}
+  .grow small{color:var(--mut)} .grow b{text-align:right}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
+  .ok{background:#dcfce7;color:#15803d}.mid{background:#fef3c7;color:#b45309}.no{background:#fee2e2;color:#b91c1c}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f1f5f9;font-size:12px;text-transform:uppercase;color:var(--mut)}
+  .filters{margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .filters button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 14px;font-size:13px;cursor:pointer}
+  .filters button.on{background:#1e293b;color:#fff;border-color:#1e293b}
+  .files{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .files a{display:block;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:11px 13px;text-decoration:none;color:var(--ink);font-size:13.5px}
+  .files a:hover{border-color:var(--blue)} .files a small{display:block;color:var(--mut);font-size:12px}
+  ol.plan li{margin:7px 0;font-size:14px} ol.plan small{color:var(--mut)}
+  ul.risk li{margin:6px 0;font-size:14px}
+  footer{color:var(--mut);font-size:12px;text-align:center;margin-top:20px}
+  .donut{display:flex;align-items:center;gap:16px}
+  .donut svg{flex:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🐑 Wool Sort — Dashboard báo cáo tháng 10/2026</h1>
+  <p>Ngày báo cáo 08/10/2026 · Nguồn: docs / ai-docs / gamedesign / code thực tế / git · Mở file này bằng browser là xem được, không cần mạng</p>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <div class="donut">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#e8ecf4" stroke-width="14"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#7c3aed" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="114.3 326.7" transform="rotate(-90 60 60)"/>
+        <text x="60" y="68" text-anchor="middle" font-size="22" font-weight="700" fill="#1c2433">35%</text>
+      </svg>
+      <div>
+        <h2>Tiến độ tổng vs kế hoạch 9 tuần</h2>
+        <p style="font-size:14px;color:var(--mut)">Core chơi được + 7 màn + pipeline tool xong. Còn thiếu toàn bộ hệ thống ngoài core (save, Home, booster, tutorial, shop, build). Có game chơi được, <b>chưa có sản phẩm phát hành được</b>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><b>7</b><span>màn chơi thật (L1–L7)</span></div>
+    <div class="kpi"><b>84×84</b><span>lưới ma trận ảnh/màn</span></div>
+    <div class="kpi"><b>5→7</b><span>slot chờ (khởi đầu→tối đa)</span></div>
+    <div class="kpi"><b>6000.3</b><span>Unity version</span></div>
+    <div class="kpi"><b>1</b><span>test tự động (PlayMode)</span></div>
+    <div class="kpi"><b>29</b><span>việc còn lại (file 08)</span></div>
+  </div>
+
+  <div class="card">
+    <h2>📁 Hồ sơ trong folder này (bấm để mở)</h2>
+    <div class="files">
+      <a href="01-tong-quan-tien-do.md"><b>01 · Tổng quan tiến độ</b><small>sếp đọc 2 phút: số liệu, đối chiếu 9 tuần, rủi ro</small></a>
+      <a href="02-tinh-nang-da-hoan-thanh-chi-tiet.md"><b>02 · Tính năng đã xong</b><small>kèm file:dòng chứng minh + stub đã biết</small></a>
+      <a href="03-con-thieu-theo-tai-lieu.md"><b>03 · Phần còn thiếu</b><small>gap theo 9 nhóm tài liệu</small></a>
+      <a href="04-ke-hoach-tiep-theo.md"><b>04 · Kế hoạch tiếp theo</b><small>4 giai đoạn + việc cần sếp quyết</small></a>
+      <a href="05-tai-lieu-thiet-ke-game-tom-tat.md"><b>05 · Game design tóm tắt</b><small>10 cụm flow người dùng, tiếng Việt</small></a>
+      <a href="06-tai-lieu-ky-thuat-khung.md"><b>06 · Tài liệu kỹ thuật</b><small>theo 10 cụm GDD + phụ lục AI/MCP</small></a>
+      <a href="07-bao-cao-ky-thuat-day-du.md"><b>07 · Báo cáo kỹ thuật đủ</b><small>11 nhóm A–K, feeling riêng nhóm C</small></a>
+      <a href="08-gdd-break-tinh-nang-lam-nhu-nao.md"><b>08 · Break task + cách làm</b><small>30 việc, file/hàm cụ thể</small></a>
+      <a href="workflow-gdd-woolsort.html"><b>🔗 Workflow GDD</b><small>diagram tương tác 10 cụm flow</small></a>
+      <a href="workflow-tech-woolsort.html"><b>🔗 Workflow Tech</b><small>diagram pipeline AI→Unity→game</small></a>
+      <a href="bao-cao-thang-10/index.html"><b>🔗 Trang báo cáo đã host</b><small>bản nhúng Notion</small></a>
+      <a href="2026-10-08%2010-37-23.mp4"><b>🎬 Video quay màn hình</b><small>11MB, demo gameplay</small></a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Mức hoàn thành theo nhóm</h2>
+    <div class="grow"><span>Core gameplay (luật, box, thắng/thua) <small>thiếu seed replay + nối economy</small></span><b>85%</b></div><div class="bar"><i style="width:85%"></i></div>
+    <div class="grow"><span>Content + pipeline (7 màn, Studio, validator) <small>Level6 chưa commit</small></span><b>90%</b></div><div class="bar"><i style="width:90%"></i></div>
+    <div class="grow"><span>Feeling (dissolve, rope, bounce, camera) <small>thiếu âm/rung, warning rỗng</small></span><b>70%</b></div><div class="bar"><i style="width:70%"></i></div>
+    <div class="grow"><span>UI/Navigation (HUD, Entry/Home, popup) <small>mới có Win/Lose cơ bản</small></span><b>15%</b></div><div class="bar"><i style="width:15%"></i></div>
+    <div class="grow"><span>Booster + Revive <small>mới ở comment</small></span><b>0%</b></div><div class="bar"><i style="width:2%"></i></div>
+    <div class="grow"><span>Save + Coin/Heart/Daily <small>chưa có file save</small></span><b>0%</b></div><div class="bar"><i style="width:2%"></i></div>
+    <div class="grow"><span>Tutorial <small>1 marker data</small></span><b>5%</b></div><div class="bar"><i style="width:5%"></i></div>
+    <div class="grow"><span>Shop coin + log local (demo, bỏ ads/IAP) <small>chưa làm</small></span><b>0%</b></div><div class="bar"><i style="width:2%"></i></div>
+    <div class="grow"><span>Cài đặt/ngôn ngữ/âm thanh <small>key bị comment, SFX rỗng</small></span><b>0%</b></div><div class="bar"><i style="width:2%"></i></div>
+    <div class="grow"><span>QA + build <small>1 PlayMode test, chưa máy thật/APK</small></span><b>10%</b></div><div class="bar"><i style="width:10%"></i></div>
+  </div>
+
+  <div class="card">
+    <h2>✅❌ Bảng tính năng (bấm nút để lọc)</h2>
+    <div class="filters">
+      <button class="on" data-f="all">Tất cả (30)</button>
+      <button data-f="ok">Đã xong (9)</button>
+      <button data-f="mid">Một phần (5)</button>
+      <button data-f="no">Còn thiếu (16)</button>
+    </div>
+    <table id="feat"><thead><tr><th>Tính năng</th><th>Tác dụng (1 dòng)</th><th>Trạng thái</th></tr></thead><tbody>
+      <tr data-s="ok"><td>Tap → slot</td><td>Bấm len bay đúng chỗ (box đầy nhất trước, hết thì chờ)</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Lớp len trong</td><td>Gỡ lớp ngoài lộ lớp trong, màu Fixed/random</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Hộp 3 slot + sinh hộp</td><td>Đầy 3 sợi cùng màu đóng nắp, ra hộp mới đúng luật ưu tiên</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Vùng chờ 5→7</td><td>Đỗ tạm khi hết hộp; đầy là thua; tự chảy ngược vào box</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Thắng/thua/chơi lại</td><td>Kết thúc ván, NEXT/RETRY, sự kiện phát 1 lần</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Tô ảnh 84×84</td><td>Hộp đầy bắn dây tô dần ảnh đúng màu</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>7 màn + Level Studio</td><td>Nội dung chơi + đồ nghề dựng/quét/tự sửa màn</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="mid"><td>Giữ-xem-trước + xoay/zoom</td><td>Nhìn trộm lớp trong; xoay/phóng bàn (recenter tắt cứng)</td><td><span class="badge mid">MỘT PHẦN</span></td></tr>
+      <tr data-s="mid"><td>Dissolve/rope/bounce/cảnh báo</td><td>Cảm giác gỡ len; warning còn rỗng, thiếu âm</td><td><span class="badge mid">MỘT PHẦN</span></td></tr>
+      <tr data-s="mid"><td>HUD + popup</td><td>Mới có tên màn + slider + Win/Lose cơ bản</td><td><span class="badge mid">MỘT PHẦN</span></td></tr>
+      <tr data-s="mid"><td>Validator content</td><td>Bắt lỗi màn trước build (thay thế 1 phần LevelDefinition)</td><td><span class="badge mid">MỘT PHẦN</span></td></tr>
+      <tr data-s="mid"><td>Test tự động</td><td>1 PlayMode test; thiếu suite + máy thật</td><td><span class="badge mid">MỘT PHẦN</span></td></tr>
+      <tr data-s="no"><td>Màn Entry + route</td><td>Loading rồi rẽ màn 1 → Gameplay, còn lại → Home</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Màn Home</td><td>Chọn màn, shop, menu, popup daily/settings</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Save game</td><td>Giữ tiến trình/tiền/cài đặt, tắt game không mất</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Coin/Heart/Daily</td><td>Thưởng/phạt, giới hạn lượt, điểm danh giữ chân</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Add Slot</td><td>+1 chỗ chờ lúc sắp thua (tối đa 7)</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Clean</td><td>Dọn vùng chờ vào hộp tạm, không mất sợi</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Magic Box</td><td>Hộp đầu thành cầu vồng nhận mọi màu</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Revive</td><td>Thua được cứu, giữ nguyên ván</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Tutorial chạy thật</td><td>Dạy tap/hộp/chờ qua 3 màn đầu, có skip</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Shop coin</td><td>Mua booster/tim bằng coin trong game</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Ngôn ngữ/âm/rung/cài đặt</td><td>Key text, cue theo sự kiện, toggle nhớ sau load</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Seed replay</td><td>Chơi lại cùng layout để QA lặp ván lỗi</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Log thống kê local</td><td>Ghi event làm bằng chứng QA/bảo vệ</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="no"><td>Test máy thật + APK</td><td>Chạy 7 màn trên máy Android, ra build + log</td><td><span class="badge no">THIẾU</span></td></tr>
+      <tr data-s="ok"><td>Tài liệu + diagram</td><td>8 file md + 2 workflow HTML + trang host + video</td><td><span class="badge ok">XONG</span></td></tr>
+      <tr data-s="ok"><td>Break task 30 việc</td><td>Việc nào làm như nào, thứ tự ưu tiên</td><td><span class="badge ok">XONG</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>🗓️ Thứ tự làm tiếp (đọc trên xuống)</h2>
+    <ol class="plan">
+      <li><b>Khóa core (1–2 ngày):</b> <small>commit Level6 · quét full 7 màn hết đỏ · chốt matrix-only · thêm seed pool</small></li>
+      <li><b>Feeling còn dở:</b> <small>nối warning, cue âm thanh, quyết định recenter</small></li>
+      <li><b>Thành demo được (1–2 tuần):</b> <small>save → Entry/Home → heart/coin tối thiểu → tutorial → test máy thật</small></li>
+      <li><b>Hoàn thiện:</b> <small>booster (AddSlot→Clean→Revive→MagicBox) → shop coin + daily → cài đặt → build APK</small></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Rủi ro cần biết</h2>
+    <ul class="risk">
+      <li>Replay chưa deterministic — cùng màn chơi lại ra layout khác, chặn QA tự động.</li>
+      <li>Chưa có save — tắt game mất hết, chặn phát hành.</li>
+      <li><code>Level6.prefab</code> đang sửa dở chưa commit.</li>
+      <li>Cần sếp chốt: trừ heart lúc nào, hết heart thì sao, replay màn cũ được gì, ma trận máy test.</li>
+    </ul>
+  </div>
+
+  <footer>Báo cáo 08/10/2026 · Wool Sort · Mở bằng browser, không cần mạng. File .md bấm vào xem text thô; diagram mở tương tác đầy đủ.</footer>
+</div>
+<script>
+document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const f=b.dataset.f;document.querySelectorAll('#feat tbody tr').forEach(r=>{r.style.display=(f==='all'||r.dataset.s===f)?'':'none'});
+});
+</script>
+</body>
+</html>
