@@ -190,9 +190,9 @@ namespace _Game.Scripts
                 }
                 else
                 {
-                    // Sample theo ti le de ho tro anh size bat ky (36x36, 512x512...)
-                    int sx = Mathf.Clamp(Mathf.RoundToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
-                    int sy = Mathf.Clamp(Mathf.RoundToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                    // Sample tâm ô bằng Floor (RoundToInt lệch nửa pixel khi ảnh đúng 84x84: ô x phải ra texel x).
+                    int sx = Mathf.Clamp(Mathf.FloorToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                    int sy = Mathf.Clamp(Mathf.FloorToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
                     runtimePixels[index] = targetTexture.GetPixel(sx, sy);
                 }
                 revealedCells[index] = true;
@@ -205,13 +205,22 @@ namespace _Game.Scripts
 
         private void MovePointerTo(int cellX, int cellY)
         {
-            if (pointer == null || runtimeSprite == null)
+            // pointer null trước đây return im lặng -> rope fallback về transform (pivot Board)
+            // nên dây đứng yên ở giữa. Báo lỗi rõ để thấy ngay trong Console.
+            if (pointer == null || colorTexture == null)
+            {
+                Debug.LogError("JamImage: pointer/colorTexture chưa gán — dây tô sẽ đứng ở pivot! Kéo Pointer (con của colorTexture) vào slot.", this);
                 return;
+            }
 
-            var bounds = runtimeSprite.bounds;
-            var x = Mathf.Lerp(bounds.min.x, bounds.max.x, (cellX + 0.5f) / GridSize);
-            var y = Mathf.Lerp(bounds.min.y, bounds.max.y, (cellY + 0.5f) / GridSize);
-            pointer.localPosition = new Vector3(x, y, pointer.localPosition.z);
+            // Map theo khung HÌNH ĐANG HIỆN (Renderer.bounds, world space), KHÔNG theo pixel sprite:
+            // scene đang override colorTexture (scale 8.64 -> 1, Simple -> Sliced 2.4) nên ảnh hiện
+            // to hơn sprite gốc nhiều — tính theo sprite space làm pointer chỉ quanh quẩn giữa pivot.
+            // Cách này đúng với mọi scale/drawMode, đổi Size/scale thoải mái dây vẫn bám đúng pixel thấy được.
+            var b = colorTexture.bounds;
+            float wx = Mathf.Lerp(b.min.x, b.max.x, (cellX + 0.5f) / GridSize);
+            float wy = Mathf.Lerp(b.min.y, b.max.y, (cellY + 0.5f) / GridSize);
+            pointer.position = new Vector3(wx, wy, pointer.position.z);
         }
 
         private void BuildCellOwners(IReadOnlyList<ColorCountEntry> levelColors)
@@ -238,8 +247,8 @@ namespace _Game.Scripts
             {
                 for (var cellX = 0; cellX < GridSize; cellX++)
                 {
-                    int sx = Mathf.Clamp(Mathf.RoundToInt((cellX + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
-                    int sy = Mathf.Clamp(Mathf.RoundToInt((cellY + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                    int sx = Mathf.Clamp(Mathf.FloorToInt((cellX + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                    int sy = Mathf.Clamp(Mathf.FloorToInt((cellY + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
                     var sample = targetTexture.GetPixel(sx, sy);
                     cellOwners.Add(FindClosestColor(sample, availableColors));
                 }
