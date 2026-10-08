@@ -96,6 +96,14 @@ public sealed class BoxImageColorValidator : EditorWindow
                 AutoFixDiv3();
         }
 
+        if (GUILayout.Button("Sửa pool random (khớp demand, giữ %3)", GUILayout.Height(28)))
+        {
+            if (EditorUtility.DisplayDialog("Sửa pool random?",
+                "Với mỗi level lệch demand/supply:\n- Thừa: bớt pool + bù inner Fixed cùng màu (giữ %3, tổng khớp).\n- Thiếu: dồn thêm vào 1 màu trong pool.\nXong chạy lại Sửa %3 nếu còn màu lẻ.\nTiếp tục?",
+                "Sửa luôn", "Hủy"))
+                AutoFixRandomPool();
+        }
+
         GUILayout.Space(4);
         GUILayout.Label("BƯỚC 2 — BOX ẢNH (ma trận màu, texture, chia ô)", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
@@ -582,6 +590,160 @@ public sealed class BoxImageColorValidator : EditorWindow
         string fix = AutoFixPerColorDiv3Core();
         report = fix + "\n" + ScanAllLevels(out okLevelCount, out errorLevelCount);
         Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Wrapper UI cho tab Validate: sửa pool random khớp demand.
+    /// </summary>
+    private void AutoFixRandomPool()
+    {
+        string fix = AutoFixRandomPoolCore();
+        report = fix + "\n" + ScanAllLevels(out okLevelCount, out errorLevelCount);
+        Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Sửa pool random khớp demand mà KHÔNG vỡ %3:
+    /// - Thừa (supply &gt; demand): bớt pool + bù inner Fixed cùng màu (tổng sợi/tổng màu giữ nguyên ý nghĩa, holder khớp runtime).
+    /// - Thiếu (supply &lt; demand): dồn thêm vào 1 màu trong pool (ưu tiên entry lớn nhất, pool rỗng thì lấy màu ngoài phổ biến nhất).
+    /// Xong vẫn cần chạy lại Sửa %3 nếu còn màu lẻ.
+    /// </summary>
+    private static string AutoFixRandomPoolCore()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("=== TỰ SỬA POOL RANDOM (khớp demand, giữ %3) ===");
+        int fixedLevelCount = 0;
+
+        var levelPaths = AssetDatabase.FindAssets("t:Prefab", new[] { LevelsFolder })
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .OrderBy(p => p)
+            .ToList();
+
+        foreach (var path in levelPaths)
+        {
+            string levelName = Path.GetFileNameWithoutExtension(path);
+            GameObject root = null;
+            try
+            {
+                root = PrefabUtility.LoadPrefabContents(path);
+                var parts = root.GetComponentsInChildren<YarnPart>(true).OrderBy(p => p.name).ToList();
+                var holder = root.GetComponent<LevelYarnInfoHolder>();
+                if (holder == null) holder = root.GetComponentInChildren<LevelYarnInfoHolder>(true);
+                if (parts.Count == 0 || holder == null) continue;
+                if (holder.randomColorEntries == null) holder.randomColorEntries = new List<ColorCountEntry>();
+
+                int demand = 0;
+                foreach (var p in parts)
+                {
+                    int types = p.innerColorTypes != null ? p.innerColorTypes.Count : 0;
+                    int fixeds = p.innerFixedColors != null ? p.innerFixedColors.Count : 0;
+                    int limit = Math.Min(p.totalInnerCount, Math.Min(types, fixeds));
+                    for (int j = 0; j < limit; j++)
+                        if (p.innerColorTypes[j] == InnerColorType.Random) demand++;
+                }
+                int supply = holder.randomColorEntries.Sum(e => e.count);
+                if (demand == supply) continue;
+
+                bool changed = false;
+                if (supply > demand)
+                {
+                    // Thừa: bớt pool từ entry lớn nhất, bù Fixed cùng màu để giữ %3.
+                    int diff = supply - demand;
+                    var reduced = new Dictionary<YarnColor, int>();
+                    while (diff > 0)
+                    {
+                        int best = -1;
+                        for (int i = 0; i < holder.randomColorEntries.Count; i++)
+                            if (holder.randomColorEntries[i].count > 0 &&
+                                (best < 0 || holder.randomColorEntries[i].count > holder.randomColorEntries[best].count))
+                                best = i;
+                        if (best < 0) break;
+                        var e = holder.randomColorEntries[best];
+                        int take = Math.Min(e.count, diff);
+                        e.count -= take;
+                        holder.randomColorEntries[best] = e;
+                        if (!reduced.ContainsKey(e.color)) reduced[e.color] = 0;
+                        reduced[e.color] += take;
+                        diff -= take;
+                        sb.AppendLine($"[SỬA] {levelName}: bớt {take} pool {e.color} (thừa).");
+                    }
+                    holder.randomColorEntries.RemoveAll(e => e.count <= 0);
+
+                    // Bù Fixed cùng màu để màu đó không bị lẻ %3 (tổng màu/tổng sợi đều khớp lại).
+                    foreach (var kv in reduced)
+                    {
+                        for (int i = 0; i < kv.Value; i++)
+                        {
+                            var target = parts.Where(p => p.allowRandomInner).OrderBy(p => p.totalInnerCount).FirstOrDefault();
+                            if (target == null) { sb.AppendLine($"[BỎ QUA] {levelName}: mọi part đều khóa random, còn thiếu {kv.Value - i} bù Fixed {kv.Key}."); break; }
+                            if (target.innerColorTypes == null) target.innerColorTypes = new List<InnerColorType>();
+                            if (target.innerFixedColors == null) target.innerFixedColors = new List<YarnColor>();
+                            // Chuẩn hóa target về đúng totalInnerCount trước khi thêm (tránh lệch list).
+                            while (target.innerColorTypes.Count < target.totalInnerCount) target.innerColorTypes.Add(InnerColorType.Fixed);
+                            while (target.innerFixedColors.Count < target.totalInnerCount) target.innerFixedColors.Add(target.initColor);
+                            target.totalInnerCount++;
+                            target.innerColorTypes.Add(InnerColorType.Fixed);
+                            target.innerFixedColors.Add(kv.Key);
+                            EditorUtility.SetDirty(target);
+                            sb.AppendLine($"[SỬA] {levelName}: +1 inner Fixed {kv.Key} vào '{target.name}' để bù pool (giữ %3).");
+                        }
+                    }
+                    changed = true;
+                }
+                else
+                {
+                    // Thiếu: dồn thêm vào 1 màu (khỏi vỡ %3 lẻ tẻ).
+                    int diff = demand - supply;
+                    YarnColor targetColor;
+                    int targetIdx = -1;
+                    int bestCount = -1;
+                    for (int i = 0; i < holder.randomColorEntries.Count; i++)
+                        if (holder.randomColorEntries[i].count > bestCount)
+                        {
+                            bestCount = holder.randomColorEntries[i].count;
+                            targetIdx = i;
+                        }
+                    if (targetIdx >= 0)
+                    {
+                        var e = holder.randomColorEntries[targetIdx];
+                        e.count += diff;
+                        holder.randomColorEntries[targetIdx] = e;
+                        targetColor = e.color;
+                    }
+                    else
+                    {
+                        // Pool rỗng: lấy màu ngoài phổ biến nhất.
+                        targetColor = parts.GroupBy(p => p.initColor).OrderByDescending(g => g.Count()).First().Key;
+                        holder.randomColorEntries.Add(new ColorCountEntry { color = targetColor, count = diff });
+                    }
+                    sb.AppendLine($"[SỬA] {levelName}: pool thiếu {diff} -> +{diff} vào {targetColor} (dồn 1 màu). Chạy lại Sửa %3 nếu màu lẻ.");
+                    changed = true;
+                }
+
+                if (!changed) continue;
+                holder.allBaseYarnParts = parts;
+                holder.totalYarnPartCount = holder.GetTotalYarnPartCount(parts);
+                holder.UpdateDebugInfo();
+                EditorUtility.SetDirty(holder);
+
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                fixedLevelCount++;
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"[LỖI] {path}: " + ex.Message);
+                Debug.LogException(ex);
+            }
+            finally
+            {
+                if (root != null) PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        sb.AppendLine(fixedLevelCount == 0 ? "Pool mọi level đã khớp demand." : $"Đã sửa pool {fixedLevelCount} level. Bấm Quét full để kiểm tra lại (có thể còn lẻ %3 -> chạy tiếp Sửa %3).");
+        return sb.ToString();
     }
 
     private static string AutoFixPerColorDiv3Core()

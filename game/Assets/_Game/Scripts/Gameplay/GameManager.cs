@@ -914,6 +914,15 @@ namespace _Game.Scripts.Gameplay
                     $"[START-CHECK] {currentLevelHolder.name}: tổng runtime={runtimeTotal} != holder.totalYarnPartCount={currentLevelHolder.totalYarnPartCount} (totalYarnPartCount stale — mở prefab cho OnValidate chạy lại hoặc bấm Validate).");
             }
 
+            // Pool thừa (supply > demand): còn màu trong pool không bao giờ spawn -> sợi ma, tổng ảo.
+            // Bắt tại đầu game thay vì đợi cuối game lệch box. Sửa bằng tab Validate -> Sửa pool random.
+            if (RandomColorPool != null && RandomColorPool.Count > 0)
+            {
+                ok = false;
+                _Game.Scripts.LevelDebugLog.LogError(
+                    $"[POOL-THỪA] {currentLevelHolder.name}: còn {RandomColorPool.Count} màu trong pool không có slot Random nào dùng tới (supply > demand) — holder đang đếm sợi ma! Vào Level Studio / tab 3 Validate -> Sửa pool random.");
+            }
+
             if (ok)
                 _Game.Scripts.LevelDebugLog.Log(
                     $"[START-CHECK] {currentLevelHolder.name}: runtime khớp holder ({runtimeTotal} sợi).");

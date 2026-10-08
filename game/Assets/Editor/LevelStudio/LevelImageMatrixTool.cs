@@ -188,6 +188,34 @@ public sealed class LevelImageMatrixTool : EditorWindow
                 ExportJson(levelNames[selectedLevelIndex]);
         }
         EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Validate JSON trước import", GUILayout.Height(28)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else if (string.IsNullOrWhiteSpace(jsonText))
+                report = "[LỖI] JSON trống.";
+            else
+                ValidateJsonBeforeImport(levelNames[selectedLevelIndex], jsonText);
+        }
+        if (GUILayout.Button("Preview matrix từ JSON", GUILayout.Height(28)))
+        {
+            if (string.IsNullOrWhiteSpace(jsonText))
+                report = "[LỖI] JSON trống.";
+            else
+                PreviewJsonMatrix(jsonText);
+        }
+        if (GUILayout.Button("Auto-map owners từ level", GUILayout.Height(28)))
+        {
+            if (levelNames.Count == 0)
+                report = "[LỖI] Chưa có level nào.";
+            else if (string.IsNullOrWhiteSpace(jsonText))
+                report = "[LỖI] JSON trống.";
+            else
+                AutoMapOwnersFromLevel(levelNames[selectedLevelIndex], jsonText);
+        }
+        EditorGUILayout.EndHorizontal();
         if (levelNames.Count > 0)
         {
             string lv = levelNames[Mathf.Clamp(selectedLevelIndex, 0, levelNames.Count - 1)];
@@ -992,6 +1020,177 @@ public sealed class LevelImageMatrixTool : EditorWindow
         cachedLevel = null;
         report = $"[OK] Đã xuất ảnh {levelName} -> {path} ({g * block}x{g * block}, mỗi ô {block}px).\n" +
                  "Sửa ở PTS (giữ đúng lưới ô, tô tràn từng ô, không chống răng cưa viền), lưu đè rồi bấm Extract level để nạp lại.";
+        Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Validate JSON trước import: check matrix size, owners, palette, owners có trong level.
+    /// </summary>
+    private void ValidateJsonBeforeImport(string levelName, string text)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"[VALIDATE] {levelName}:");
+        if (!TryParseMatrixJson(text, out var dto, out var parseErr))
+        {
+            sb.AppendLine($"  [LỖI] Parse JSON thất bại: {parseErr}");
+            report = sb.ToString();
+            Debug.LogError(report);
+            return;
+        }
+        if (dto.width != Grid || dto.height != Grid)
+        {
+            sb.AppendLine($"  [LỖI] Matrix size {dto.width}x{dto.height}, cần {Grid}x{Grid}.");
+        }
+        else
+        {
+            sb.AppendLine($"  [OK] Matrix size {Grid}x{Grid} đúng.");
+        }
+        if (dto.palette == null || dto.palette.Count == 0)
+        {
+            sb.AppendLine($"  [LỖI] Thiếu palette.");
+        }
+        else
+        {
+            sb.AppendLine($"  [OK] Palette {dto.palette.Count} màu.");
+        }
+        if (dto.owners == null || dto.owners.Count == 0)
+        {
+            sb.AppendLine($"  [CẢNH BÁO] Thiếu owners map.");
+        }
+        else
+        {
+            sb.AppendLine($"  [OK] Owners {dto.owners.Count} id.");
+        }
+        // Check owners colors có trong level
+        if (!RefreshHolderCounts(levelName, out var available, out _, null))
+        {
+            sb.AppendLine($"  [LỖI] Level không có màu nào.");
+        }
+        else
+        {
+            foreach (var kv in dto.owners)
+            {
+                if (int.TryParse(kv.Key, out int id) && dto.owners.TryGetValue(kv.Key, out var ownerStr))
+                {
+                    if (!Enum.TryParse<YarnColor>(ownerStr, true, out var yarnColor))
+                    {
+                        sb.AppendLine($"  [LỖI] Owner id={id}: '{ownerStr}' không phải YarnColor hợp lệ.");
+                    }
+                    else if (!available.Contains(yarnColor))
+                    {
+                        sb.AppendLine($"  [CẢNH BÁO] Owner id={id}: '{ownerStr}' không có trong level (sẽ bị bỏ qua khi import).");
+                    }
+                }
+            }
+        }
+        if (dto.matrix == null || dto.matrix.Count != Grid)
+        {
+            sb.AppendLine($"  [LỖI] Matrix thiếu hoặc sai số hàng ({dto.matrix?.Count ?? 0}/{Grid}).");
+        }
+        else
+        {
+            bool ok = true;
+            for (int r = 0; r < dto.matrix.Count; r++)
+                if (dto.matrix[r] == null || dto.matrix[r].Count != Grid)
+                {
+                    sb.AppendLine($"  [LỖI] Hàng {r} có {dto.matrix[r]?.Count ?? 0} ô, cần {Grid}.");
+                    ok = false;
+                }
+            if (ok) sb.AppendLine($"  [OK] Matrix {Grid}x{Grid} đầy đủ.");
+        }
+        report = sb.ToString();
+        Debug.Log(report);
+    }
+
+    /// <summary>
+    /// Preview matrix từ JSON: vẽ lưới 84x84 nhỏ để check trước khi import.
+    /// </summary>
+    private void PreviewJsonMatrix(string text)
+    {
+        if (!TryParseMatrixJson(text, out var dto, out var parseErr))
+        {
+            report = $"[LỖI] Parse JSON thất bại: {parseErr}";
+            Debug.LogError(report);
+            return;
+        }
+        var matrix = AssetDatabase.LoadAssetAtPath<LevelColorMatrix>($"{MatrixFolder}/{dto.width}x{dto.height}.asset");
+        if (matrix == null)
+        {
+            matrix = ScriptableObject.CreateInstance<LevelColorMatrix>();
+            matrix.hideFlags = HideFlags.HideAndDontSave;
+        }
+        int g = dto.width;
+        var owners = new YarnColor[g * g];
+        var displays = new Color[g * g];
+        var displayById = new Dictionary<int, Color>();
+        foreach (var kv in dto.palette)
+            if (int.TryParse(kv.Key, out int id) && ColorUtility.TryParseHtmlString(kv.Value, out var c))
+                displayById[id] = c;
+        var ownerById = new Dictionary<int, YarnColor>();
+        if (dto.owners != null)
+            foreach (var kv in dto.owners)
+                if (int.TryParse(kv.Key, out int id) && Enum.TryParse<YarnColor>(kv.Value, true, out var yarn))
+                    ownerById[id] = yarn;
+        for (int r = 0; r < g; r++)
+            for (int x = 0; x < g; x++)
+            {
+                int id = dto.matrix[r][x];
+                owners[r * g + x] = ownerById.TryGetValue(id, out var o) ? o : YarnColor.None;
+                displays[r * g + x] = displayById.TryGetValue(id, out var c) ? c : Color.magenta;
+            }
+        var matrix2 = ScriptableObject.CreateInstance<LevelColorMatrix>();
+        matrix2.hideFlags = HideFlags.HideAndDontSave;
+        matrix2.levelName = "PREVIEW";
+        matrix2.gridSize = g;
+        matrix2.BakeFlatArrays(owners, displays);
+        cachedMatrix = matrix2;
+        cachedLevel = "PREVIEW";
+        report = $"[PREVIEW] Matrix {g}x{g} - {dto.palette.Count} palette, {dto.owners?.Count ?? 0} owners. Xem preview bên trái.";
+        Debug.Log($"[PREVIEW] Matrix {g}x{g} ready.");
+    }
+
+    /// <summary>
+    /// Auto-map owners: tự map màu JSON (palette hex) -> màu level gần nhất (dựa trên Database).
+    /// Cập nhật jsonText trong ô text.
+    /// </summary>
+    private void AutoMapOwnersFromLevel(string levelName, string text)
+    {
+        if (!TryParseMatrixJson(text, out var dto, out var parseErr))
+        {
+            report = $"[LỖI] Parse JSON thất bại: {parseErr}";
+            Debug.LogError(report);
+            return;
+        }
+        if (!RefreshHolderCounts(levelName, out var available, out _, null))
+        {
+            report = $"[LỖI] Level {levelName} không có màu nào.";
+            return;
+        }
+        var db = AssetDatabase.LoadAssetAtPath<YarnColorDatabase>(DatabasePath);
+        if (db == null) { report = "[LỖI] Không load được Database."; return; }
+
+        var newOwners = new Dictionary<string, string>();
+        foreach (var kv in dto.owners)
+        {
+            if (!int.TryParse(kv.Key, out int id)) continue;
+            if (!dto.palette.TryGetValue(kv.Key, out var hexStr)) continue;
+            if (!ColorUtility.TryParseHtmlString(hexStr, out var hexColor)) continue;
+            if (available.Count == 0) continue;
+            // Tìm màu level gần nhất (delta RGB nhỏ nhất)
+            YarnColor best = available[0];
+            float bestDist = float.MaxValue;
+            foreach (var c in available)
+            {
+                var refCol = LevelColorMatrixUtility.RefColor(db, c);
+                float dr = hexColor.r - refCol.r, dg = hexColor.g - refCol.g, dbDiff = hexColor.b - refCol.b;
+                float d = dr * dr + dg * dg + dbDiff * dbDiff;
+                if (d < bestDist) { bestDist = d; best = c; }
+            }
+            newOwners[kv.Key] = best.ToString();
+        }
+        dto.owners = newOwners;
+        jsonText = BuildMatrixJsonString(dto);
+        report = $"[OK] Auto-mapped {newOwners.Count} owners. JSON đã cập nhật trong ô text.";
         Debug.Log(report);
     }
 }
