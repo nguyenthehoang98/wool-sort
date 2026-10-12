@@ -51,26 +51,3 @@ public class BroomSweep : MonoBehaviour
 
     public void PlaySweep(Action onDone) => onDone?.Invoke();
 }
-
-// --- Ghost bay vào TempBox của booster Clean (stub bay tức thì) ---
-public class YarnGhost : MonoBehaviour { }
-
-public class YarnGhostService
-{
-    private static YarnGhostService _instance;
-    public static YarnGhostService Instance => _instance ??= new YarnGhostService();
-
-    public YarnGhost Create(Vector3 pos, Quaternion rot, Vector3 scale, YarnColor _)
-    {
-        var go = new GameObject("YarnGhost_Stub");
-        go.transform.SetPositionAndRotation(pos, rot);
-        go.transform.localScale = scale;
-        return go.AddComponent<YarnGhost>();
-    }
-
-    public void FlyToTempBox(YarnGhost ghost, Vector3 target, Camera _, Action onDone)
-    {
-        if (ghost != null) ghost.transform.position = target;
-        onDone?.Invoke();
-    }
-}

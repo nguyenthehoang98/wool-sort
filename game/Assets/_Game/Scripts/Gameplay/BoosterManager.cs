@@ -30,13 +30,16 @@ namespace _Game.Scripts.Gameplay
         [Tooltip("Vị trí giỏ ra giữ len khi Clean, thu xong sẽ quay về Idle.")]
         [SerializeField] private Transform tempBoxShowAnchor;
         [SerializeField] private float tempBoxMoveDuration = 0.4f;
+        [Tooltip("Khoảng cách thời gian giữa các sợi bay vào giỏ.")]
+        [SerializeField] private float ghostStagger = 0.08f;
+        [Tooltip("Thời gian dây bay từ slot vào giỏ.")]
+        [SerializeField] private float ropeFlyDuration = 0.5f;
 
         private bool isLockByUsingBooster;
         public bool IsLockByUsingBooster => isLockByUsingBooster;
 
         // Danh sách giữ các piece tạm
         private readonly List<YarnPart> _tempParts = new List<YarnPart>();
-        private readonly List<YarnGhost> _activeGhosts = new List<YarnGhost>();
 
         public Transform TempBoxContainer => tempBoxContainer;
 
@@ -170,64 +173,47 @@ namespace _Game.Scripts.Gameplay
             // Hiển thị Temp-Box
             ShowTempBoxEntry(() =>
             {
-                SpawnAllGhosts();
-                AnimateAllGhosts(() => ReturnTempBox(OnCleanComplete));
+                SendWaitingYarnsToTempBox(() => ReturnTempBox(OnCleanComplete));
             });
         }
 
-        private void SpawnAllGhosts()
+        // Mỗi sợi trên waiting area nối bằng dây (RopeBoard) bay từ slot vào giỏ, lần lượt cách nhau ghostStagger.
+        private void SendWaitingYarnsToTempBox(Action onAllComplete)
         {
-            _activeGhosts.Clear();
-
-            // 1) Clear tất cả slot đang chứa yarn trên waiting area
-            var waitingSlots = WaitingAreaManager.Instance.GetWaitingSlots();
-            foreach(var waitSlot in waitingSlots)
-            {
-                if(!waitSlot.IsFilled)
-                    continue;
-                var part = waitSlot.CurrentPart;
-
-                // lấy trc khi clear
-                var color = waitSlot.FilledColor;
-                _tempParts.Add(part);
-
-                waitSlot.Clear();
-                SlotManager.Instance.RegisterSlot(waitSlot);
-
-                // tạo ghost qua service, gom logic màu/sizing/parent bên trong
-                var ghost = YarnGhostService.Instance.Create(
-                    waitSlot.transform.position,
-                    waitSlot.transform.rotation,
-                    waitSlot.transform.lossyScale,
-                    color);
-
-                _activeGhosts.Add(ghost);
-            }
-        }
-
-        private void AnimateAllGhosts(Action onAllComplete)
-        {
-            int remaining = _activeGhosts.Count;
-            if(remaining == 0)
+            if (WaitingAreaManager.Instance == null || tempBoxContainer == null)
             {
                 onAllComplete?.Invoke();
                 return;
             }
 
-            foreach(var ghost in _activeGhosts)
+            var waitingSlots = WaitingAreaManager.Instance.GetWaitingSlots();
+            int index = 0;
+            foreach (var waitSlot in waitingSlots)
             {
-                YarnGhostService.Instance.FlyToTempBox(
-                    ghost,
-                    tempBoxContainer != null ? tempBoxContainer.position : ghost != null ? ghost.transform.position : Vector3.zero,
-                    boxCamera,
-                    () =>
-                    {
-                        if(--remaining == 0)
-                            onAllComplete?.Invoke();
-                    });
+                if (!waitSlot.IsFilled)
+                    continue;
+
+                var part = waitSlot.CurrentPart;
+                var color = waitSlot.FilledColor;
+                var fromAnchor = waitSlot.GetAnchorTransform();
+                _tempParts.Add(part);
+
+                waitSlot.Clear();
+                SlotManager.Instance.RegisterSlot(waitSlot);
+
+                float delay = index * ghostStagger;
+                this.WaitInvoke(delay, () =>
+                    YarnRopeController.Instance.SpawnRopeBoard(fromAnchor, tempBoxContainer, color, ropeFlyDuration));
+                index++;
             }
 
-            _activeGhosts.Clear();
+            if (index == 0)
+            {
+                onAllComplete?.Invoke();
+                return;
+            }
+
+            this.WaitInvoke((index - 1) * ghostStagger + ropeFlyDuration, () => onAllComplete?.Invoke());
         }
 
         private void ShowTempBoxEntry(Action onComplete)
