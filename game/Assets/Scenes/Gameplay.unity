@@ -285,6 +285,54 @@ Transform:
   - {fileID: 1000870855}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &271269152
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 271269154}
+  - component: {fileID: 271269153}
+  m_Layer: 0
+  m_Name: BoosterManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &271269153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271269152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cbe017a700ef1a5cba09181a672a4b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Gameplay.BoosterManager
+  boxCamera: {fileID: 1684273108}
+  tempBoxContainer: {fileID: 172257353}
+  broomSweep: {fileID: 0}
+  postSweepDelay: 0.1
+--- !u!4 &271269154
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271269152}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &278439860
 GameObject:
   m_ObjectHideFlags: 0
@@ -540,9 +588,11 @@ MonoBehaviour:
   - {fileID: 965654362}
   - {fileID: 2020960458}
   - {fileID: 682822795}
+  addButton: {fileID: 0}
   spacing: 0.52
   waitingSlotPrefab: {fileID: 2342186873290625299, guid: 96abc0981479c2c4abf7ec49e9899d83,
     type: 3}
+  vfxUnlockSlot: {fileID: 0}
 --- !u!1 &541313731
 GameObject:
   m_ObjectHideFlags: 0
@@ -1430,6 +1480,51 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 793317391}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &802699398
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 802699399}
+  - component: {fileID: 802699400}
+  m_Layer: 0
+  m_Name: BoosterDebugPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &802699399
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 802699398}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &802699400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 802699398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3984fd0d34d54775b55501a440658ee4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Utils.BoosterDebugPanel
+  showPanel: 1
 --- !u!1 &813599046
 GameObject:
   m_ObjectHideFlags: 0
@@ -3476,10 +3571,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boxContainerTransform: {fileID: 278439861}
-  boardTarget: {fileID: 793317392}
   spacing: 1.16
   boxPrefab: {fileID: -6249603975089096548, guid: 05d3a75754ae9d546a964d9df81449de,
     type: 3}
+  unlockBtnPrefab: {fileID: 0}
+  magicBoxPrefab: {fileID: 0}
   spawnPoints:
   - point: {fileID: 1211897128}
     unlocked: 1
@@ -3491,6 +3587,7 @@ MonoBehaviour:
     unlocked: 0
   slotManager: {fileID: 2056751783}
   waitingArea: {fileID: 434392285}
+  vfxUnlockBox: {fileID: 0}
   printTimeData:
   - range: {x: 0, y: 10}
     time: 0.3
@@ -5435,3 +5532,5 @@ SceneRoots:
   - {fileID: 829061291}
   - {fileID: 1406926546}
   - {fileID: 1180980792}
+  - {fileID: 271269154}
+  - {fileID: 802699399}

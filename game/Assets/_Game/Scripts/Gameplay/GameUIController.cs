@@ -388,5 +388,9 @@ namespace _Game.Scripts.Gameplay
         }
 
                 public void PlayWarningLose(bool value) { }
+
+        // Stub thay cho meta-game (ads/shop) chưa có trong bản core này.
+        public void ShiftNoAdsForTempBox() { }
+        public void ResetNoAdsButtonPosition() { }
     }
 }

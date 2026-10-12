@@ -879,6 +879,35 @@ namespace _Game.Scripts.Gameplay
         }
 
         /// <summary>
+        /// Chọn màu box cho revive.add_box: ưu tiên màu đang kẹt nhiều nhất ở waiting area
+        /// để box mới có chỗ chứa ngay; fallback về màu còn nhiều nhất rồi tới logic thường.
+        /// </summary>
+        public YarnColor ChooseNextBoxColorRevive()
+        {
+            var waiting = WaitingAreaManager.Instance != null ? WaitingAreaManager.Instance.GetWaitingSlots() : null;
+            if (waiting != null)
+            {
+                YarnColor best = YarnColor.None;
+                int bestCount = 0;
+                foreach (YarnColor col in System.Enum.GetValues(typeof(YarnColor)))
+                {
+                    if (col == YarnColor.None || col == YarnColor.Rainbow) continue;
+                    int c = 0;
+                    foreach (var s in waiting)
+                        if (s != null && s.IsFilled && s.FilledColor == col) c++;
+                    if (c > bestCount && YarnColorManager.Instance.GetBasketMaterial(col) != null)
+                    {
+                        bestCount = c;
+                        best = col;
+                    }
+                }
+                if (best != YarnColor.None && bestCount > 0) return best;
+            }
+            var fallback = GetMaxRemainingColor();
+            return fallback != YarnColor.None ? fallback : ChooseNextBoxColor();
+        }
+
+        /// <summary>
         /// Phân xử runtime-vs-config ngay đầu game: so runtime build được (piecesByColor)
         /// với holder khai báo (colorCountEntries + totalYarnPartCount).
         /// Lệch ở đâu thì thằng đó báo sai — đọc log [START-CHECK].
@@ -1027,6 +1056,36 @@ namespace _Game.Scripts.Gameplay
             else
                 _Game.Scripts.LevelDebugLog.LogWarning($"[ChooseNextBoxColor] fallback strand = {best}.");
             return best;
+        }
+
+        /// <summary>
+        /// Lấy tối đa <paramref name="count"/> info còn OnBoard của màu cho MagicBox.
+        /// (Thay cho bản meta-game đầy đủ; đủ để booster biên dịch và chạy ở bản core.)
+        /// </summary>
+        public List<YarnPartInfo> GetNextInfosForMagicBox(YarnColor color, int count, out int missing)
+        {
+            var result = new List<YarnPartInfo>();
+            if (piecesByColor.TryGetValue(color, out var list) && list != null)
+            {
+                foreach (var info in list.Where(i => i.State == PartState.OnBoard).OrderBy(i => i.LayerIndex))
+                {
+                    if (result.Count >= count) break;
+                    result.Add(info);
+                }
+            }
+            missing = Mathf.Max(0, count - result.Count);
+            return result;
+        }
+
+        /// <summary>
+        /// Đếm lại số sợi còn lại từ dữ liệu (đồng bộ sau khi MagicBox hút sợi).
+        /// </summary>
+        public void UpdateCountYarnRemain()
+        {
+            int total = 0;
+            foreach (var kv in piecesByColor)
+                if (kv.Value != null) total += kv.Value.Count;
+            countYarnRemain = Mathf.Max(0, total);
         }
 
         public void HandlePartPicked(YarnPart part)

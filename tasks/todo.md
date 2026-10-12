@@ -66,9 +66,9 @@
 
 ## Tuần 6 — Booster, tutorial và presentation
 
-- [ ] **W6-01 — Add Slot** — W6D1. Validate cap, cost/inventory và layout. **Verify:** không vượt tối đa 7 slot.
-- [ ] **W6-02 — Clean** — W6D2. Chuyển waiting pieces sang temporary storage không mất piece. **Verify:** ad/coin fail không mutate.
-- [ ] **W6-03 — Magic Box và revive** — W6D3. Chọn đúng active box, revive giữ nguyên board. **Verify:** double tap chỉ tạo một operation.
+- [~] **W6-01 — Add Slot** — W6D1. Validate cap, cost/inventory và layout. **Verify:** không vượt tối đa 7 slot. Đã có test `AddSlot_GrowsByOneUntilCap` + `AddSlot_NeverExceedsMax` (`game/Assets/Tests/PlayMode/BoosterSceneTests.cs`); chờ chạy Test Runner, evidence: `docs/evidence/w6-booster-tests.md`.
+- [~] **W6-02 — Clean** — W6D2. Chuyển waiting pieces sang temporary storage không mất piece. **Verify:** ad/coin fail không mutate. Đã có test `Clean_AvailabilityMatchesWaitingState` + checklist panel `BoosterDebugPanel`; chờ chạy Play scene, evidence: `docs/evidence/w6-booster-tests.md`.
+- [~] **W6-03 — Magic Box và revive** — W6D3. Chọn đúng active box, revive giữ nguyên board. **Verify:** double tap chỉ tạo một operation. Đã thêm `GameManager.ChooseNextBoxColorRevive`; test tay bằng `BoosterDebugPanel`, evidence: `docs/evidence/w6-booster-tests.md`.
 - [ ] **W6-04 — Tutorial data/runtime** — W6D4. Data-driven steps, flag version, command gate và skip. **Verify:** tutorial không lặp sau reload.
 - [ ] **W6-05 — Win/lose UI, FX, audio, settings** — W6D5. Nối view/animation/audio/vibration/localization key. **Verify:** toggle có hiệu lực và popup khóa gameplay. **Deps:** W6-01..04.
 

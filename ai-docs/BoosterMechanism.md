@@ -71,9 +71,9 @@ Mỗi booster có:
 4. **Manager trung tâm** – thực hiện ba phương thức công khai (`CanUseBooster`, `UseBooster`, các helper riêng cho từng loại). Dùng coroutine hoặc async/await cho delay.
 5. **Hộp tạm** – cho Clean, có thể tối giản bằng việc di chuyển nhanh các đối tượng len vào một container ẩn và trả lại; bỏ qua ghost nếu muốn tốc độ.
 6. **MagicBox** – đơn giản hoá: không cần animation cầu vồng, chỉ gọi logic sinh mảnh len còn thiếu cho box đầu tiên.
-7. **Analytics** – thay `Databuckets` bằng log đơn giản hoặc SDK analytics hiện có.
+7. **Analytics** – dùng log đơn giản hoặc SDK analytics hiện có.
 8. **Logic mở khóa** – giới hạn booster dựa trên level và cờ tutorial.
-9. **Popup mua** – tùy chọn; có thể dùng UI “Mua bằng xu / Quảng cáo thưởng” và cuối cùng gọi `UseBooster`.
+9. **Mua booster** – có thể tích hợp UI mua (coin hoặc quảng cáo) và gọi `BoosterManager.UseBooster`.
 
 ## 8️⃣ Đề xuất cấu trúc thư mục
 ```
@@ -85,10 +85,25 @@ Assets/_Game/Scripts/Gameplay/
 │   BoxManager.cs
 │   Box.cs
 │   ...
-Assets/_Game/Resources/I2Languages.asset   // bản địa hoá (chỉ sao chép các key liên quan)
 Assets/_Game/Prefab/UI/BoosterBtn.prefab   // UI button
 Assets/_Game/Scripts/UI/Popup/MoreBoosterPopup.cs
 ```
+
+## 📁 Các file liên quan
+
+- **C# Scripts**
+  - `Assets/_Game/Scripts/Gameplay/BoosterType.cs`
+  - `Assets/_Game/Scripts/Gameplay/BoosterManager.cs`
+  - `Assets/_Game/Scripts/Gameplay/BoosterItem.cs`
+  - `Assets/_Game/Scripts/Gameplay/WaitingAreaManager.cs`
+  - `Assets/_Game/Scripts/Gameplay/BoxManager.cs`
+  - `Assets/_Game/Scripts/Gameplay/Box.cs`
+- **Prefabs**
+  - `Assets/_Game/Prefab/UI/BoosterBtn.prefab`
+  - `Assets/_Game/Prefab/UI/MoreBoosterPopup.prefab` (if exists)
+- **Textures / Sprites**
+  - `Assets/_Game/Textures/Button_Boosters.png`
+  - `Assets/_Game/Textures/FX_Booster_Rainbow.png`
 
 ---
 *Được tạo tự động từ code hiện có. Điều chỉnh đường dẫn hoặc tên lớp nếu bạn đổi cấu trúc.*

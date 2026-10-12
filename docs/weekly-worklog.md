@@ -109,7 +109,7 @@ Worklog này bám theo đề cương 9 tuần trong file DOCX. Đây là **mẫu
 | 3 |  |  |  |  |  |
 | 4 |  |  |  |  |  |
 | 5 |  |  |  |  |  |
-| 6 |  |  |  |  |  |
+| 6 | Booster playable ở bản core: test AddSlot/Clean/MagicBox, panel debug, đấu dây scene | W6-01..03 còn chờ chạy Test Runner + Play scene | Thiếu source gốc (GameData/SettingManager/shop) nên dùng stub | `docs/evidence/w6-booster-tests.md`, `booster-html.html` | Giữ stub tới khi có source gốc; chạy test rồi mới đóng W6 |
 | 7 |  |  |  |  |  |
 | 8 |  |  |  |  |  |
 | 9 |  |  |  |  |  |

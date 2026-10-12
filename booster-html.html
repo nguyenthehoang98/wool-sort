@@ -31,13 +31,13 @@
     </tr>
   </thead>
   <tbody>
-    <tr class="todo">
+    <tr class="done">
       <td>1</td>
       <td>Sao chép các file nguồn cốt lõi (BoosterType, BoosterManager, BoosterItem, WaitingAreaManager, BoxManager, Box, utils và config liên quan)</td>
       <td>Dev Lead</td>
       <td class="priority">Cao</td>
-      <td>TODO</td>
-      <td>Giữ nguyên namespace gốc <code>_Game.Scripts.Gameplay</code>. Điều chỉnh nếu dự án mới dùng namespace khác.</td>
+      <td>Done</td>
+      <td>File đã có trong <code>game/Assets/_Game/Scripts</code>, giữ namespace <code>_Game.Scripts.Gameplay</code>. Quét cú pháp Roslyn 302 file = 0 lỗi; còn chờ verify mở Editor.</td>
     </tr>
     <tr class="todo">
       <td>2</td>
@@ -46,14 +46,6 @@
       <td class="priority">Trung bình</td>
       <td>TODO</td>
       <td>Đặt prefab trong <code>Assets/_Game/Prefab/UI</code> của dự án mới.</td>
-    </tr>
-    <tr class="todo">
-      <td>3</td>
-      <td>Sao chép các mục bản địa hoá (I2Languages.asset) cho các chuỗi booster</td>
-      <td>Localization</td>
-      <td class="priority">Trung bình</td>
-      <td>TODO</td>
-      <td>Đảm bảo file ngôn ngữ được import và được I2 Localization nhận diện.</td>
     </tr>
     <tr class="todo">
       <td>4</td>
@@ -79,29 +71,37 @@
       <td>TODO</td>
       <td>Kiểm tra vị trí con trỏ và container UI.</td>
     </tr>
-    <tr class="todo">
-      <td>7</td>
-      <td>Kết nối UI mua booster (<code>MoreBoosterPopup.cs</code>) với hệ thống IAP mới (nếu có)</td>
-      <td>Monetisation Team</td>
-      <td class="priority">Trung bình</td>
-      <td>TODO</td>
-      <td>Thay thế các call <code>Databuckets</code> bằng SDK analytics của dự án.</td>
-    </tr>
-    <tr class="todo">
+    <tr class="in-progress">
       <td>8</td>
       <td>Viết unit test cho từng luồng booster (AddSlot, Clean, MagicBox)</td>
       <td>QA</td>
       <td class="priority">Trung bình</td>
-      <td>TODO</td>
-      <td>Dùng NUnit/Unity Test Runner. Kiểm tra thay đổi trạng thái và UI.</td>
+      <td>In‑Progress</td>
+      <td>Đã có <code>BoosterLogicTests</code> (6 test) + <code>BoosterSceneTests</code> (3 test) trong <code>game/Assets/Tests/PlayMode</code>. Chờ chạy Test Runner — xem <code>docs/evidence/w6-booster-tests.md</code>.</td>
     </tr>
-    <tr class="todo">
+    <tr class="in-progress">
       <td>9</td>
       <td>Chạy test tích hợp: sử dụng mỗi booster trong một level mới, đảm bảo không crash, xác nhận số lượng giảm đúng</td>
       <td>QA</td>
       <td class="priority">Cao</td>
-      <td>TODO</td>
-      <td>Test tự động trong Play‑Mode hoặc checklist QA thủ công.</td>
+      <td>In‑Progress</td>
+      <td>Có panel thủ công <code>BoosterDebugPanel</code> (editor-only, 3 nút lớn) + checklist trong <code>docs/evidence/w6-booster-tests.md</code>. Đã đấu dây <code>BoosterManager</code> trong scene Gameplay; guard null hết đường crash. Chờ chạy Play scene.</td>
+    </tr>
+    <tr class="done">
+      <td>12</td>
+      <td>Panel debug booster thủ công (editor-only, không lên build)</td>
+      <td>Assistant</td>
+      <td class="priority">Trung bình</td>
+      <td>Done</td>
+      <td><code>game/Assets/_Game/Scripts/Utils/BoosterDebugPanel.cs</code> — 3 nút Dùng AddSlot/Clean/MagicBox, chữ lớn, tự chẩn đoán khi thiếu manager.</td>
+    </tr>
+    <tr class="done">
+      <td>13</td>
+      <td>Sửa crash load level + đấu dây BoosterManager trong scene</td>
+      <td>Assistant</td>
+      <td class="priority">Cao</td>
+      <td>Done</td>
+      <td>NRE <code>WaitingAreaManager.Initialize</code> (addButton null) đã guard; <code>boxCamera</code>/<code>tempBoxContainer</code> đã đấu trong <code>Gameplay.unity</code>. Chi tiết: <code>docs/evidence/w6-booster-tests.md</code>.</td>
     </tr>
     <tr class="todo">
       <td>10</td>
@@ -122,5 +122,30 @@
   </tbody>
 </table>
 <p>Làm mới trang sau mỗi lần thay đổi trạng thái. Dùng cột <strong>Trạng thái</strong> để lọc: <strong>TODO</strong>, <strong>In‑Progress</strong>, <strong>Done</strong>.</p>
+<h2>📁 Các file liên quan</h2>
+<ul>
+<li><strong>C# Scripts</strong>
+  <ul>
+    <li>Assets/_Game/Scripts/Gameplay/BoosterType.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/BoosterManager.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/BoosterItem.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/WaitingAreaManager.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/BoxManager.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/Box.cs</li>
+  </ul>
+</li>
+<li><strong>Prefabs</strong>
+  <ul>
+    <li>Assets/_Game/Prefab/UI/BoosterBtn.prefab</li>
+    <li>Assets/_Game/Prefab/UI/MoreBoosterPopup.prefab (nếu có)</li>
+  </ul>
+</li>
+<li><strong>Textures / Sprites</strong>
+  <ul>
+    <li>Assets/_Game/Textures/Button_Boosters.png</li>
+    <li>Assets/_Game/Textures/FX_Booster_Rainbow.png</li>
+  </ul>
+</li>
+</ul>
 </body>
 </html>
