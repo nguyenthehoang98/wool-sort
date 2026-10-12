@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Theo dõi triển khai Booster</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { color: #2c3e50; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background-color: #f4f4f4; }
+  .done { background-color: #e0ffe0; }
+  .in-progress { background-color: #fff9c4; }
+  .todo { background-color: #ffebee; }
+  .priority { font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Theo dõi triển khai Booster</h1>
+<p>Dự án: <code>/home/hoangnguyen/Documents/unity/wool-sort</code></p>
+<p>Tài liệu tham khảo: <a href="ai-docs/BoosterMechanism.md">BoosterMechanism.md</a></p>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Công việc</th>
+      <th>Người phụ trách / Nhóm</th>
+      <th>Độ ưu tiên</th>
+      <th>Trạng thái</th>
+      <th>Ghi chú / Tiêu chí chấp nhận</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="todo">
+      <td>1</td>
+      <td>Sao chép các file nguồn cốt lõi (BoosterType, BoosterManager, BoosterItem, WaitingAreaManager, BoxManager, Box, utils và config liên quan)</td>
+      <td>Dev Lead</td>
+      <td class="priority">Cao</td>
+      <td>TODO</td>
+      <td>Giữ nguyên namespace gốc <code>_Game.Scripts.Gameplay</code>. Điều chỉnh nếu dự án mới dùng namespace khác.</td>
+    </tr>
+    <tr class="todo">
+      <td>2</td>
+      <td>Sao chép prefab UI <code>BoosterBtn.prefab</code> và các sprite liên quan (Button_Boosters*, FX_Booster_Rainbow)</td>
+      <td>UI/Art</td>
+      <td class="priority">Trung bình</td>
+      <td>TODO</td>
+      <td>Đặt prefab trong <code>Assets/_Game/Prefab/UI</code> của dự án mới.</td>
+    </tr>
+    <tr class="todo">
+      <td>3</td>
+      <td>Sao chép các mục bản địa hoá (I2Languages.asset) cho các chuỗi booster</td>
+      <td>Localization</td>
+      <td class="priority">Trung bình</td>
+      <td>TODO</td>
+      <td>Đảm bảo file ngôn ngữ được import và được I2 Localization nhận diện.</td>
+    </tr>
+    <tr class="todo">
+      <td>4</td>
+      <td>Đưa <code>Configs.LIST_BOOSTER_COST</code> và <code>LIST_BOOSTER_UNLOCK</code> vào module config mới</td>
+      <td>Gameplay Engineer</td>
+      <td class="priority">Cao</td>
+      <td>TODO</td>
+      <td>Cập nhật mọi giá trị cứng (hard‑coded) dựa trên chỉ mục danh sách cũ.</td>
+    </tr>
+    <tr class="todo">
+      <td>5</td>
+      <td>Điều chỉnh <code>GameData</code> để lưu số lượng booster trong hệ thống lưu mới (PlayerPrefs/JSON)</td>
+      <td>Data Engineer</td>
+      <td class="priority">Cao</td>
+      <td>TODO</td>
+      <td>Ánh xạ <code>BoosterSaveData</code> sang schema lưu mới.</td>
+    </tr>
+    <tr class="todo">
+      <td>6</td>
+      <td>Cập nhật các script tutorial (BoosterAddHoleTutorial, BoosterCleanTutorial, BoosterMagicBoxTutorial) để tham chiếu đúng hierarchy scene mới</td>
+      <td>Gameplay Engineer</td>
+      <td class="priority">Thấp</td>
+      <td>TODO</td>
+      <td>Kiểm tra vị trí con trỏ và container UI.</td>
+    </tr>
+    <tr class="todo">
+      <td>7</td>
+      <td>Kết nối UI mua booster (<code>MoreBoosterPopup.cs</code>) với hệ thống IAP mới (nếu có)</td>
+      <td>Monetisation Team</td>
+      <td class="priority">Trung bình</td>
+      <td>TODO</td>
+      <td>Thay thế các call <code>Databuckets</code> bằng SDK analytics của dự án.</td>
+    </tr>
+    <tr class="todo">
+      <td>8</td>
+      <td>Viết unit test cho từng luồng booster (AddSlot, Clean, MagicBox)</td>
+      <td>QA</td>
+      <td class="priority">Trung bình</td>
+      <td>TODO</td>
+      <td>Dùng NUnit/Unity Test Runner. Kiểm tra thay đổi trạng thái và UI.</td>
+    </tr>
+    <tr class="todo">
+      <td>9</td>
+      <td>Chạy test tích hợp: sử dụng mỗi booster trong một level mới, đảm bảo không crash, xác nhận số lượng giảm đúng</td>
+      <td>QA</td>
+      <td class="priority">Cao</td>
+      <td>TODO</td>
+      <td>Test tự động trong Play‑Mode hoặc checklist QA thủ công.</td>
+    </tr>
+    <tr class="todo">
+      <td>10</td>
+      <td>Cập nhật tài liệu – thêm liên kết tới trang HTML này trong wiki dự án</td>
+      <td>Docs</td>
+      <td class="priority">Thấp</td>
+      <td>TODO</td>
+      <td>Liên kết tới <code>BoosterMechanism.md</code> và tracker này.</td>
+    </tr>
+    <tr class="done">
+      <td>11</td>
+      <td>Tạo file HTML tracker này</td>
+      <td>Assistant</td>
+      <td class="priority">Cao</td>
+      <td>Done</td>
+      <td>File được tạo tại <code>/home/hoangnguyen/Documents/unity/wool-sort/booster-html.html</code></td>
+    </tr>
+  </tbody>
+</table>
+<p>Làm mới trang sau mỗi lần thay đổi trạng thái. Dùng cột <strong>Trạng thái</strong> để lọc: <strong>TODO</strong>, <strong>In‑Progress</strong>, <strong>Done</strong>.</p>
+</body>
+</html>
