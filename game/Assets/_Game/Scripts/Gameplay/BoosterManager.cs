@@ -24,9 +24,15 @@ namespace _Game.Scripts.Gameplay
         [SerializeField] private BroomSweep broomSweep;
         [SerializeField] private float postSweepDelay = 0.1f;
 
+        [Header("Giỏ tạm (Clean)")]
+        [Tooltip("Vị trí nghỉ của giỏ tạm. Giỏ luôn đứng ở đây khi không dùng Clean.")]
+        [SerializeField] private Transform tempBoxIdleAnchor;
+        [Tooltip("Vị trí giỏ ra giữ len khi Clean, thu xong sẽ quay về Idle.")]
+        [SerializeField] private Transform tempBoxShowAnchor;
+        [SerializeField] private float tempBoxMoveDuration = 0.4f;
+
         private bool isLockByUsingBooster;
         public bool IsLockByUsingBooster => isLockByUsingBooster;
-        private Vector3 _tempBoxOriginalPos;
 
         // Danh sách giữ các piece tạm
         private readonly List<YarnPart> _tempParts = new List<YarnPart>();
@@ -34,12 +40,22 @@ namespace _Game.Scripts.Gameplay
 
         public Transform TempBoxContainer => tempBoxContainer;
 
+        private Vector3 IdlePosition => tempBoxIdleAnchor != null ? tempBoxIdleAnchor.position : tempBoxContainer.position;
+        private Vector3 ShowPosition => tempBoxShowAnchor != null ? tempBoxShowAnchor.position : IdlePosition;
+
         private void Awake()
         {
             Instance = this;
 
-            if (tempBoxContainer != null) tempBoxContainer.gameObject.SetActive(false);
-            else Debug.LogError("[BoosterManager] tempBoxContainer chưa gán — booster Clean sẽ chạy rút gọn (không hiện TempBox).", this);
+            if (tempBoxContainer == null)
+            {
+                Debug.LogError("[BoosterManager] tempBoxContainer chưa gán — booster Clean sẽ chạy rút gọn (không hiện giỏ tạm).", this);
+                return;
+            }
+            if (tempBoxIdleAnchor == null)
+                Debug.LogWarning("[BoosterManager] tempBoxIdleAnchor chưa gán — giỏ tạm dùng vị trí đặt trong scene làm chỗ nghỉ.", this);
+            tempBoxContainer.gameObject.SetActive(true);
+            tempBoxContainer.position = IdlePosition;
             if (boxCamera == null)
                 Debug.LogError("[BoosterManager] boxCamera chưa gán — Clean sẽ bay thẳng vào vị trí, kiểm tra lại scene.", this);
         }
@@ -49,13 +65,12 @@ namespace _Game.Scripts.Gameplay
             isLockByUsingBooster = false;
             _tempParts.Clear();
 
-            if (tempBoxContainer != null) tempBoxContainer.gameObject.SetActive(false);
+            if (tempBoxContainer != null)
+            {
+                tempBoxContainer.DOKill();
+                tempBoxContainer.position = IdlePosition;
+            }
             if (broomSweep != null) broomSweep.Show(false);
-        }
-
-        public void SetTempBoxOriginalPosition()
-        {
-            if (tempBoxContainer != null) _tempBoxOriginalPos = tempBoxContainer.position;
         }
 
         public bool CanUseBooster(BoosterType type, bool needShowToolTip = true)
@@ -156,7 +171,7 @@ namespace _Game.Scripts.Gameplay
             ShowTempBoxEntry(() =>
             {
                 SpawnAllGhosts();
-                AnimateAllGhosts(OnCleanComplete);
+                AnimateAllGhosts(() => ReturnTempBox(OnCleanComplete));
             });
         }
 
@@ -217,21 +232,28 @@ namespace _Game.Scripts.Gameplay
 
         private void ShowTempBoxEntry(Action onComplete)
         {
-            // Thiếu wiring scene thì bỏ qua animation, vẫn chạy logic Clean.
-            if (tempBoxContainer == null || boxCamera == null)
+            if (tempBoxContainer == null)
             {
                 onComplete?.Invoke();
                 return;
             }
             tempBoxContainer.gameObject.SetActive(true);
-            // start ở ngoài màn trái
-            Vector3 startPos = _tempBoxOriginalPos + boxCamera.transform.right * 2f;
-            tempBoxContainer.position = startPos;
-
-            // bay vào vị trí gốc
-            tempBoxContainer
-                .DOMove(_tempBoxOriginalPos, 0.4f)
+            tempBoxContainer.DOKill();
+            tempBoxContainer.DOMove(ShowPosition, tempBoxMoveDuration)
                 .SetEase(DG.Tweening.Ease.OutBack)
+                .OnComplete(() => onComplete?.Invoke());
+        }
+
+        private void ReturnTempBox(Action onComplete)
+        {
+            if (tempBoxContainer == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+            tempBoxContainer.DOKill();
+            tempBoxContainer.DOMove(IdlePosition, tempBoxMoveDuration)
+                .SetEase(DG.Tweening.Ease.InOutSine)
                 .OnComplete(() => onComplete?.Invoke());
         }
 
@@ -333,11 +355,11 @@ namespace _Game.Scripts.Gameplay
             }
         }
 
-        //Courtine delay xu ly hide tempBoxContainer
+        //Courtine delay: giỏ tạm không ẩn nữa, chỉ đảm bảo đứng đúng chỗ nghỉ và báo UI
         public IEnumerator HideTempBoxContainer(float delay)
         {
             yield return new WaitForSeconds(delay);
-            if (tempBoxContainer != null) tempBoxContainer.gameObject.SetActive(false);
+            if (tempBoxContainer != null && !DOTween.IsTweening(tempBoxContainer)) tempBoxContainer.position = IdlePosition;
             GameUIController.Instance.ResetNoAdsButtonPosition();
         }
 

@@ -143,7 +143,7 @@ namespace _Game.Scripts.Gameplay
                     SpawnInitialBox(i);
                 else
                 {
-                    if (GameData.Instance.Level() > 1)
+                    if (GameData.Instance.Level() > 1 && unlockBtnPrefab != null)
                         Instantiate(unlockBtnPrefab, spawnPoints[i].point);
                     else
                         spawnPoints[i].point.gameObject.SetActive(false);
@@ -159,8 +159,11 @@ namespace _Game.Scripts.Gameplay
             if (nextUnlockId >= spawnPoints.Length) return false;
             var sp = spawnPoints[nextUnlockId];
             sp.unlocked = true;
+            // Điểm spawn mới luôn nằm cuối hàng (theo thứ tự index), bật lên rồi căn lại toàn bộ hàng box.
+            sp.point.gameObject.SetActive(true);
             var btn = sp.point.GetComponentInChildren<BoxUnlockButton>();
             if (btn) btn.gameObject.SetActive(false);
+            Relayout();
             StartCoroutine(SpawnBoxRoutine(nextUnlockId, unlockBoxType, true, false));
             nextUnlockId++;
             return true;
@@ -206,7 +209,7 @@ namespace _Game.Scripts.Gameplay
             var sp = spawnPoints[idx];
             var box = PoolManager.Instance.Get<Box>("box");
             box.transform.SetParent(sp.point, false);
-            if (needVfxUnlock)
+            if (needVfxUnlock && vfxUnlockBox != null)
             {
                 var vfx = Instantiate(vfxUnlockBox, box.transform.GetChild(0));
                 box.SetVfx(vfx);

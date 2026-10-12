@@ -214,9 +214,12 @@ namespace _Game.Scripts.Gameplay
                 UpdateWarningVFX();
             };
 
-            // thêm vfx unlock slot
-            var vfx = Instantiate(vfxUnlockSlot, slot.transform);
-            Destroy(vfx, 2f);
+            // thêm vfx unlock slot (bỏ qua nếu chưa gán trong scene)
+            if (vfxUnlockSlot != null)
+            {
+                var vfx = Instantiate(vfxUnlockSlot, slot.transform);
+                Destroy(vfx, 2f);
+            }
 
             RefreshLayout(false);
             UpdateWarningVFX();
