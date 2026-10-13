@@ -29,6 +29,7 @@ namespace _Game.Scripts.Gameplay
 
         [Header("Canvas")]
         [SerializeField] private CanvasGroup canvasGroupBase;
+        [SerializeField] private Canvas canvasOverlay;
 
         [Header("Button")]
 
@@ -54,14 +55,10 @@ namespace _Game.Scripts.Gameplay
             Instance = this;
             uiCanvas = canvasGroupBase.GetComponent<Canvas>();
             EnsureCanvasScale(uiCanvas);
-            var overlays = GameObject.Find("Canvas_2 (Overlays)");
-            if (overlays != null) EnsureCanvasScale(overlays.GetComponent<Canvas>());
-            winPopup = FindObjectOfType<WinPopup>();
-            losePopup = FindObjectOfType<LosePopup>();
-            if (winPopup == null)
-                Debug.LogWarning("[GameUIController] Không tìm thấy WinPopup trong scene.", this);
-            if (losePopup == null)
-                Debug.LogWarning("[GameUIController] Không tìm thấy LosePopup trong scene.", this);
+            EnsureCanvasScale(canvasOverlay);
+            
+            if (winPopup == null) Debug.LogError("[GameUIController] Không tìm thấy WinPopup trong scene.", this);
+            if (losePopup == null) Debug.LogError("[GameUIController] Không tìm thấy LosePopup trong scene.", this);
         }
 
         private void Update()
