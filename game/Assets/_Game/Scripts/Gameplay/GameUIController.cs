@@ -39,22 +39,62 @@ namespace _Game.Scripts.Gameplay
 
         private bool isLockClick;
         private Canvas uiCanvas;
-        private GameObject resultPopup;
-        private CanvasGroup resultPopupGroup;
-        private RectTransform resultPopupCard;
-        private TextMeshProUGUI resultTitle;
-        private TextMeshProUGUI resultMessage;
-        private TextMeshProUGUI resultActionLabel;
-        private Button resultActionButton;
+        private WinPopup winPopup;
+        private LosePopup losePopup;
         private bool resultPopupShown;
         private bool resultWon;
+
+        [Header("Debug Hotkeys (Editor)")]
+        [Tooltip("Bật để bấm W/L hiện Win/Lose popup khi Play trong Editor.")]
+        public bool enableDebugHotkeys = true;
 
         private void Awake()
         {
             Instance = this;
-
             uiCanvas = canvasGroupBase.GetComponent<Canvas>();
-            CreateResultPopup();
+            EnsureCanvasScale(uiCanvas);
+            var overlays = GameObject.Find("Canvas_2 (Overlays)");
+            if (overlays != null) EnsureCanvasScale(overlays.GetComponent<Canvas>());
+            winPopup = FindObjectOfType<WinPopup>();
+            losePopup = FindObjectOfType<LosePopup>();
+            if (winPopup == null)
+                Debug.LogWarning("[GameUIController] Không tìm thấy WinPopup trong scene.", this);
+            if (losePopup == null)
+                Debug.LogWarning("[GameUIController] Không tìm thấy LosePopup trong scene.", this);
+        }
+
+        private void Update()
+        {
+#if UNITY_EDITOR
+            if (!enableDebugHotkeys || !Application.isPlaying) return;
+            if (Input.GetKeyDown(KeyCode.W)) TestShowWin();
+            if (Input.GetKeyDown(KeyCode.L)) TestShowLose();
+#endif
+        }
+
+        // Canvas root scale 0 làm cả canvas tàng hình (từng xảy ra với
+        // Canvas_1/Canvas_2 trong scene). Tự chữa + log để dễ phát hiện.
+        private static void EnsureCanvasScale(Canvas c)
+        {
+            if (c != null && c.transform.localScale == Vector3.zero)
+            {
+                Debug.LogWarning("[GameUIController] Canvas " + c.name + " scale 0 -> reset về 1.", c);
+                c.transform.localScale = Vector3.one;
+            }
+        }
+
+        [ContextMenu("Test Show WinPopup (W)")]
+        public void TestShowWin()
+        {
+            Debug.Log("[GameUIController] Test hotkey W -> ShowWin.", this);
+            ShowWin();
+        }
+
+        [ContextMenu("Test Show LosePopup (L)")]
+        public void TestShowLose()
+        {
+            Debug.Log("[GameUIController] Test hotkey L -> ShowLose.", this);
+            ShowLose();
         }
 
         // Start is called before the first frame update
@@ -186,7 +226,7 @@ namespace _Game.Scripts.Gameplay
             var boxManager = GameManager.Instance != null ? GameManager.Instance.BoxManager : null;
             if (boxManager == null || boxManager.HasFiredAllBoxesClosed)
             {
-                ShowResultPopup(true);
+                ShowWin();
                 return;
             }
 
@@ -194,10 +234,24 @@ namespace _Game.Scripts.Gameplay
             show = () =>
             {
                 boxManager.OnAllBoxesClosed -= show;
-                ShowResultPopup(true);
+                ShowWin();
             };
             boxManager.OnAllBoxesClosed += show;
             Debug.Log("Core gameplay level complete; waiting for final box animation");
+        }
+
+        private void ShowWin()
+        {
+            if (winPopup == null)
+            {
+                Debug.LogWarning("[GameUIController] WinPopup chưa có trong scene.", this);
+                return;
+            }
+            winPopup.Show(Configs.WIN_REWARD);
+            resultPopupShown = true;
+            resultWon = true;
+            isLockClick = true;
+            boardTransform.localScale = Vector3.zero;
         }
 
         public void HandleLose() => HandleLoseDelayed(null);
@@ -217,6 +271,9 @@ namespace _Game.Scripts.Gameplay
                     StartCoroutine(ShowLoseAfterDelay());
                 };
                 slot.OnAnimationFilled += show;
+                // Fallback: nếu anim treo và event không bao giờ fire,
+                // vẫn hiện popup sau 2.5s thay vì kẹt màn hình thua.
+                StartCoroutine(ShowLoseFallback(slot, show));
             }
             else
             {
@@ -226,129 +283,79 @@ namespace _Game.Scripts.Gameplay
             Debug.Log("Core gameplay level failed; waiting for final slot animation");
         }
 
+        private IEnumerator ShowLoseFallback(Slot slot, Action show)
+        {
+            yield return new WaitForSeconds(2.5f);
+            if (resultPopupShown) yield break;
+            Debug.LogWarning("[GameUIController] OnAnimationFilled quá hạn, hiện LosePopup fallback.", this);
+            slot.OnAnimationFilled -= show;
+            StartCoroutine(ShowLoseAfterDelay());
+        }
+
         private IEnumerator ShowLoseAfterDelay()
         {
             yield return new WaitForSeconds(0.25f);
-            ShowResultPopup(false);
+            ShowLose();
         }
 
-        private void ShowResultPopup(bool won)
+        private void ShowLose()
         {
-            if (resultPopup == null)
+            if (resultPopupShown) return;
+            if (losePopup == null)
+            {
+                Debug.LogWarning("[GameUIController] LosePopup chưa có trong scene.", this);
                 return;
-
+            }
+            int level = GameManager.Instance != null ? GameManager.Instance.CurrentLevel : 1;
+            float progress = GameManager.Instance != null ? GameManager.Instance.GetGameProgress() : 0.5f;
+            losePopup.Show(level, progress);
             resultPopupShown = true;
-            resultWon = won;
+            resultWon = false;
             isLockClick = true;
             boardTransform.localScale = Vector3.zero;
-            resultTitle.text = won ? "YOU WIN" : "LEVEL FAILED";
-            resultMessage.text = won ? "Great job!" : "Try again and sort the yarn.";
-            resultActionLabel.text = won ? "NEXT" : "RETRY";
-            resultActionButton.interactable = true;
-            resultActionButton.onClick.RemoveAllListeners();
-            resultActionButton.onClick.AddListener(OnResultAction);
-
-            resultPopup.SetActive(true);
-            resultPopupGroup.alpha = 0f;
-            resultPopupCard.localScale = Vector3.one * 0.85f;
-            resultPopupGroup.DOFade(1f, 0.2f);
-            resultPopupCard.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
         }
 
-        private void OnResultAction()
-        {
-            if (resultActionButton != null)
-                resultActionButton.interactable = false;
+        // Gỡ ResultPopup sinh từ code: Win/Lose popup nằm sẵn trong
+        // Gameplay.unity (con của Canvas_2 Overlays), xem WinPopup/LosePopup.
 
-            HideResultPopup();
-            if (resultWon)
-                GameManager.Instance.LoadNextLevel();
-            else
-                GameManager.Instance.LoadLevel();
+        public void OnWinNext()
+        {
+            if (winPopup != null) winPopup.Hide();
+            resultPopupShown = false;
+            GameManager.Instance.LoadNextLevel();
+        }
+
+        // Nút xem ads trên WinPopup (stub: hiện tại đi tiếp luôn, chờ AdsService).
+        public void OnWinAds()
+        {
+            Debug.Log("[WinPopup] Claim x3 via ads (stub) -> next level.");
+            if (winPopup != null) winPopup.Hide();
+            resultPopupShown = false;
+            GameManager.Instance.LoadNextLevel();
+        }
+
+        public void OnLoseRetry()
+        {
+            if (losePopup != null) losePopup.Hide();
+            resultPopupShown = false;
+            GameManager.Instance.LoadLevel();
+        }
+
+        // Nút home trên LosePopup (stub: hiện tại reload level, chờ Home flow).
+        public void OnLoseHome()
+        {
+            Debug.Log("[LosePopup] Home (stub) -> reload level.");
+            if (losePopup != null) losePopup.Hide();
+            resultPopupShown = false;
+            GameManager.Instance.LoadLevel();
         }
 
         private void HideResultPopup()
         {
-            if (resultPopup == null)
-                return;
-
-            resultPopupGroup?.DOKill();
-            resultPopupCard?.DOKill();
+            // hide both popups if any are active
+            winPopup?.Hide();
+            losePopup?.Hide();
             resultPopupShown = false;
-            resultPopup.SetActive(false);
-        }
-
-        private void CreateResultPopup()
-        {
-            if (uiCanvas == null || resultPopup != null)
-                return;
-
-            resultPopup = new GameObject("ResultPopup", typeof(RectTransform), typeof(CanvasGroup));
-            resultPopup.transform.SetParent(uiCanvas.transform, false);
-            resultPopup.transform.SetAsLastSibling();
-            var popupRect = resultPopup.GetComponent<RectTransform>();
-            popupRect.anchorMin = Vector2.zero;
-            popupRect.anchorMax = Vector2.one;
-            popupRect.offsetMin = Vector2.zero;
-            popupRect.offsetMax = Vector2.zero;
-            resultPopupGroup = resultPopup.GetComponent<CanvasGroup>();
-
-            var shade = CreateImage("Shade", resultPopup.transform, new Color(0f, 0f, 0f, 0.65f));
-            Stretch(shade.rectTransform);
-
-            var card = CreateImage("Card", resultPopup.transform, new Color(0.96f, 0.92f, 0.86f, 1f));
-            resultPopupCard = card.rectTransform;
-            resultPopupCard.anchorMin = resultPopupCard.anchorMax = new Vector2(0.5f, 0.5f);
-            resultPopupCard.sizeDelta = new Vector2(720f, 620f);
-
-            resultTitle = CreateText("Title", resultPopupCard, 56, Color.black, TextAlignmentOptions.Center);
-            resultTitle.rectTransform.anchorMin = new Vector2(0f, 0.62f);
-            resultTitle.rectTransform.anchorMax = new Vector2(1f, 0.88f);
-            resultTitle.rectTransform.offsetMin = resultTitle.rectTransform.offsetMax = Vector2.zero;
-
-            resultMessage = CreateText("Message", resultPopupCard, 30, new Color(0.15f, 0.15f, 0.15f), TextAlignmentOptions.Center);
-            resultMessage.rectTransform.anchorMin = new Vector2(0.08f, 0.43f);
-            resultMessage.rectTransform.anchorMax = new Vector2(0.92f, 0.62f);
-            resultMessage.rectTransform.offsetMin = resultMessage.rectTransform.offsetMax = Vector2.zero;
-
-            var buttonImage = CreateImage("ActionButton", resultPopupCard, new Color(0.2f, 0.55f, 0.9f, 1f));
-            var buttonRect = buttonImage.rectTransform;
-            buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(0.5f, 0.2f);
-            buttonRect.sizeDelta = new Vector2(420f, 120f);
-            resultActionButton = buttonImage.gameObject.AddComponent<Button>();
-            resultActionButton.targetGraphic = buttonImage;
-
-            resultActionLabel = CreateText("Label", buttonRect, 34, Color.white, TextAlignmentOptions.Center);
-            Stretch(resultActionLabel.rectTransform);
-            resultPopup.SetActive(false);
-        }
-
-        private static Image CreateImage(string name, Transform parent, Color color)
-        {
-            var image = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-            image.transform.SetParent(parent, false);
-            image.color = color;
-            return image;
-        }
-
-        private static TextMeshProUGUI CreateText(string name, Transform parent, float fontSize, Color color, TextAlignmentOptions alignment)
-        {
-            var text = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
-            text.transform.SetParent(parent, false);
-            text.font = TMP_Settings.defaultFontAsset;
-            text.fontSize = fontSize;
-            text.color = color;
-            text.alignment = alignment;
-            text.enableWordWrapping = true;
-            return text;
-        }
-
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
         }
 
         public void ReleaseLockClickUI() => isLockClick = false;
