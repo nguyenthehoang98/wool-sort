@@ -23,7 +23,9 @@ namespace _Game.Scripts.Gameplay
         private void Awake()
         {
             ValidateRefs();
-            gameObject.SetActive(false);
+            // Popup luôn active trong hierarchy, ẩn/hiện bằng alpha để tránh
+            // mọi vấn đề với SetActive (không hiện dù đã gọi SetActive(true)).
+            SetVisible(false, true);
         }
 
         private void ValidateRefs()
@@ -67,26 +69,39 @@ namespace _Game.Scripts.Gameplay
                 btnHome.onClick.RemoveAllListeners();
                 btnHome.onClick.AddListener(() => GameUIController.Instance.OnLoseHome());
             }
-            gameObject.SetActive(true);
+            if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (canvasGroup != null)
             {
-                canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, 0.2f);
+                canvasGroup.DOKill();
+                canvasGroup.alpha = 1f;
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
             }
             if (cardRect != null)
             {
+                cardRect.DOKill();
                 cardRect.localScale = Vector3.one * 0.85f;
                 cardRect.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
             }
             Debug.Log("[LosePopup.Show] done. activeSelf=" + gameObject.activeSelf
+                + " alpha=" + (canvasGroup != null ? canvasGroup.alpha.ToString() : "NULL")
                 + " childCount=" + transform.childCount, this);
         }
 
         public void Hide()
         {
-            if (canvasGroup != null) canvasGroup.DOKill();
-            if (cardRect != null) cardRect.DOKill();
-            gameObject.SetActive(false);
+            SetVisible(false, false);
+        }
+
+        private void SetVisible(bool visible, bool instant)
+        {
+            if (canvasGroup != null)
+            {
+                canvasGroup.DOKill();
+                canvasGroup.alpha = visible ? 1f : 0f;
+                canvasGroup.interactable = visible;
+                canvasGroup.blocksRaycasts = visible;
+            }
         }
     }
 }
