@@ -15,19 +15,14 @@ public sealed class CoreSceneFlow : MonoBehaviour
             Invoke(nameof(LoadNextScene), 0.75f);
     }
 
-    private void OnGUI()
-    {
-        if (autoAdvance)
+        // OnGUI removed – UI now provided by real UI assets.
+        // Kept for optional editor debugging.
+#if UNITY_EDITOR
+        private void OnGUI()
         {
-            GUI.Label(new Rect(0, 0, Screen.width, Screen.height), "Loading...", TitleStyle());
-            return;
+            // placeholder for debug UI if needed.
         }
-
-        GUI.Box(new Rect(Screen.width * 0.2f, Screen.height * 0.2f, Screen.width * 0.6f, Screen.height * 0.6f), "");
-        GUI.Label(new Rect(Screen.width * 0.25f, Screen.height * 0.3f, Screen.width * 0.5f, 80f), "PUZZLE GAME", TitleStyle());
-        if (GUI.Button(new Rect(Screen.width * 0.3f, Screen.height * 0.55f, Screen.width * 0.4f, 80f), "PLAY LEVEL 1", ButtonStyle()))
-            LoadNextScene();
-    }
+#endif
 
     private void LoadNextScene()
     {

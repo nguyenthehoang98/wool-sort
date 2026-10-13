@@ -70,41 +70,14 @@ namespace _Game.Scripts.Gameplay
             if (Input.GetKeyDown(KeyCode.F3)) ToggleLock();
         }
 
+        // OnGUI removed – UI now provided by real UI components.
+        // Retained for potential debug when needed (enable via #if UNITY_EDITOR).
+#if UNITY_EDITOR
         private void OnGUI()
         {
-            if (!showPanel || !Application.isPlaying) return;
-            int s = Mathf.Max(1, Mathf.RoundToInt(panelScale * 2f));
-            var style = new GUIStyle(GUI.skin.button) { fontSize = 16 * s };
-            var label = new GUIStyle(GUI.skin.label) { fontSize = 15 * s, normal = { textColor = Color.white } };
-            var box = new GUIStyle(GUI.skin.box) { fontSize = 14 * s };
-
-            GUILayout.BeginArea(new Rect(10, 10, 320 * panelScale + 60, 420), box);
-            GUILayout.Label("[Booster Test] 1/2/3=dùng | Shift+1/2/3=popup | F1=5 F2=0 F3=lock", label);
-            GUILayout.Label($"Tồn: Add={GameData.Instance.GetCount(BoosterType.AddSlot)} " +
-                $"Clean={GameData.Instance.GetCount(BoosterType.Clean)} " +
-                $"Magic={GameData.Instance.GetCount(BoosterType.MagicBox)} | Lv={GameData.Instance.Level()}", label);
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Dùng AddSlot (1)", style)) Use(BoosterType.AddSlot);
-            if (GUILayout.Button("Popup", style)) MoreBoosterPopupUI.Show(BoosterType.AddSlot);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Dùng Clean (2)", style)) Use(BoosterType.Clean);
-            if (GUILayout.Button("Popup", style)) MoreBoosterPopupUI.Show(BoosterType.Clean);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Dùng Magic (3)", style)) Use(BoosterType.MagicBox);
-            if (GUILayout.Button("Popup", style)) MoreBoosterPopupUI.Show(BoosterType.MagicBox);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Set 5 (F1)", style)) SetAll(5);
-            if (GUILayout.Button("Set 0 (F2)", style)) SetAll(0);
-            if (GUILayout.Button("Lock? (F3)", style)) ToggleLock();
-            GUILayout.EndHorizontal();
-            if (GUILayout.Button("Refresh bar", style)) RefreshBar();
-            GUILayout.EndArea();
+            // Debug panel placeholder – disabled in production.
         }
+#endif
 
         // ---- API cho nút bấm / menu Tools ----
         public void SetAll(int v)
