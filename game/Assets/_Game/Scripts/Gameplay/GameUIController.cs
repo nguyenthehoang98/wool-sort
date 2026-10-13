@@ -253,7 +253,10 @@ namespace _Game.Scripts.Gameplay
             resultPopupShown = true;
             resultWon = true;
             isLockClick = true;
-            boardTransform.localScale = Vector3.zero;
+            if (boardTransform != null)
+                boardTransform.localScale = Vector3.zero;
+            else
+                Debug.LogWarning("[GameUIController] boardTransform chưa gán.", this);
         }
 
         public void HandleLose() => HandleLoseDelayed(null);
@@ -314,7 +317,10 @@ namespace _Game.Scripts.Gameplay
             resultPopupShown = true;
             resultWon = false;
             isLockClick = true;
-            boardTransform.localScale = Vector3.zero;
+            if (boardTransform != null)
+                boardTransform.localScale = Vector3.zero;
+            else
+                Debug.LogWarning("[GameUIController] boardTransform chưa gán.", this);
         }
 
         // Gỡ ResultPopup sinh từ code: Win/Lose popup nằm sẵn trong
