@@ -4001,17 +4001,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f60067a6f33790f5d9fb15c4c0dd0305, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  frameNormal: {fileID: 0}
-  frameLock: {fileID: 0}
-  iconLock: {fileID: 0}
-  iconPlus: {fileID: 0}
-  iconNoti: {fileID: 0}
-  iconAddSlot: {fileID: 0}
-  iconClean: {fileID: 0}
-  iconMagic: {fileID: 0}
-  iconAddSlotGray: {fileID: 0}
-  iconCleanGray: {fileID: 0}
-  iconMagicGray: {fileID: 0}
+  frameNormal: {fileID: 21300000, guid: 17811e6bd958e514fac1cd2784b39ed6, type: 3}
+  frameLock: {fileID: 21300000, guid: 7f18752daf6fb064fa395fb79ca382d0, type: 3}
+  iconLock: {fileID: 21300000, guid: 372dec2909f5f9c4d997bdd2bf09c170, type: 3}
+  iconPlus: {fileID: 21300000, guid: 8da6fb6706494384b9c2536f00e33e61, type: 3}
+  iconNoti: {fileID: 21300000, guid: 86ede35ceb8de83429453f07e08b87e7, type: 3}
+  iconAddSlot: {fileID: 21300000, guid: 6f94f94d816492a4e84210ec54a0529f, type: 3}
+  iconClean: {fileID: 21300000, guid: 9739307558ef05a4784b9e172fde771e, type: 3}
+  iconMagic: {fileID: 21300000, guid: fa90802c56dbfde4e9a58765b2fb2f39, type: 3}
+  iconAddSlotGray: {fileID: 21300000, guid: 1b4fa80e02ae70848b601e0fb45db867, type: 3}
+  iconCleanGray: {fileID: 21300000, guid: b0d96032fa8ff1b4fb1341f6587aabba, type: 3}
+  iconMagicGray: {fileID: 21300000, guid: f9805c1fe473d284bb3c0b2e4bb9e967, type: 3}
   containerAnchoredPos: {x: 0, y: 137}
   buttonSpacing: 263
   buttonYOffset: -10
@@ -8074,6 +8074,111 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1e5f9e680fcf4ea40bad80876c20c1ea, type: 3}
+--- !u!1 &820000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 820000101}
+  - component: {fileID: 820000102}
+  m_Layer: 0
+  m_Name: MoreBoosterPopupUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &820000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &820000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1adf9a8af0db1e93bb357f5ce55b798, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardBg: {fileID: 21300000, guid: 0455705ef2d7e6042803df6a7425f7aa, type: 3}
+  buttonBlue: {fileID: 21300000, guid: 8e090e593e6aa25469722ca6b6086127, type: 3}
+  buttonGreen: {fileID: 21300000, guid: 8613f5d74e9cf544f9a2e77b23ae202e, type: 3}
+  buttonClose: {fileID: 21300000, guid: 7f837d85b6992d945ab2cb7aa75f7a73, type: 3}
+  coinIcon: {fileID: 21300000, guid: ab0a109847726e9489040ebe7fd8c34d, type: 3}
+  adsIcon: {fileID: 21300000, guid: eafa307af92a26b4c95c8bcf6180202c, type: 3}
+  contentIcons:
+  - {fileID: 21300000, guid: 6f94f94d816492a4e84210ec54a0529f, type: 3}
+  - {fileID: 21300000, guid: 9739307558ef05a4784b9e172fde771e, type: 3}
+  - {fileID: 21300000, guid: fa90802c56dbfde4e9a58765b2fb2f39, type: 3}
+--- !u!1 &820000200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 820000201}
+  - component: {fileID: 820000202}
+  m_Layer: 0
+  m_Name: BoosterQuickTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &820000201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820000200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &820000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820000200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb03154f2ee34983aa22c267353ae07f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startAddSlot: 2
+  startClean: 0
+  startMagic: 2
+  simulateLockedClean: 0
+  showPanel: 1
+  enableHotkeys: 1
+  panelScale: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8097,3 +8202,5 @@ SceneRoots:
   - {fileID: 1180980792}
   - {fileID: 271269154}
   - {fileID: 810000201}
+  - {fileID: 820000101}
+  - {fileID: 820000201}

@@ -44,10 +44,60 @@ namespace _Game.Scripts.Gameplay
         private void Awake()
         {
             ResolveSprites();
+            EnsureSceneButtons();
+        }
+
+        /// <summary>Gọi từ Inspector (chuột phải) hoặc code để refresh 3 nút trong scene.</summary>
+        public void Refresh() => RefreshSceneButtons();
+
+        [ContextMenu("Refresh Buttons")]
+        private void CtxRefresh() => RefreshSceneButtons();
+
+        [ContextMenu("Wire Sprites From Resources")]
+        private void CtxWireSprites()
+        {
+            frameNormal = null; frameLock = null; iconLock = null;
+            iconPlus = null; iconNoti = null;
+            iconAddSlot = null; iconClean = null; iconMagic = null;
+            iconAddSlotGray = null; iconCleanGray = null; iconMagicGray = null;
+            ResolveSprites();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
+
+        [ContextMenu("Force Rebuild Buttons (autoBuild)")]
+        private void CtxRebuild()
+        {
+            ResolveSprites();
+            BuildIfMissing(force: true);
+        }
+
+        // Tự chữa: nếu container/thiếu nút/thiếu ref thì dựng lại bằng code
+        // (kể cả khi autoBuild=false) để Play là thấy UI ngay, không cần kéo tay.
+        private void EnsureSceneButtons()
+        {
             if (autoBuild)
+            {
                 BuildIfMissing();
-            else
-                RefreshSceneButtons();
+                return;
+            }
+            var parent = FindBoosterParent();
+            var container = parent != null ? parent.Find("BoosterContainer") : null;
+            if (container == null)
+            {
+                Debug.LogWarning("[BoosterBarUI] Thiếu BoosterContainer -> tự dựng bằng code.", this);
+                BuildIfMissing();
+                return;
+            }
+            var items = container.GetComponentsInChildren<BoosterItem>(true);
+            if (items.Length < 3)
+            {
+                Debug.LogWarning("[BoosterBarUI] BoosterContainer thiếu nút -> tự dựng bù.", this);
+                BuildIfMissing();
+                return;
+            }
+            RefreshSceneButtons();
         }
 
         // Nút nằm sẵn trong scene: gọi Setup để cập nhật lock/count theo level hiện tại.
@@ -92,17 +142,31 @@ namespace _Game.Scripts.Gameplay
             return Resources.Load<Sprite>("BoosterUI/" + name);
         }
 
-        private void BuildIfMissing()
+        private void BuildIfMissing(bool force = false)
         {
             var parent = FindBoosterParent();
             if (parent == null) return;
 
             var container = parent.Find("BoosterContainer");
-            if (container != null && container.childCount >= 3)
+            if (!force && container != null && container.childCount >= 3)
             {
                 foreach (var item in container.GetComponentsInChildren<BoosterItem>(true))
                     item.Setup();
                 return;
+            }
+
+            if (force && container != null)
+            {
+                // Xóa nút cũ dựng sai/thiếu ref rồi dựng lại sạch.
+                for (int i = container.childCount - 1; i >= 0; i--)
+                {
+#if UNITY_EDITOR
+                    if (!Application.isPlaying)
+                        DestroyImmediate(container.GetChild(i).gameObject);
+                    else
+#endif
+                        Destroy(container.GetChild(i).gameObject);
+                }
             }
 
             if (container == null)

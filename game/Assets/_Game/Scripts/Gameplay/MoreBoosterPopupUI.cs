@@ -57,6 +57,28 @@ namespace _Game.Scripts.Gameplay
             _instance.Open(type);
         }
 
+        public static bool IsShowing => _instance != null && _instance._root != null && _instance._root.activeSelf;
+        public static BoosterType CurrentType => _instance != null ? _instance._current : BoosterType.AddSlot;
+
+        public static void CloseCurrent()
+        {
+            if (_instance != null) _instance.Hide();
+        }
+
+        // Test nhanh từ Inspector (chuột phải component) hoặc Tools menu.
+        [ContextMenu("Test Show AddSlot")]
+        private void CtxShowAddSlot() => Open(BoosterType.AddSlot);
+        [ContextMenu("Test Show Clean")]
+        private void CtxShowClean() => Open(BoosterType.Clean);
+        [ContextMenu("Test Show MagicBox")]
+        private void CtxShowMagic() => Open(BoosterType.MagicBox);
+
+        private void Update()
+        {
+            if (_root != null && _root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+                Hide();
+        }
+
         private void Open(BoosterType type)
         {
             _current = type;
@@ -66,6 +88,11 @@ namespace _Game.Scripts.Gameplay
             Refresh();
             _root.SetActive(true);
             _root.transform.SetAsLastSibling();
+        }
+
+        private void OnEnable()
+        {
+            if (_instance == null) _instance = this;
         }
 
         public void Hide()
@@ -114,6 +141,9 @@ namespace _Game.Scripts.Gameplay
             Stretch(shadeRt);
             var shadeImg = shade.AddComponent<Image>();
             shadeImg.color = new Color(0f, 0f, 0f, 0.65f);
+            var shadeBtn = shade.AddComponent<Button>();
+            shadeBtn.targetGraphic = shadeImg;
+            shadeBtn.onClick.AddListener(Hide);
 
             var card = new GameObject("Card", typeof(RectTransform));
             var cardRt = SetupChild(card, _root.transform);

@@ -10,6 +10,7 @@ using _Game.Scripts.Gameplay;
 using UnityEngine;
 
 // --- Tiến trình/meta-game tối giản (thay GameData gốc) ---
+// Hỗ trợ test nhanh: SetCount/SetLevel/Reset + RaiseChanged để UI refresh ngay.
 public class GameData
 {
     private static GameData _instance;
@@ -18,7 +19,11 @@ public class GameData
     private readonly Dictionary<BoosterType, int> _counts =
         new Dictionary<BoosterType, int>();
 
-    public int Level() => 1;
+    // Cho phép test lock: mặc định 1 (unlock hết vì LIST_BOOSTER_UNLOCK={1,1,1}).
+    // BoosterQuickTest / menu Tools có thể đổi lúc Play.
+    private int _levelOverride = 1;
+
+    public int Level() => _levelOverride;
     public bool IsBoosterTutShown(BoosterType _) => true;
     public void MarkBoosterTutShown(BoosterType _) { }
 
@@ -26,14 +31,50 @@ public class GameData
     public int GetCount(BoosterType type) =>
         _counts.TryGetValue(type, out var c) ? c : 99;
 
-    public void AddCount(BoosterType type, int delta, string _, string __) =>
+    public void AddCount(BoosterType type, int delta, string _, string __)
+    {
         _counts[type] = GetCount(type) + delta;
+        GameConst.RaiseChanged();
+    }
+
+    // ---- Test hooks (gọi từ BoosterQuickTest / Tools menu / Console) ----
+    public void SetCount(BoosterType type, int value, bool notify = true)
+    {
+        _counts[type] = Mathf.Max(0, value);
+        if (notify) GameConst.RaiseChanged();
+    }
+
+    public void SetAllCounts(int addSlot, int clean, int magic, bool notify = true)
+    {
+        _counts[BoosterType.AddSlot] = Mathf.Max(0, addSlot);
+        _counts[BoosterType.Clean] = Mathf.Max(0, clean);
+        _counts[BoosterType.MagicBox] = Mathf.Max(0, magic);
+        if (notify) GameConst.RaiseChanged();
+    }
+
+    public void ResetCounts(bool notify = true)
+    {
+        _counts.Clear();
+        if (notify) GameConst.RaiseChanged();
+    }
+
+    public void SetLevel(int level, bool notify = true)
+    {
+        _levelOverride = Mathf.Max(1, level);
+        if (notify) GameConst.RaiseChanged();
+    }
 }
 
 // --- Sự kiện đổi booster (thay GameConst gốc) ---
 public static class GameConst
 {
     public static event Action<ChangeBoosterArgs> OnChangeBooster;
+
+    public static void RaiseChanged()
+    {
+        try { OnChangeBooster?.Invoke(new ChangeBoosterArgs()); }
+        catch (Exception e) { Debug.LogWarning("[GameConst] OnChangeBooster throw: " + e.Message); }
+    }
 }
 
 public class ChangeBoosterArgs { }
