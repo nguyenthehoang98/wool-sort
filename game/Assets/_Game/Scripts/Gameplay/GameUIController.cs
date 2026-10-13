@@ -252,7 +252,7 @@ namespace _Game.Scripts.Gameplay
             resultWon = true;
             isLockClick = true;
             if (boardTransform != null)
-                boardTransform.localScale = Vector3.zero;
+                boardTransform.localScale = Vector3.one;
             else
                 Debug.LogWarning("[GameUIController] boardTransform chưa gán.", this);
         }
@@ -316,7 +316,7 @@ namespace _Game.Scripts.Gameplay
             resultWon = false;
             isLockClick = true;
             if (boardTransform != null)
-                boardTransform.localScale = Vector3.zero;
+                boardTransform.localScale = Vector3.one;
             else
                 Debug.LogWarning("[GameUIController] boardTransform chưa gán.", this);
         }
@@ -373,7 +373,7 @@ namespace _Game.Scripts.Gameplay
             canvasGroupBase.alpha = visible ? 1f : 0f;
             canvasGroupBase.interactable = visible;
             canvasGroupBase.blocksRaycasts = visible;
-            boardTransform.localScale = visible ? Vector3.one : Vector3.zero;
+            boardTransform.localScale = Vector3.one;
         }
 
         /// <summary>

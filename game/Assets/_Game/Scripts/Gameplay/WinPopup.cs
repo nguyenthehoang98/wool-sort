@@ -19,10 +19,9 @@ namespace _Game.Scripts.Gameplay
         public Button btnCoin;
         public Button btnAds;
         public TextMeshProUGUI coinText;
-        [Tooltip("Ảnh tròn chụp màn hình lúc thắng (con ImgCircle/ImgPhoto).")]
-        public Image photoImage;
 
-        private Sprite lastPhoto;
+
+
 
         private void Awake()
         {
@@ -40,7 +39,7 @@ namespace _Game.Scripts.Gameplay
             if (btnCoin == null) Debug.LogWarning("[WinPopup] Chưa kéo btnCoin.", this);
             if (btnAds == null) Debug.LogWarning("[WinPopup] Chưa kéo btnAds.", this);
             if (coinText == null) Debug.LogWarning("[WinPopup] Chưa kéo coinText.", this);
-            if (photoImage == null) Debug.LogWarning("[WinPopup] Chưa kéo photoImage.", this);
+
         }
 
         public void Show(int coinReward = 60)
@@ -52,7 +51,7 @@ namespace _Game.Scripts.Gameplay
                 + " btnCoin=" + (btnCoin != null)
                 + " btnAds=" + (btnAds != null)
                 + " coinText=" + (coinText != null)
-                + " photoImage=" + (photoImage != null)
+    
                 + " | activeSelf=" + gameObject.activeSelf
                 + " | canvas=" + (canvas != null ? canvas.name + " scale=" + canvas.transform.localScale : "NULL"), this);
             if (canvas != null && canvas.transform.localScale == Vector3.zero)
@@ -63,7 +62,7 @@ namespace _Game.Scripts.Gameplay
 
             if (messageText != null) messageText.text = "Great job!";
             if (coinText != null) coinText.text = "x" + coinReward;
-            RefreshPhoto();
+
             if (btnCoin != null)
             {
                 btnCoin.interactable = true;
@@ -100,31 +99,7 @@ namespace _Game.Scripts.Gameplay
             SetVisible(false, false);
         }
 
-        // Chụp gameplay lúc này làm ảnh tròn. Gọi trong Show, trước khi board ẩn.
-        private void RefreshPhoto()
-        {
-            if (photoImage == null) return;
-            if (lastPhoto != null)
-            {
-                if (lastPhoto.texture != null) Destroy(lastPhoto.texture);
-                Destroy(lastPhoto);
-                lastPhoto = null;
-            }
-            var cam = GameManager.Instance != null ? GameManager.Instance.OrthoCam : null;
-            lastPhoto = PopupPhoto.Capture(cam);
-            if (lastPhoto != null)
-            {
-                photoImage.sprite = lastPhoto;
-                photoImage.preserveAspect = true;
-                photoImage.color = Color.white;
-            }
-            else
-            {
-                var c = photoImage.color;
-                c.a = 0f;
-                photoImage.color = c;
-            }
-        }
+
 
         private void SetVisible(bool visible, bool instant)
         {

@@ -12,43 +12,26 @@ namespace _Game.Scripts.Gameplay
             if (cam == null) cam = Camera.main;
             if (cam == null || Screen.width <= 0 || Screen.height <= 0) return null;
 
-            int w = Screen.width, h = Screen.height;
-            var rtFull = RenderTexture.GetTemporary(w, h, 24);
+                        // Capture directly to a square render texture to avoid extra cropping.
+            var rtSquare = RenderTexture.GetTemporary(PHOTO_SIZE, PHOTO_SIZE, 24);
             var prevTex = cam.targetTexture;
             var prevActive = RenderTexture.active;
-            Texture2D full = null, square = null;
+            Texture2D square = null;
             try
             {
-                cam.targetTexture = rtFull;
+                cam.targetTexture = rtSquare;
                 cam.Render();
                 cam.targetTexture = prevTex;
-                RenderTexture.active = rtFull;
-                full = new Texture2D(w, h, TextureFormat.RGB24, false);
-                full.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-                full.Apply();
-
-                // Crop vuông giữa + scale về PHOTO_SIZE.
-                var rtSquare = RenderTexture.GetTemporary(PHOTO_SIZE, PHOTO_SIZE, 0);
-                try
-                {
-                    Graphics.Blit(full, rtSquare);
-                    RenderTexture.active = rtSquare;
-                    square = new Texture2D(PHOTO_SIZE, PHOTO_SIZE, TextureFormat.RGB24, false);
-                    square.ReadPixels(new Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE), 0, 0);
-                    square.Apply();
-                }
-                finally
-                {
-                    RenderTexture.active = prevActive;
-                    RenderTexture.ReleaseTemporary(rtSquare);
-                }
+                RenderTexture.active = rtSquare;
+                square = new Texture2D(PHOTO_SIZE, PHOTO_SIZE, TextureFormat.RGB24, false);
+                square.ReadPixels(new Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE), 0, 0);
+                square.Apply();
                 ApplyCircularMask(square);
             }
             finally
             {
                 RenderTexture.active = prevActive;
-                RenderTexture.ReleaseTemporary(rtFull);
-                if (full != null) Object.Destroy(full);
+                RenderTexture.ReleaseTemporary(rtSquare);
             }
             if (square == null) return null;
             return Sprite.Create(square, new Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE), new Vector2(0.5f, 0.5f));
