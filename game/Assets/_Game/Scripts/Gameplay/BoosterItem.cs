@@ -28,10 +28,30 @@ namespace _Game.Scripts.Gameplay
 
         private void Awake()
         {
-            buttonBooster.onClick.AddListener(() =>
+            if (buttonBooster != null)
             {
-                OnClick();
-            });
+                buttonBooster.onClick.AddListener(() =>
+                {
+                    OnClick();
+                });
+            }
+        }
+
+        // Gán reference khi dựng UI bằng code (BoosterBarUI) thay vì prefab.
+        public void Bind(BoosterType boosterType, Button button, GameObject normal, GameObject lockObj, GameObject noti, TMP_Text count, GameObject plus)
+        {
+            type = boosterType;
+            if (buttonBooster != null)
+                buttonBooster.onClick.RemoveAllListeners();
+            buttonBooster = button;
+            objNormal = normal;
+            objLock = lockObj;
+            objNoti = noti;
+            countText = count;
+            objPlus = plus;
+            if (buttonBooster != null)
+                buttonBooster.onClick.AddListener(OnClick);
+            Setup();
         }
 
         private void OnEnable()
@@ -51,6 +71,11 @@ namespace _Game.Scripts.Gameplay
 
         public void Setup()
         {
+            if (objNormal == null || objLock == null || objNoti == null || objPlus == null || countText == null)
+            {
+                Debug.LogWarning($"[BoosterItem] {type} thiếu ref UI (dựng bằng BoosterBarUI để đủ ref).", this);
+                return;
+            }
             _btnBoosterState = ButtonBoosterState.Noti;
 
             objNormal.SetActive(true);
@@ -113,16 +138,23 @@ namespace _Game.Scripts.Gameplay
 
         public void OnClick()
         {
-            if (!GameManager.Instance.CanInteractWithGame() || BoosterManager.Instance.IsLockByUsingBooster) return;
+            var gameManager = GameManager.Instance;
+            var boosterManager = BoosterManager.Instance;
+            if (gameManager == null || boosterManager == null)
+            {
+                Debug.LogWarning("[BoosterItem] Thiếu GameManager/BoosterManager trong scene, bỏ qua click.", this);
+                return;
+            }
+            if (!gameManager.CanInteractWithGame() || boosterManager.IsLockByUsingBooster) return;
 
             if (_btnBoosterState == ButtonBoosterState.Lock)
             {
                 var unlockLevel = Configs.LIST_BOOSTER_UNLOCK[(int)type];
-                KitTooltipManager.Instance.Show($"Unlock at level {unlockLevel}");
+                ShowTooltip($"Unlock at level {unlockLevel}");
                 return;
             }
 
-            if (!BoosterManager.Instance.CanUseBooster(type))
+            if (!boosterManager.CanUseBooster(type))
             {
                 return;
             }
@@ -134,12 +166,23 @@ namespace _Game.Scripts.Gameplay
             }
 
             GameData.Instance.AddCount(type, -1, "use", "use_booster");
-            BoosterManager.Instance.UseBooster(type);
+            boosterManager.UseBooster(type);
+        }
+
+        private static void ShowTooltip(string message)
+        {
+            // KitTooltipManager thường nằm ở scene Entry/Home (DontDestroyOnLoad),
+            // mở thẳng scene Gameplay thì Instance null -> fallback log, không crash.
+            var tooltip = KitTooltipManager.Instance;
+            if (tooltip != null)
+                tooltip.Show(message);
+            else
+                Debug.Log($"[Booster Tooltip] {message}");
         }
 
         private void OpenBuyPopup()
         {
-            Debug.LogWarning($"[Stub] OpenBuyPopup {type} (shop chưa có trong bản này).");
+            MoreBoosterPopupUI.Show(type);
         }
 
         public BoosterType GetBoosterType()

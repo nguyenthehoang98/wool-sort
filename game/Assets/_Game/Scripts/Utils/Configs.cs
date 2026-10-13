@@ -16,7 +16,9 @@ public static class Configs
 
     //More Booster Popup
     public static List<int> LIST_BOOSTER_COST = new List<int>() { 80, 120, 60 };
-    public static List<int> LIST_BOOSTER_UNLOCK = new List<int>() { 2, 8, 4 };
+    // Mặc định unlock tất cả booster từ level 1 (yêu cầu 2026-10-13).
+    // Giá trị gốc: { 2, 8, 4 } (AddSlot lv2, Clean lv8, MagicBox lv4).
+    public static List<int> LIST_BOOSTER_UNLOCK = new List<int>() { 1, 1, 1 };
 
     //Win Popup
     public const int WIN_REWARD = 10;

@@ -50,6 +50,10 @@ namespace _Game.Scripts.Gameplay
         {
             Instance = this;
 
+            // Tự dựng hàng nút booster uGUI nếu scene chưa có (tránh sửa scene tay).
+            if (FindObjectOfType<BoosterBarUI>() == null)
+                new GameObject("BoosterBarUI").AddComponent<BoosterBarUI>();
+
             if (tempBoxContainer == null)
             {
                 Debug.LogError("[BoosterManager] tempBoxContainer chưa gán — booster Clean sẽ chạy rút gọn (không hiện giỏ tạm).", this);
@@ -78,26 +82,32 @@ namespace _Game.Scripts.Gameplay
 
         public bool CanUseBooster(BoosterType type, bool needShowToolTip = true)
         {
+            var waiting = WaitingAreaManager.Instance;
+            if (waiting == null)
+            {
+                Debug.LogWarning("[BoosterManager] WaitingAreaManager chưa có trong scene, cho phép dùng để test UI.", this);
+                return true;
+            }
             switch(type)
             {
                 case BoosterType.AddSlot:
-                    bool flag = WaitingAreaManager.Instance.HasReachMaxSlot();
+                    bool flag = waiting.HasReachMaxSlot();
                     if(flag)
                     {
                         if(needShowToolTip)
                         {
-                            KitTooltipManager.Instance.Show("No more slots available");
+                            ShowTooltip("No more slots available");
                         }
                     }
 
                     return !flag;
                 case BoosterType.Clean:
-                    bool flag2 = WaitingAreaManager.Instance.IsAllEmpty();
+                    bool flag2 = waiting.IsAllEmpty();
                     if(flag2)
                     {
                         if(needShowToolTip)
                         {
-                            KitTooltipManager.Instance.Show("Waiting area is empty");
+                            ShowTooltip("Waiting area is empty");
                         }
                     }
                     return !flag2;
@@ -121,9 +131,19 @@ namespace _Game.Scripts.Gameplay
             }
         }
 
-        public void UseBooster(BoosterType type, bool isRevive = false)
+        private static void ShowTooltip(string message)
         {
-            if(isLockByUsingBooster)
+            // KitTooltipManager thường nằm ở scene Entry/Home (DontDestroyOnLoad),
+            // mở thẳng scene Gameplay thì Instance null -> fallback log, không crash.
+            var tooltip = KitTooltipManager.Instance;
+            if (tooltip != null)
+                tooltip.Show(message);
+            else
+                Debug.Log($"[Booster Tooltip] {message}");
+        }
+
+        public void UseBooster(BoosterType type, bool isRevive = false)
+        {            if(isLockByUsingBooster)
                 return;
 
             switch(type)

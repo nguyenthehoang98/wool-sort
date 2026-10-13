@@ -23,12 +23,24 @@
 (`CanInteractWithGame == true` trong 25s), `waitingSlotPrefab` và `vfxUnlockSlot`
 được gán trên `WaitingAreaManager` (nếu thiếu, test AddSlot đỏ — đúng ý nghĩa wiring check).
 
-## Checklist thủ công bằng panel (MagicBox/Clean cần mắt thường)
+## Checklist thủ công bằng UI thật (thay OnGUI)
 
-1. Scene Gameplay đã có sẵn GameObject gắn `BoosterDebugPanel` → chỉ cần bấm Play.
-2. Bấm **Dùng AddSlot**: số slot waiting +1, tới trần thì nút báo từ chối.
-3. Tap vài sợi cho waiting có đồ → bấm **Dùng Clean**: sợi bay vào TempBox; chờ box mới refill thì TempBox tự ẩn.
-4. Bấm **Dùng MagicBox**: box đầu chuyển rainbow, hút đúng `RequiredCount` sợi, 2 box sau ra màu min-priority.
+> Cập nhật 2026-10-13 — đã dựng UI tương đương gốc bằng code, không copy prefab.
+
+1. Bấm Play scene Gameplay: `BoosterManager.Awake` tự tạo `BoosterBarUI`
+   nếu scene chưa có → hiện `BoosterContainer` (0,137) với 3 nút
+   AddSlot (−263) / MagicBox (0) / Clean (+263), số đo theo
+   `BoosterBtn.prefab` gốc (root 200×200, Frame 194×100, Notice 56×56…).
+2. Kéo sprite từ `Assets/_Game/BoosterUI_Picked/` vào field của `BoosterBarUI`
+   (`frameNormal`, `iconAddSlot`…) và `MoreBoosterPopupUI` (`cardBg`,
+   `contentIcons`…); để trống vẫn chạy màu trơn để test logic.
+3. Bấm từng nút khi còn lượt: trừ kho và chạy đúng effect
+   (AddSlot +1 slot, Clean bay vào TempBox, MagicBox rainbow + hút sợi).
+4. Bấm nút khi hết lượt (kho = 0): mở `MoreBoosterPopupUI`
+   (title/desc/content theo gốc, cost từ `Configs.LIST_BOOSTER_COST`,
+   nút coin/ads stub → grant + `UseBooster`).
+5. Panel OnGUI cũ (`BoosterDebugPanel`) mặc định `showPanel = false`;
+   chỉ bật khi cần chẩn đoán, không dùng làm UI chính.
 
 ## Sửa crash khi load level (2026-10-12)
 
@@ -54,3 +66,55 @@
 - Mới verify: quét cú pháp Roslyn 305 file Assets = 0 lỗi; đối chiếu namespace/usings thủ công.
 - `GameData` đang là stub (`Level()=1`, kho booster mặc định 99) nên test kho chỉ đúng với stub;
   khi có `GameData` gốc phải chạy lại toàn bộ.
+
+## Nút trong scene + unlock level 1 + ảnh gốc (2026-10-13, theo yêu cầu)
+
+- **Unlock mặc định level 1:** `Configs.LIST_BOOSTER_UNLOCK = { 1, 1, 1 }`
+  (giá trị gốc `{ 2, 8, 4 }` giữ trong comment). `GameData` stub `Level()=1`
+  nên cả 3 booster hiện trạng thái mở ngay.
+- **Nút sửa trực tiếp trong scene, không sinh từ code:**
+  - `Gameplay.unity` đã chèn sẵn `BoosterContainer` (con của SafeArea,
+    anchor (0.5,0), pos (0,137)) + 3 nút `BoosterBtn_1/3/2`
+    (AddSlot type 0 tại x=-263 size 180 / MagicBox type 2 tại x=0 /
+    Clean type 1 tại x=+263, fileID 810000001+), mỗi nút đủ
+    Button + Image + `BoosterItem` (type/buttonBooster/objNormal/objLock/
+    objNoti/countText/objPlus đã đấu dây) + Frame/ImgIcon, FrameLock/ImgLock,
+    Notice/TxtNum (TMP font BALOO của scene), IconPlus.
+  - `BoosterBarUI.autoBuild` mặc định `false`: chỉ `ResolveSprites()` +
+    gọi `Setup()` cho nút trong scene. `BoosterManager.Awake` giữ ensure
+    (scene đã có sẵn nên không tạo thêm).
+  - Verify bằng parse YAML: không có ref nào missing, type 0/2/1 đúng,
+    sprite đúng 3 frame + 1 icon/loại.
+- **Ảnh theo game gốc:** sprite trong scene trỏ thẳng guid trong
+  `BoosterUI_Picked/` (= guid gốc từ `wool-sort (2)`): `Button_Boosters(Gray)`,
+  `Icon_Lock_2/Plus/Noti`, `Icon_Slot_3/4`, `Icon_Broom_2/3`, `Icon_Spool_2/3`.
+- Trạng thái: code + scene xong, **chờ bạn mở Unity kiểm tra hiển thị
+  và bấm thử trong Play mode**.
+
+- Stack: `BoosterItem.OnClick (BoosterItem.cs:146)` → `KitTooltipManager.Instance.Show`
+  khi booster ở trạng thái Lock. Nguyên nhân: `KitTooltipManager` sống ở scene
+  Entry/Home (`DontDestroyOnLoad`), mở thẳng scene Gameplay thì `Instance == null`.
+- Sửa:
+  - `BoosterItem.OnClick`: guard `GameManager/BoosterManager == null`, helper
+    `ShowTooltip()` (có Instance thì Show, không thì `Debug.Log`, không crash).
+  - `BoosterManager.CanUseBooster` + helper `ShowTooltip()` tương tự; `WaitingAreaManager`
+    null thì cho phép dùng để test UI thay vì NRE.
+  - `BoosterBarUI`: field nào chưa kéo sprite thì tự `Resources.Load("BoosterUI/<tên>")`;
+    vẫn thiếu thì nút hiện màu fallback theo loại (AddSlot xanh lá / Clean cam /
+    Magic tím) để nhìn thấy và bấm được; log hướng dẫn kéo từ `BoosterUI_Picked/`.
+  - `MoreBoosterPopupUI`: `ResolveSprites()` + tự cập nhật lại sprite ở `Refresh()`
+    (card/nút/content), thiếu thì màu trơn.
+- Asset runtime: copy 19 PNG từ `BoosterUI_Picked/` sang
+  `Assets/_Game/Resources/BoosterUI/` (**chỉ PNG, không copy .meta** để tránh trùng guid).
+  `BoosterUI_Picked/` vẫn là nơi bạn edit; bản Resources là fallback tự load.
+- Trạng thái: code xong, **chờ bạn Play lại scene Gameplay verify hết NRE + nút hiện hình**.
+
+## Fix compile 2026-10-13 — CS0103 `MakeImage`
+
+- Lỗi: `MoreBoosterPopupUI.cs(109,24): error CS0103: The name 'MakeImage' does not exist`.
+- Nguyên nhân: `Build()` gọi `MakeImage(...)` nhưng file chỉ định nghĩa
+  `MakeText`/`MakeButton`, thiếu hàm dựng `Image`.
+- Sửa: bổ sung `MakeImage(parent, name, anchoredRatio, sizeDelta)` static,
+  cùng quy ước vị trí card với `MakeText` (`x*380`, `y*980-490`), `preserveAspect = true`.
+- Trạng thái: code xong, **chờ mở Unity verify hết lỗi compile** + Play test
+  checklist UI thật ở trên.

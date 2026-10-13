@@ -39,13 +39,13 @@
       <td>Done</td>
       <td>File đã có trong <code>game/Assets/_Game/Scripts</code>, giữ namespace <code>_Game.Scripts.Gameplay</code>. Quét cú pháp Roslyn 302 file = 0 lỗi; còn chờ verify mở Editor.</td>
     </tr>
-    <tr class="todo">
+    <tr class="done">
       <td>2</td>
-      <td>Sao chép prefab UI <code>BoosterBtn.prefab</code> và các sprite liên quan (Button_Boosters*, FX_Booster_Rainbow)</td>
+      <td>Nút booster trong scene tương đương gốc (không sinh từ code) + pick sprite gốc vào folder mới + unlock mặc định level 1</td>
       <td>UI/Art</td>
       <td class="priority">Trung bình</td>
-      <td>TODO</td>
-      <td>Đặt prefab trong <code>Assets/_Game/Prefab/UI</code> của dự án mới.</td>
+      <td>Done (code + scene xong, chờ Play test)</td>
+      <td><code>Gameplay.unity</code> có sẵn <code>BoosterContainer</code> + 3 nút <code>BoosterBtn_1/3/2</code> đấu đủ ref <code>BoosterItem</code>, sprite trỏ guid trong <code>game/Assets/_Game/BoosterUI_Picked/</code> (= guid gốc). <code>BoosterBarUI.autoBuild=false</code> chỉ refresh. <code>LIST_BOOSTER_UNLOCK={1,1,1}</code> (gốc {2,8,4} trong comment). Popup mua <code>MoreBoosterPopupUI.cs</code> giữ nguyên.</td>
     </tr>
     <tr class="todo">
       <td>4</td>
@@ -85,7 +85,15 @@
       <td>QA</td>
       <td class="priority">Cao</td>
       <td>In‑Progress</td>
-      <td>Có panel thủ công <code>BoosterDebugPanel</code> (editor-only, 3 nút lớn) + checklist trong <code>docs/evidence/w6-booster-tests.md</code>. Đã đấu dây <code>BoosterManager</code> trong scene Gameplay; guard null hết đường crash. Chờ chạy Play scene.</td>
+      <td>UI thật <code>BoosterContainer</code> + 3 nút nằm sẵn trong scene Gameplay (không sinh từ code, <code>BoosterBarUI.autoBuild=false</code> chỉ refresh). Unlock mặc định level 1. Fix CS0103 <code>MakeImage</code>, NRE <code>KitTooltipManager</code> null (helper <code>ShowTooltip</code> fallback log). Sprite scene trỏ guid trong <code>BoosterUI_Picked/</code> + mirror <code>Resources/BoosterUI/</code> cho popup. Chờ chạy Play scene — xem <code>docs/evidence/w6-booster-tests.md</code>.</td>
+    </tr>
+    <tr class="done">
+      <td>14</td>
+      <td>Fix CS0103 <code>MakeImage</code> trong <code>MoreBoosterPopupUI.cs</code> + NRE <code>KitTooltipManager</code> null ở <code>BoosterItem.OnClick:146</code> + nút thiếu UI asset</td>
+      <td>Assistant</td>
+      <td class="priority">Cao</td>
+      <td>Done (code xong, chờ Play verify)</td>
+      <td>CS0103: bổ sung hàm <code>MakeImage</code>. NRE: guard <code>GameManager/BoosterManager/WaitingAreaManager/KitTooltipManager</code> null + helper <code>ShowTooltip()</code> fallback log. Asset: copy 19 PNG sang <code>Assets/_Game/Resources/BoosterUI/</code> (chỉ PNG, không copy .meta để tránh trùng guid) để tự <code>Resources.Load</code> khi Inspector trống; thiếu nữa thì nút hiện màu fallback theo loại. Chi tiết: <code>docs/evidence/w6-booster-tests.md</code>.</td>
     </tr>
     <tr class="done">
       <td>12</td>
@@ -93,7 +101,7 @@
       <td>Assistant</td>
       <td class="priority">Trung bình</td>
       <td>Done</td>
-      <td><code>game/Assets/_Game/Scripts/Utils/BoosterDebugPanel.cs</code> — 3 nút Dùng AddSlot/Clean/MagicBox, chữ lớn, tự chẩn đoán khi thiếu manager.</td>
+      <td><code>game/Assets/_Game/Scripts/Utils/BoosterDebugPanel.cs</code> — 3 nút Dùng AddSlot/Clean/MagicBox, chữ lớn, tự chẩn đoán khi thiếu manager. Từ 2026-10-13 mặc định <code>showPanel=false</code>, chỉ fallback khi UI thật chưa dựng.</td>
     </tr>
     <tr class="done">
       <td>13</td>
@@ -124,26 +132,33 @@
 <p>Làm mới trang sau mỗi lần thay đổi trạng thái. Dùng cột <strong>Trạng thái</strong> để lọc: <strong>TODO</strong>, <strong>In‑Progress</strong>, <strong>Done</strong>.</p>
 <h2>📁 Các file liên quan</h2>
 <ul>
-<li><strong>C# Scripts</strong>
+<li><strong>C# Scripts (dựng trực tiếp, không copy prefab)</strong>
   <ul>
     <li>Assets/_Game/Scripts/Gameplay/BoosterType.cs</li>
     <li>Assets/_Game/Scripts/Gameplay/BoosterManager.cs</li>
-    <li>Assets/_Game/Scripts/Gameplay/BoosterItem.cs</li>
+    <li>Assets/_Game/Scripts/Gameplay/BoosterItem.cs (thêm Bind)</li>
+    <li>Assets/_Game/Scripts/Gameplay/BoosterBarUI.cs (mới — dựng hàng nút)</li>
+    <li>Assets/_Game/Scripts/Gameplay/MoreBoosterPopupUI.cs (mới — popup mua)</li>
     <li>Assets/_Game/Scripts/Gameplay/WaitingAreaManager.cs</li>
     <li>Assets/_Game/Scripts/Gameplay/BoxManager.cs</li>
     <li>Assets/_Game/Scripts/Gameplay/Box.cs</li>
   </ul>
 </li>
-<li><strong>Prefabs</strong>
+<li><strong>Nút trong scene (sửa trực tiếp, không sinh từ code)</strong>
   <ul>
-    <li>Assets/_Game/Prefab/UI/BoosterBtn.prefab</li>
-    <li>Assets/_Game/Prefab/UI/MoreBoosterPopup.prefab (nếu có)</li>
+    <li>Scene <code>Gameplay.unity</code>: <code>BoosterContainer</code> + <code>BoosterBtn_1/3/2</code> (fileID 810000001+, sprite = guid trong <code>BoosterUI_Picked/</code>) + <code>BoosterBarUI</code> binder (<code>autoBuild=false</code>)</li>
+    <li><code>LIST_BOOSTER_UNLOCK = {1,1,1}</code> — unlock mặc định level 1 (gốc {2,8,4})</li>
   </ul>
 </li>
-<li><strong>Textures / Sprites</strong>
+<li><strong>Prefab gốc (chỉ đọc số đo, không copy)</strong>
   <ul>
-    <li>Assets/_Game/Textures/Button_Boosters.png</li>
-    <li>Assets/_Game/Textures/FX_Booster_Rainbow.png</li>
+    <li>(gốc) wool-sort (2)/Assets/_Game/Prefab/UI/BoosterBtn.prefab</li>
+    <li>(gốc) wool-sort (2)/Assets/_Game/Resources/MoreBoosterPopup.prefab</li>
+  </ul>
+</li>
+<li><strong>Textures / Sprites đã pick vào folder mới</strong>
+  <ul>
+    <li>Assets/_Game/BoosterUI_Picked/ (19 PNG + meta + README.md — Button_Boosters*, Icon_Slot_*/Broom_*/Spool_*, Icon_Plus/Noti/Lock_2, Button_Blue/Green/Gray/Close, Frame_Popup_1/2, Icon_Coin_S/ADS)</li>
   </ul>
 </li>
 </ul>
