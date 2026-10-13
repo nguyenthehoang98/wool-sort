@@ -21,17 +21,55 @@ namespace _Game.Scripts.Gameplay
 
         private void Awake()
         {
+            ResolveRefs();
+            gameObject.SetActive(false);
+        }
+
+        private void ResolveRefs()
+        {
             if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
             if (cardRect == null)
             {
                 var card = transform.Find("Card");
-                if (card != null) cardRect = (RectTransform)card;
+                if (card != null) cardRect = card as RectTransform;
             }
-            gameObject.SetActive(false);
+            if (messageText == null) messageText = FindText("TxtMessage");
+            if (coinText == null) coinText = FindText("BtnCoin/TxtCoin");
+            if (btnCoin == null) btnCoin = FindButton("BtnCoin");
+            if (btnAds == null) btnAds = FindButton("BtnAds");
+        }
+
+        private TextMeshProUGUI FindText(string path)
+        {
+            var t = transform.Find(path);
+            return t != null ? t.GetComponent<TextMeshProUGUI>() : null;
+        }
+
+        private Button FindButton(string path)
+        {
+            var t = transform.Find(path);
+            return t != null ? t.GetComponent<Button>() : null;
         }
 
         public void Show(int coinReward = 60)
         {
+            ResolveRefs();
+            // Chẩn đoán: log chính xác ref nào còn thiếu + trạng thái render.
+            var canvas = GetComponentInParent<Canvas>();
+            Debug.Log("[WinPopup.Show] refs: canvasGroup=" + (canvasGroup != null)
+                + " cardRect=" + (cardRect != null)
+                + " messageText=" + (messageText != null)
+                + " btnCoin=" + (btnCoin != null)
+                + " btnAds=" + (btnAds != null)
+                + " coinText=" + (coinText != null)
+                + " | activeSelf=" + gameObject.activeSelf
+                + " | canvas=" + (canvas != null ? canvas.name + " scale=" + canvas.transform.localScale : "NULL"), this);
+            if (canvas != null && canvas.transform.localScale == Vector3.zero)
+            {
+                Debug.LogWarning("[WinPopup.Show] Canvas scale 0 -> reset về 1.", this);
+                canvas.transform.localScale = Vector3.one;
+            }
+
             if (messageText != null) messageText.text = "Great job!";
             if (coinText != null) coinText.text = "x" + coinReward;
             if (btnCoin != null)
@@ -57,6 +95,8 @@ namespace _Game.Scripts.Gameplay
                 cardRect.localScale = Vector3.one * 0.85f;
                 cardRect.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
             }
+            Debug.Log("[WinPopup.Show] done. activeSelf=" + gameObject.activeSelf
+                + " childCount=" + transform.childCount, this);
         }
 
         public void Hide()

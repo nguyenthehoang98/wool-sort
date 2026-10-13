@@ -86,14 +86,16 @@ namespace _Game.Scripts.Gameplay
         [ContextMenu("Test Show WinPopup (W)")]
         public void TestShowWin()
         {
-            Debug.Log("[GameUIController] Test hotkey W -> ShowWin.", this);
+            Debug.Log("[GameUIController] Test hotkey W -> ShowWin. winPopup="
+                + (winPopup != null ? winPopup.name : "NULL"), this);
             ShowWin();
         }
 
         [ContextMenu("Test Show LosePopup (L)")]
         public void TestShowLose()
         {
-            Debug.Log("[GameUIController] Test hotkey L -> ShowLose.", this);
+            Debug.Log("[GameUIController] Test hotkey L -> ShowLose. losePopup="
+                + (losePopup != null ? losePopup.name : "NULL"), this);
             ShowLose();
         }
 
