@@ -39,8 +39,9 @@ namespace _Game.Scripts.Gameplay
 
         private bool isLockClick;
         private Canvas uiCanvas;
-        private WinPopup winPopup;
-        private LosePopup losePopup;
+        [Header("Popups (kéo thả trong Inspector)")]
+        public WinPopup winPopup;
+        public LosePopup losePopup;
         private bool resultPopupShown;
         private bool resultWon;
 

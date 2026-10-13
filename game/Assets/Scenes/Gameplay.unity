@@ -1229,6 +1229,8 @@ MonoBehaviour:
   canvasGroupBase: {fileID: 2031883443}
   scaleSlider: {fileID: 1859963945}
   txtLevel: {fileID: 541313733}
+  winPopup: {fileID: 830000004}
+  losePopup: {fileID: 840000004}
   enableDebugHotkeys: 1
 --- !u!1 &745931962
 GameObject:

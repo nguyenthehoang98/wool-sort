@@ -6,59 +6,38 @@ using UnityEngine.UI;
 namespace _Game.Scripts.Gameplay
 {
     // LosePopup thật trong scene (con của Canvas_2 Overlays).
+    // Kéo thả ref trực tiếp trong Inspector — không Find trong code.
     // Thiết kế tham khảo bản gốc: Shade + Card + ImgTitle (Text_OhNooo)
     // + TxtLevelProgress + thanh progress (Frame_Progress_1/2)
     // + BtnRestart (Button_Green) / BtnHome (Button_Yellow + Icon_Home_3).
     public class LosePopup : MonoBehaviour
     {
-        [Header("UI References")]
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform cardRect;
-        [SerializeField] private TextMeshProUGUI levelText;
-        [SerializeField] private Image progressFill;
-        [SerializeField] private Button btnRestart;
-        [SerializeField] private Button btnHome;
+        [Header("UI References (kéo thả trong Inspector)")]
+        public CanvasGroup canvasGroup;
+        public RectTransform cardRect;
+        public TextMeshProUGUI levelText;
+        public Image progressFill;
+        public Button btnRestart;
+        public Button btnHome;
 
         private void Awake()
         {
-            ResolveRefs();
+            ValidateRefs();
             gameObject.SetActive(false);
         }
 
-        private void ResolveRefs()
+        private void ValidateRefs()
         {
-            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
-            if (cardRect == null)
-            {
-                var card = transform.Find("Card");
-                if (card != null) cardRect = card as RectTransform;
-            }
-            if (levelText == null)
-            {
-                var t = transform.Find("TxtLevel");
-                if (t != null) levelText = t.GetComponent<TextMeshProUGUI>();
-            }
-            if (progressFill == null)
-            {
-                var f = transform.Find("ProgressBack/ProgressFill");
-                if (f != null) progressFill = f.GetComponent<Image>();
-            }
-            if (btnRestart == null)
-            {
-                var r = transform.Find("BtnRestart");
-                if (r != null) btnRestart = r.GetComponent<Button>();
-            }
-            if (btnHome == null)
-            {
-                var h = transform.Find("BtnHome");
-                if (h != null) btnHome = h.GetComponent<Button>();
-            }
+            if (canvasGroup == null) Debug.LogWarning("[LosePopup] Chưa kéo canvasGroup.", this);
+            if (cardRect == null) Debug.LogWarning("[LosePopup] Chưa kéo cardRect.", this);
+            if (levelText == null) Debug.LogWarning("[LosePopup] Chưa kéo levelText.", this);
+            if (progressFill == null) Debug.LogWarning("[LosePopup] Chưa kéo progressFill.", this);
+            if (btnRestart == null) Debug.LogWarning("[LosePopup] Chưa kéo btnRestart.", this);
+            if (btnHome == null) Debug.LogWarning("[LosePopup] Chưa kéo btnHome.", this);
         }
 
         public void Show(int level = 1, float progress = 0.5f)
         {
-            ResolveRefs();
-            // Chẩn đoán: log chính xác ref nào còn thiếu + trạng thái render.
             var canvas = GetComponentInParent<Canvas>();
             Debug.Log("[LosePopup.Show] refs: canvasGroup=" + (canvasGroup != null)
                 + " cardRect=" + (cardRect != null)

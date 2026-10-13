@@ -6,55 +6,38 @@ using UnityEngine.UI;
 namespace _Game.Scripts.Gameplay
 {
     // WinPopup thật trong scene (con của Canvas_2 Overlays).
+    // Kéo thả ref trực tiếp trong Inspector — không Find trong code.
     // Thiết kế tham khảo bản gốc: Shade + Card + ImgTitle (Text_Congratulations)
     // + khung tròn (Frame_Picture_GP_3 + Pattern_01) + message + 2 nút
     // BtnCoin (Button_Green + Icon_Coin_S) / BtnAds (Button_Blue + Icon_ADS_1).
     public class WinPopup : MonoBehaviour
     {
-        [Header("UI References")]
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform cardRect;
-        [SerializeField] private TextMeshProUGUI messageText;
-        [SerializeField] private Button btnCoin;
-        [SerializeField] private Button btnAds;
-        [SerializeField] private TextMeshProUGUI coinText;
+        [Header("UI References (kéo thả trong Inspector)")]
+        public CanvasGroup canvasGroup;
+        public RectTransform cardRect;
+        public TextMeshProUGUI messageText;
+        public Button btnCoin;
+        public Button btnAds;
+        public TextMeshProUGUI coinText;
 
         private void Awake()
         {
-            ResolveRefs();
+            ValidateRefs();
             gameObject.SetActive(false);
         }
 
-        private void ResolveRefs()
+        private void ValidateRefs()
         {
-            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
-            if (cardRect == null)
-            {
-                var card = transform.Find("Card");
-                if (card != null) cardRect = card as RectTransform;
-            }
-            if (messageText == null) messageText = FindText("TxtMessage");
-            if (coinText == null) coinText = FindText("BtnCoin/TxtCoin");
-            if (btnCoin == null) btnCoin = FindButton("BtnCoin");
-            if (btnAds == null) btnAds = FindButton("BtnAds");
-        }
-
-        private TextMeshProUGUI FindText(string path)
-        {
-            var t = transform.Find(path);
-            return t != null ? t.GetComponent<TextMeshProUGUI>() : null;
-        }
-
-        private Button FindButton(string path)
-        {
-            var t = transform.Find(path);
-            return t != null ? t.GetComponent<Button>() : null;
+            if (canvasGroup == null) Debug.LogWarning("[WinPopup] Chưa kéo canvasGroup.", this);
+            if (cardRect == null) Debug.LogWarning("[WinPopup] Chưa kéo cardRect.", this);
+            if (messageText == null) Debug.LogWarning("[WinPopup] Chưa kéo messageText.", this);
+            if (btnCoin == null) Debug.LogWarning("[WinPopup] Chưa kéo btnCoin.", this);
+            if (btnAds == null) Debug.LogWarning("[WinPopup] Chưa kéo btnAds.", this);
+            if (coinText == null) Debug.LogWarning("[WinPopup] Chưa kéo coinText.", this);
         }
 
         public void Show(int coinReward = 60)
         {
-            ResolveRefs();
-            // Chẩn đoán: log chính xác ref nào còn thiếu + trạng thái render.
             var canvas = GetComponentInParent<Canvas>();
             Debug.Log("[WinPopup.Show] refs: canvasGroup=" + (canvasGroup != null)
                 + " cardRect=" + (cardRect != null)
