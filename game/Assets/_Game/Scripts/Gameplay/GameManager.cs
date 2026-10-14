@@ -227,6 +227,14 @@ namespace _Game.Scripts.Gameplay
 
             // 0) Prep: ẩn UI, block input, ẩn box + waiting area
             GameUIController.Instance.SetAllUIVisible(false);
+            // Ensure popups are hidden at level start
+            if (GameUIController.Instance != null)
+            {
+                if (GameUIController.Instance.winPopup != null)
+                    GameUIController.Instance.winPopup.gameObject.SetActive(false);
+                if (GameUIController.Instance.losePopup != null)
+                    GameUIController.Instance.losePopup.gameObject.SetActive(false);
+            }
             BoxManager.Instance.SetBoxesVisible(false);
             WaitingAreaManager.Instance.SetWaitingSlotsVisible(false);
 
