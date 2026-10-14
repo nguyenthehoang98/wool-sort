@@ -36,6 +36,7 @@ namespace _Game.Scripts.Gameplay
         private TextMeshProUGUI _cost;
         private Image _cardImg;
         private Image _coinBtnImg;
+        public TextMeshProUGUI coinBarText; // UI showing total coins
         private Image _adsBtnImg;
         private Image _closeBtnImg;
 
@@ -155,8 +156,9 @@ namespace _Game.Scripts.Gameplay
             cardImg.sprite = cardBg;
             cardImg.color = cardBg == null ? new Color(0.96f, 0.93f, 0.87f, 1f) : Color.white;
 
-            _title = MakeText(card.transform, "Title", 54, Color.black, TextAlignmentOptions.Center,
-                new Vector2(0f, 0.78f), new Vector2(640f, 90f));
+            // Coin bar showing total balance
+            coinBarText = MakeText(card.transform, "CoinBar", 28, Color.black, TextAlignmentOptions.Right,
+                new Vector2(0.45f, 0.85f), new Vector2(200f, 50f));
             _content = MakeImage(card.transform, "Content", new Vector2(0f, 0.52f), new Vector2(300f, 260f));
             _desc = MakeText(card.transform, "Desc", 30, new Color(0.2f, 0.2f, 0.2f), TextAlignmentOptions.Center,
                 new Vector2(0f, 0.28f), new Vector2(640f, 120f));
@@ -180,7 +182,9 @@ namespace _Game.Scripts.Gameplay
             ApplySprite(_closeBtnImg, buttonClose, new Color(0.85f, 0.3f, 0.3f, 1f));
             _title.text = Titles[i];
             _desc.text = Descs[i];
-            _cost.text = Configs.LIST_BOOSTER_COST[i].ToString();
+            // Update coin bar with current balance
+            if (coinBarText != null)
+                coinBarText.text = "Coins: " + CoinManager.Instance.GetBalance();
             if (contentIcons != null && i < contentIcons.Length && contentIcons[i] != null)
             {
                 _content.sprite = contentIcons[i];
@@ -198,7 +202,13 @@ namespace _Game.Scripts.Gameplay
             if (_clicked) return;
             _clicked = true;
             int cost = Configs.LIST_BOOSTER_COST[(int)_current];
-            Debug.Log($"[MoreBoosterPopupUI] Buy {_current} with coin ({cost}) — stub core: dùng trực tiếp.");
+            // Attempt to spend coins before granting booster
+            if (!CoinManager.Instance.ConsumeCoins(cost))
+            {
+                Debug.LogWarning($"[MoreBoosterPopupUI] Not enough coins to buy {_current}. Required {cost}, have {CoinManager.Instance.GetBalance()}");
+                return;
+            }
+            Debug.Log($"[MoreBoosterPopupUI] Bought {_current} with coins. Remaining: {CoinManager.Instance.GetBalance()}");
             // TODO(W7): thay bằng EconomyService (check Coin, ConsumeCoin) trước khi grant.
             GrantAndUse();
         }

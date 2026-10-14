@@ -18,7 +18,7 @@ namespace _Game.Scripts.Gameplay
         public TextMeshProUGUI messageText;
         public Button btnCoin;
         public Button btnAds;
-        public TextMeshProUGUI coinText;
+        public TextMeshProUGUI coinBarText; // UI element displaying total coins
 
 
 
@@ -61,7 +61,8 @@ namespace _Game.Scripts.Gameplay
             }
 
             if (messageText != null) messageText.text = "Great job!";
-            if (coinText != null) coinText.text = "x" + coinReward;
+            // Add earned coins to player's balance
+            CoinManager.Instance?.AddCoins(coinReward);
 
             if (btnCoin != null)
             {
@@ -115,7 +116,9 @@ namespace _Game.Scripts.Gameplay
                         canvasGroup.alpha = 0f;
                         canvasGroup.transform.localScale = Vector3.zero;
                         canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
-                        canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
+                        // Update coin bar with total coins
+                        if (coinBarText != null)
+                            coinBarText.text = "Coins: " + CoinManager.Instance.GetBalance();
                     }
                 }
                 else
