@@ -76,10 +76,7 @@ namespace _Game.Scripts.Gameplay
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (canvasGroup != null)
             {
-                canvasGroup.DOKill();
-                canvasGroup.alpha = 1f;
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
+                SetVisible(true, false);
             }
             if (cardRect != null)
             {
@@ -104,7 +101,26 @@ namespace _Game.Scripts.Gameplay
             if (canvasGroup != null)
             {
                 canvasGroup.DOKill();
-                canvasGroup.alpha = visible ? 1f : 0f;
+                if (visible)
+                {
+                    if (instant)
+                    {
+                        canvasGroup.alpha = 1f;
+                        canvasGroup.transform.localScale = Vector3.one;
+                    }
+                    else
+                    {
+                        canvasGroup.alpha = 0f;
+                        canvasGroup.transform.localScale = Vector3.zero;
+                        canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
+                        canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
+                    }
+                }
+                else
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.transform.localScale = Vector3.zero;
+                }
                 canvasGroup.interactable = visible;
                 canvasGroup.blocksRaycasts = visible;
             }
