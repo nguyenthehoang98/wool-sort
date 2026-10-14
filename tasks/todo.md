@@ -60,7 +60,7 @@
 - [ ] **W4-05 — Level 1 vertical slice** — W4D5. Chạy level đầu từ load đến win/lose. **Verify:** log input → event → outcome hoàn chỉnh.
 - [ ] **W5-01 — Content pipeline** — W5D1. Validator kiểm tra màu, layer, box, order, thumbnail, backup reference. **Verify:** lỗi hiển thị trước build.
 - [ ] **W5-02 — Campaign/difficulty data** — W5D2. Cấu hình Normal/Hard/VeryHard và thứ tự campaign. **Verify:** thêm level không sửa core.
-- [ ] **W5-03 — Win/lose/restart** — W5D3. Chốt outcome một lần, reward, restart và revive gate. **Verify:** win/lose không duplicate.
+- [~] **W5-03 — Win/lose/restart** — W5D3. Win/lose UI scaling animation added, popups hidden on level start. Verify: win/lose emit once, animation behavior correct.
 - [ ] **W5-04 — Deterministic replay** — W5D4. Seed + command log tái hiện cùng event log. **Verify:** cùng input cho cùng kết quả.
 - [ ] **W5-05 — Three-level checkpoint** — W5D5. Chạy ít nhất 3 level đại diện. **Verify:** regression core pass; ghi bug còn lại. **Deps:** W4-01..05, W5-01..04.
 

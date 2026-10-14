@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Coin Resource Tracker</title>
+<style>
+  body {font-family: Arial, sans-serif; margin: 20px;}
+  h1 {color: #2c3e50;}
+  table {width: 100%; border-collapse: collapse; margin-top: 20px;}
+  th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}
+  th {background-color: #f4f4f4;}
+  .done {background-color: #e0ffe0;}
+  .todo {background-color: #ffebee;}
+</style>
+</head>
+<body>
+<h1>Coin Resource Tracker</h1>
+<p>Project: <code>/home/hoangnguyen/Documents/unity/wool-sort</code></p>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Task</th>
+      <th>Owner</th>
+      <th>Priority</th>
+      <th>Status</th>
+      <th>Notes / Acceptance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="done">
+      <td>1</td>
+      <td>Define Coin usage (win reward, booster purchase, ad reward)</td>
+      <td>Game Designer</td>
+      <td class="priority">High</td>
+      <td>Done</td>
+      <td>Documented in <code>docs/coin-resource.md</code></td>
+    </tr>
+    <tr class="todo">
+      <td>2</td>
+      <td>Implement EconomyService to store coin balance</td>
+      <td>Gameplay Engineer</td>
+      <td class="priority">High</td>
+      <td>TODO</td>
+      <td>Provide AddCoin, ConsumeCoin, GetBalance API.</td>
+    </tr>
+    <tr class="todo">
+      <td>3</td>
+      <td>Add persistent HUD showing current coin count</td>
+      <td>UI Engineer</td>
+      <td class="priority">Medium</td>
+      <td>TODO</td>
+      <td>Prefab `CoinHUD` with icon + TextMeshProUGUI, subscribe to EconomyService events.</td>
+    </tr>
+    <tr class="todo">
+      <td>4</td>
+      <td>Wire WinPopup reward to EconomyService</td>
+      <td>Gameplay Engineer</td>
+      <td class="priority">High</td>
+      <td>TODO</td>
+      <td>When `WinPopup.Show(int coinReward)` is called, add `coinReward` to the balance.</td>
+    </tr>
+    <tr class="todo">
+      <td>5</td>
+      <td>Wire MoreBoosterPopup coin purchase to EconomyService</td>
+      <td>Gameplay Engineer</td>
+      <td class="priority">High</td>
+      <td>TODO</td>
+      <td>`BuyWithCoin()` should check/consume coins before granting the booster.</td>
+    </tr>
+  </tbody>
+</table>
+<p>Refresh this page after each change. Use the **Status** column to filter: <strong>TODO</strong>, <strong>Done</strong>.</p>
+<h2>📁 Related Files</h2>
+<ul>
+  <li><strong>C# Scripts</strong>
+    <ul>
+      <li>Assets/_Game/Scripts/Gameplay/WinPopup.cs (coin reward UI)</li>
+      <li>Assets/_Game/Scripts/Gameplay/MoreBoosterPopupUI.cs (coin purchase button)</li>
+      <li>Assets/_Game/Scripts/Utils/Configs.cs (FREE_COIN_ADS constant)</li>
+    </ul>
+  </li>
+  <li><strong>Resources</strong>
+    <ul>
+      <li>Assets/_Game/Resources/BoosterUI/Icon_Coin_S.png (icon used for coin buttons)</li>
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

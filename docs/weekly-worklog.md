@@ -56,7 +56,7 @@ Worklog này bám theo đề cương 9 tuần trong file DOCX. Đây là **mẫu
 |---|---|---|---|---|---|---|
 | W5D1 | Hoàn thiện content validator | Báo missing/duplicate/màu/layer/backup trước build |  | TODO |  |  |
 | W5D2 | Cấu hình campaign và Normal/Hard/VeryHard | Thêm level không sửa core |  | TODO |  |  |
-| W5D3 | Win/lose/restart/reward | Win/lose chỉ emit một lần |  | TODO |  |  |
+| W5D3 | Win/lose/restart/reward | Win/lose chỉ emit một lần, animation scaling added, popups hidden on level start |  | DONE |  |  |
 | W5D4 | Deterministic seed và command replay | Cùng seed + input cho cùng event log |  | TODO |  |  |
 | W5D5 | Checkpoint 3 level đại diện | Core regression pass; bug có reproduction |  | TODO |  |  |
 
