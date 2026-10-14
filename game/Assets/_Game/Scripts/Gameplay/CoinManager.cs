@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace _Game.Scripts.Gameplay
@@ -8,6 +9,8 @@ namespace _Game.Scripts.Gameplay
     {
         public static CoinManager Instance { get; private set; }
         private const string PlayerPrefsKey = "PlayerCoins";
+        public static event System.Action<int> OnBalanceChanged;
+
         private int _balance;
 
         private void Awake()
@@ -41,6 +44,7 @@ namespace _Game.Scripts.Gameplay
             _balance += amount;
             SaveBalance();
             Debug.Log($"[CoinManager] Added {amount} coins. New balance: {_balance}");
+            OnBalanceChanged?.Invoke(_balance);
         }
 
         public bool ConsumeCoins(int amount)
@@ -54,6 +58,7 @@ namespace _Game.Scripts.Gameplay
             _balance -= amount;
             SaveBalance();
             Debug.Log($"[CoinManager] Consumed {amount} coins. New balance: {_balance}");
+            OnBalanceChanged?.Invoke(_balance);
             return true;
         }
     }
