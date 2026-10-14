@@ -19,6 +19,7 @@ namespace _Game.Scripts.Gameplay
         public Button btnCoin;
         public Button btnAds;
         public TextMeshProUGUI coinBarText; // UI element displaying total coins
+        public TextMeshProUGUI coinText; // UI element showing reward amount (e.g., "x60")
 
 
 
@@ -61,8 +62,8 @@ namespace _Game.Scripts.Gameplay
             }
 
             if (messageText != null) messageText.text = "Great job!";
-            // Add earned coins to player's balance
             CoinManager.Instance?.AddCoins(coinReward);
+            if (coinText != null) coinText.text = "x" + coinReward;
 
             if (btnCoin != null)
             {
