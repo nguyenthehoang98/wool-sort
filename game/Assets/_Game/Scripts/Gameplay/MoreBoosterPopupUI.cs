@@ -74,6 +74,10 @@ namespace _Game.Scripts.Gameplay
         [ContextMenu("Test Show MagicBox")]
         private void CtxShowMagic() => Open(BoosterType.MagicBox);
 
+        private void OnDestroy()
+        {
+            if (_instance == this) _instance = null;
+        }
         private void Update()
         {
             if (_root != null && _root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
@@ -156,7 +160,9 @@ namespace _Game.Scripts.Gameplay
             cardImg.sprite = cardBg;
             cardImg.color = cardBg == null ? new Color(0.96f, 0.93f, 0.87f, 1f) : Color.white;
 
-            // Coin bar showing total balance
+            // Title text
+            _title = MakeText(card.transform, "Title", 54, Color.black, TextAlignmentOptions.Center,
+                new Vector2(0f, 0.78f), new Vector2(640f, 90f));
             coinBarText = MakeText(card.transform, "CoinBar", 28, Color.black, TextAlignmentOptions.Right,
                 new Vector2(0.45f, 0.85f), new Vector2(200f, 50f));
             _content = MakeImage(card.transform, "Content", new Vector2(0f, 0.52f), new Vector2(300f, 260f));

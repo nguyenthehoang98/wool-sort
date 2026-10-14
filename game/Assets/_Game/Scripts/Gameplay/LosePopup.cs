@@ -52,6 +52,9 @@ namespace _Game.Scripts.Gameplay
 
                 + " | activeSelf=" + gameObject.activeSelf
                 + " | canvas=" + (canvas != null ? canvas.name + " scale=" + canvas.transform.localScale : "NULL"), this);
+            // Stop any ongoing rope printing when level fails
+            YarnRopeController.Instance?.ClearAllRopes();
+
             if (canvas != null && canvas.transform.localScale == Vector3.zero)
             {
                 Debug.LogWarning("[LosePopup.Show] Canvas scale 0 -> reset về 1.", this);
