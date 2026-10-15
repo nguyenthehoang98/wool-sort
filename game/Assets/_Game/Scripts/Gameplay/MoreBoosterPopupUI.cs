@@ -3,6 +3,7 @@
 // Đặt sẵn trong scene (con của Canvas_2 Overlays), kéo thả ref trong Inspector.
 // Không còn dựng UI bằng code lúc runtime.
 
+using System.Collections;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -37,6 +38,17 @@ namespace _Game.Scripts.Gameplay
         private bool _clicked;
         private static MoreBoosterPopupUI _instance;
 
+        /// <summary>
+        /// Số frame còn lại phải chặn input gameplay sau khi popup đóng.
+        /// Lý do: uGUI xử lý onClick ở PointerUp, LeanTouch fire OnFingerTap CÙNG frame.
+        /// Nếu Buy thành công -> Hide() -> cho dùng booster ngay, thì chính cú click
+        /// đó "xuyên" xuống và kích hoạt luôn booster lên dây (dùng 2 lần 1 click).
+        /// </summary>
+        private static int _inputBlockFrames;
+
+        /// <summary>True khi input gameplay đang bị chặn do popup vừa đóng.</summary>
+        public static bool IsBlockingGameplayInput => _inputBlockFrames > 0;
+
         private static readonly string[] Titles = { "ADD SLOT", "CLEAN", "MAGIC SPOOL" };
         private static readonly string[] Descs =
         {
@@ -48,6 +60,9 @@ namespace _Game.Scripts.Gameplay
         private void Awake()
         {
             ValidateRefs();
+            // Static có thể giữ giá trị qua lần reload scene (domain reload tắt trong Editor
+            // Play mode) -> reset để không khoá input oan ở đầu level.
+            _inputBlockFrames = 0;
             // Popup luôn active trong hierarchy, ẩn/hiện bằng alpha
             SetVisible(false, true);
             // Ensure singleton instance
@@ -55,6 +70,13 @@ namespace _Game.Scripts.Gameplay
                 _instance = this;
             else if (_instance != this)
                 Destroy(gameObject);
+        }
+
+        private void Update()
+        {
+            // Đếm ngược khoá input sau khi popup đóng (xem _inputBlockFrames).
+            if (_inputBlockFrames > 0)
+                _inputBlockFrames--;
         }
 
         /// <summary>Static accessor to show popup.</summary>
@@ -85,6 +107,11 @@ namespace _Game.Scripts.Gameplay
         /// <summary>Internal instance method to show popup.</summary>
         private void ShowPopup(BoosterType type)
         {
+            // Huỷ lượt "dùng booster sau khi đóng" còn treo (nếu user mở lại popup
+            // trước khi coroutine cũ chạy xong) để không dùng booster ngoài ý muốn.
+            StopAllCoroutines();
+            _inputBlockFrames = 0;
+
             _currentType = type;
             _clicked = false;
 
@@ -127,7 +154,22 @@ namespace _Game.Scripts.Gameplay
 
         public void Hide()
         {
+            Hide(false);
+        }
+
+        /// <summary>
+        /// Ẩn popup. <paramref name="blockGameplayInput"/> = true khi đóng do mua thành công:
+        /// lúc đó khoá input gameplay vài frame để cú click trên nút BUY không
+        /// xuyên xuống dây/part (LeanTouch fire tap cùng frame với uGUI PointerUp).
+        /// </summary>
+        private void Hide(bool blockGameplayInput)
+        {
             SetVisible(false, false);
+            if (blockGameplayInput)
+            {
+                // Khoá đủ dài để trải qua cả frame PointerUp hiện tại và frame tap của LeanTouch.
+                _inputBlockFrames = 2;
+            }
         }
 
         private void RefreshUI()
@@ -236,7 +278,11 @@ namespace _Game.Scripts.Gameplay
 
         private void GrantAndUse()
         {
-            Hide();
+            // Đóng popup TRƯỚC và khoá input gameplay trong lúc đóng: nếu không,
+            // cú click vừa rồi trên nút BUY sẽ xuyên xuống và dùng booster lên dây
+            // ngay lập tức (double-action trên 1 click).
+            Hide(true);
+
             if (BoosterManager.Instance == null)
             {
                 Debug.LogWarning("[MoreBoosterPopupUI] BoosterManager missing.");
@@ -246,7 +292,27 @@ namespace _Game.Scripts.Gameplay
 
             GameData.Instance.AddCount(_currentType, 1, "buy", "more_booster_popup");
             GameData.Instance.AddCount(_currentType, -1, "use", "use_booster");
-            BoosterManager.Instance.UseBooster(_currentType);
+
+            // Trì hoãn việc dùng booster tới khi popup đã đóng hẳn: đợi tween fade
+            // (0.25s) + thêm 1 nhịp để chắc chắn không nhận event click của chính
+            // thao tác mua.
+            StartCoroutine(UseBoosterAfterClose());
+        }
+
+        private IEnumerator UseBoosterAfterClose()
+        {
+            // SetVisible(false,...) đã dựng tween fade+scale đóng popup.
+            // KHÔNG tạo tween mới ở đây (sẽ DOKill tween đang chạy và ghi đè alpha),
+            // chỉ chờ hết thời lượng tween đóng rồi thêm vài frame đệm.
+            yield return new WaitForSeconds(0.3f);
+
+            // Thêm 2 frame: qua frame PointerUp hiện tại + frame tap của LeanTouch.
+            yield return null;
+            yield return null;
+
+            _clicked = false;
+            if (BoosterManager.Instance != null)
+                BoosterManager.Instance.UseBooster(_currentType);
         }
 
         private void SetVisible(bool visible, bool instant)
@@ -254,6 +320,9 @@ namespace _Game.Scripts.Gameplay
             if (canvasGroup != null)
             {
                 canvasGroup.DOKill();
+                // DOKill trên CanvasGroup chỉ kill tween target = component,
+                // không kill tween scale (target = transform) -> kill tay.
+                canvasGroup.transform.DOKill();
                 if (visible)
                 {
                     if (instant)
@@ -263,16 +332,18 @@ namespace _Game.Scripts.Gameplay
                     }
                     else
                     {
+                        // Set scale = 1 NGAY rồi mới tween để popup không bị tàng hình
+                        // khi tween scale không chạy.
                         canvasGroup.alpha = 0f;
-                        canvasGroup.transform.localScale = Vector3.zero;
+                        canvasGroup.transform.localScale = Vector3.one;
                         canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
                         canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
                     }
                 }
                 else
                 {
+                    // Ẩn bằng alpha, không set scale 0 để lần show sau luôn hiện được.
                     canvasGroup.alpha = 0f;
-                    canvasGroup.transform.localScale = Vector3.zero;
                 }
                 canvasGroup.interactable = visible;
                 canvasGroup.blocksRaycasts = visible;

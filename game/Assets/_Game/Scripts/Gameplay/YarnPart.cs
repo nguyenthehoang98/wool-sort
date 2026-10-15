@@ -190,7 +190,10 @@ namespace _Game.Scripts.Gameplay
         {
             if (Input.touchCount > 1) return;
             if (!GameManager.Instance.CanInteractWithGame()) return;
-            if (finger.IsOverGui) return;
+            // StartedOverGui: ngón tay bắt đầu trên UI (vd nút BUY của popup). IsOverGui
+            // đọc vị trí hiện tại nên khi popup vừa đóng cùng frame nó trả false ->
+            // tap xuyên xuống part. Chặn cả 2 để không dùng booster/click dây ngoài ý muốn.
+            if (finger.IsOverGui || finger.StartedOverGui) return;
             if (IsDissolving || dissolveRoutine != null) return;
 
             // Debug.Log("Handle Finger Tap");
@@ -242,7 +245,9 @@ namespace _Game.Scripts.Gameplay
         {
             if (Input.touchCount > 1) return;
             if (!GameManager.Instance.CanInteractWithGame()) return;
-            if (finger.IsOverGui) return;
+            // Xem HandleFingerTap: chặn cả ngón bắt đầu trên UI để không bắt hold
+            // xuyên qua popup vừa đóng.
+            if (finger.IsOverGui || finger.StartedOverGui) return;
             if (IsDissolving) return;
 
             Ray ray = Camera.main.ScreenPointToRay(finger.ScreenPosition);

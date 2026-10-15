@@ -17,8 +17,10 @@ namespace _Game.Scripts
 
         private void HandleTap(LeanFinger finger)
         {
-            // Nếu tap vào UI thì bỏ qua
-            if (finger.IsOverGui) return;
+            // Nếu tap vào UI thì bỏ qua. Kiểm tra cả StartedOverGui: IsOverGui đọc vị trí
+            // HIỆN TẠI, nên khi popup vừa đóng trong cùng frame thì nó trả false dù ngón
+            // tay đã bắt đầu trên popup -> tap xuyên xuống gameplay.
+            if (finger.IsOverGui || finger.StartedOverGui) return;
             if (!GameManager.Instance.CanInteractWithGame()) return;
 
             // Raycast từ OrthoCam, chỉ vào layer Box

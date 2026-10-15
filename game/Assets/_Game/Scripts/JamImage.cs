@@ -30,6 +30,17 @@ namespace _Game.Scripts
 
         public Transform Pointer => pointer != null ? pointer : transform;
 
+        /// <summary>
+        /// True khi coroutine tô ảnh còn đang chạy. Dùng để chặn show WinPopup
+        /// khi ảnh chưa in xong.
+        /// </summary>
+        public bool IsPrinting { get; private set; }
+
+        /// <summary>
+        /// Số pixel batch đã in xong (tăng dần), dùng để biết tiến độ in.
+        /// </summary>
+        public int PrintedBatchCount { get; private set; }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -45,6 +56,12 @@ namespace _Game.Scripts
 
         public void Initialize(IReadOnlyList<ColorCountEntry> levelColors, string levelName = null)
         {
+            // Level mới: dừng mọi coroutine tô ảnh còn sót của level trước và reset cờ,
+            // nếu không IsPrinting giữ true -> WinPopup của level sau chờ vô hạn.
+            StopAllCoroutines();
+            IsPrinting = false;
+            PrintedBatchCount = 0;
+
             // Load theo level: Resources/Images/{levelName} - LOI NEU KO TIM THAY
             if (!string.IsNullOrEmpty(levelName))
             {
@@ -126,6 +143,10 @@ namespace _Game.Scripts
             if (cells.Count == 0)
                 return false;
 
+            // Đánh dấu đang in NGAY (đồng bộ) để caller có thể chặn show popup
+            // ngay trong frame này, không phải đợi coroutine chạy frame đầu.
+            IsPrinting = true;
+            PrintedBatchCount++;
             StartCoroutine(RevealPixels(cells, Mathf.Max(0.001f, timePerPixel)));
             return true;
         }
@@ -179,27 +200,39 @@ namespace _Game.Scripts
 
         private System.Collections.IEnumerator RevealPixels(List<Vector2Int> cells, float timePerPixel)
         {
-            foreach (var cell in cells)
+            // try/finally: nếu coroutine bị StopAllCoroutines/object destroy giữa chừng,
+            // IsPrinting vẫn phải được hạ xuống, nếu không WinPopup sẽ chờ vô hạn.
+            try
             {
-                var index = cell.y * GridSize + cell.x;
-                MovePointerTo(cell.x, cell.y);
-                // Ưu tiên màu hiển thị đã bake trong matrix (ảnh gốc có thể đã dời đi).
-                if (activeMatrix != null)
+                foreach (var cell in cells)
                 {
-                    runtimePixels[index] = activeMatrix.GetDisplayColor(cell.x, cell.y);
-                }
-                else
-                {
-                    // Sample tâm ô bằng Floor (RoundToInt lệch nửa pixel khi ảnh đúng 84x84: ô x phải ra texel x).
-                    int sx = Mathf.Clamp(Mathf.FloorToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
-                    int sy = Mathf.Clamp(Mathf.FloorToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
-                    runtimePixels[index] = targetTexture.GetPixel(sx, sy);
-                }
-                revealedCells[index] = true;
-                runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
-                runtimeTexture.Apply(false, false);
+                    if (!initialized || runtimePixels == null || runtimeTexture == null)
+                        yield break;
 
-                yield return new WaitForSeconds(timePerPixel);
+                    var index = cell.y * GridSize + cell.x;
+                    MovePointerTo(cell.x, cell.y);
+                    // Ưu tiên màu hiển thị đã bake trong matrix (ảnh gốc có thể đã dời đi).
+                    if (activeMatrix != null)
+                    {
+                        runtimePixels[index] = activeMatrix.GetDisplayColor(cell.x, cell.y);
+                    }
+                    else
+                    {
+                        // Sample tâm ô bằng Floor (RoundToInt lệch nửa pixel khi ảnh đúng 84x84: ô x phải ra texel x).
+                        int sx = Mathf.Clamp(Mathf.FloorToInt((cell.x + 0.5f) / GridSize * targetTexture.width), 0, targetTexture.width - 1);
+                        int sy = Mathf.Clamp(Mathf.FloorToInt((cell.y + 0.5f) / GridSize * targetTexture.height), 0, targetTexture.height - 1);
+                        runtimePixels[index] = targetTexture.GetPixel(sx, sy);
+                    }
+                    revealedCells[index] = true;
+                    runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
+                    runtimeTexture.Apply(false, false);
+
+                    yield return new WaitForSeconds(timePerPixel);
+                }
+            }
+            finally
+            {
+                IsPrinting = false;
             }
         }
 

@@ -50,6 +50,20 @@ namespace _Game.Scripts.Gameplay
 
         private int printtingPropress;
 
+        // Số lượt PrintImage đang chạy (in ảnh + dây bay lên ảnh). Mỗi lượt kết thúc
+        // sau đúng thời lượng in của nó; dùng để biết level đã in xong hết chưa.
+        private int printingCount;
+
+        /// <summary>
+        /// True khi còn box đang in ảnh lên board (ảnh hoặc dây in chưa xong).
+        /// WinPopup phải đợi hết cái này rồi mới được show.
+        /// Lưu ý: KHÔNG tính mọi dây trong scene — dây waiting→box không liên quan
+        /// tới việc in ảnh và có thể còn tồn tại khi đã thắng.
+        /// </summary>
+        public bool IsAnyPrinting =>
+            printingCount > 0
+            || (JamImage.Instance != null && JamImage.Instance.IsPrinting);
+
         // có đang có ít nhất 1 box đang xử lý không
         public bool IsProcessingBox => processingBoxCount > 0;
 
@@ -125,6 +139,7 @@ namespace _Game.Scripts.Gameplay
             hasFiredAllClosed = false;
             processingBoxCount = 0;
             _minOverrideCount = 0;
+            ResetPrintTracking();
             gm = gameManager;
             this.maxBoxes = maxBoxes;
             this.nextUnlockId = initialUnlock;
@@ -411,6 +426,26 @@ namespace _Game.Scripts.Gameplay
             if (JamImage.Instance != null)
                 JamImage.Instance.Print(boxInfo.BoxColor, progress);
             YarnRopeController.Instance.SpawnRopeBoard(boxInfo.GetTargetRope(), JamImage.Instance.Pointer, boxInfo.BoxColor, currentWaitOfTime);
+
+            // Theo dõi lượt in này để biết khi nào xong hẳn (ảnh + dây bay lên ảnh).
+            // Dùng chung thời lượng với JamImage.Print (mỗi pixel nghỉ `progress` giây)
+            // nên mốc kết thúc khớp với lúc pixel cuối được tô.
+            // +0.05s đệm để pixel/dây cuối kịp render.
+            printingCount++;
+            StartCoroutine(TrackPrintRoutine(Mathf.Max(0f, time) + 0.05f));
+        }
+
+        private IEnumerator TrackPrintRoutine(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            printingCount = Mathf.Max(0, printingCount - 1);
+        }
+
+        // Reset trạng thái in khi load level mới (tránh kẹt cờ từ level trước).
+        private void ResetPrintTracking()
+        {
+            printingCount = 0;
+            printtingPropress = 0;
         }
 
         private void StartLoopPrintSfx()

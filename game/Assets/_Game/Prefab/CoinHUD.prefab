@@ -190,6 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coinText: {fileID: 1850247758366226526}
+  iconCoin: {fileID: 236458539313761456}
 --- !u!1 &5933574506748126697
 GameObject:
   m_ObjectHideFlags: 0

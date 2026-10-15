@@ -224,20 +224,58 @@ namespace _Game.Scripts.Gameplay
                 return;
 
             var boxManager = GameManager.Instance != null ? GameManager.Instance.BoxManager : null;
-            if (boxManager == null || boxManager.HasFiredAllBoxesClosed)
+            if (boxManager == null)
             {
                 ShowWin();
                 return;
             }
 
-            Action show = null;
-            show = () =>
+            // Chờ 2 điều kiện rồi mới show WinPopup:
+            //  1) box cuối cùng đã đóng xong animation
+            //  2) ảnh + dây in đã xong hết (nếu không popup hiện khi dây còn đang in)
+            if (boxManager.HasFiredAllBoxesClosed && !boxManager.IsAnyPrinting)
             {
-                boxManager.OnAllBoxesClosed -= show;
                 ShowWin();
+                return;
+            }
+
+            // Chờ box cuối đóng (event) rồi chuyển sang chờ print xong.
+            Action onClosed = null;
+            onClosed = () =>
+            {
+                boxManager.OnAllBoxesClosed -= onClosed;
+                StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
             };
-            boxManager.OnAllBoxesClosed += show;
-            Debug.Log("Core gameplay level complete; waiting for final box animation");
+            boxManager.OnAllBoxesClosed += onClosed;
+
+            // Nếu box đã đóng hết từ trước thì event sẽ không fire nữa -> chờ print trực tiếp.
+            if (boxManager.HasFiredAllBoxesClosed)
+            {
+                boxManager.OnAllBoxesClosed -= onClosed;
+                StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
+            }
+
+            Debug.Log("Core gameplay level complete; waiting for final box animation + print done");
+        }
+
+        /// <summary>
+        /// Chờ tới khi box cuối in xong ảnh và dây bay lên ảnh xong, rồi mới show WinPopup.
+        /// Có timeout an toàn để không kẹt màn hình thắng nếu cờ print bị treo.
+        /// </summary>
+        private IEnumerator WaitPrintDoneThenShowWin(BoxManager boxManager)
+        {
+            float deadline = Time.time + 10f;
+            while (boxManager != null && boxManager.IsAnyPrinting && Time.time < deadline)
+                yield return null;
+
+            if (boxManager != null && boxManager.IsAnyPrinting)
+                Debug.LogWarning("[GameUIController] Chờ print quá lâu, hiện WinPopup để không kẹt màn hình.", this);
+
+            // Thêm 1 frame để pixel/dây cuối cùng kịp render trước khi popup che lên.
+            yield return null;
+
+            if (resultPopupShown) yield break;
+            ShowWin();
         }
 
         private void ShowWin()
@@ -247,6 +285,16 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogWarning("[GameUIController] WinPopup chưa có trong scene.", this);
                 return;
             }
+
+            // Chốt chặn cuối: không show khi dây/ảnh còn đang in.
+            var boxManager = GameManager.Instance != null ? GameManager.Instance.BoxManager : null;
+            if (boxManager != null && boxManager.IsAnyPrinting)
+            {
+                Debug.Log("[GameUIController] ShowWin bị hoãn: vẫn còn in ảnh/dây.");
+                StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
+                return;
+            }
+
             winPopup.Show(Configs.WIN_REWARD);
             resultPopupShown = true;
             resultWon = true;

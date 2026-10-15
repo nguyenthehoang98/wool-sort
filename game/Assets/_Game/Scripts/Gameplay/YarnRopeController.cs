@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _Game.Scripts.Pool;
+using DG.Tweening;
 using UnityEngine;
 
 namespace _Game.Scripts.Gameplay
@@ -129,14 +130,21 @@ namespace _Game.Scripts.Gameplay
         /// </summary>
         public void ClearAllRopes()
         {
+            // Kill trước để coroutine/animation của rope không ghi đè trạng thái sau khi đã trả pool.
             foreach (var r in ropes)
                 if (r != null)
+                {
+                    r.DOKill();
                     PoolManager.Instance.Release("rope", r);
+                }
             ropes.Clear();
 
             foreach (var rb in ropeBoards)
                 if (rb != null)
+                {
+                    rb.DOKill();
                     PoolManager.Instance.Release("ropeBoard", rb);
+                }
             ropeBoards.Clear();
         }
 

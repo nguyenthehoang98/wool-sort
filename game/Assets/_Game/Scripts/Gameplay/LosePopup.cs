@@ -29,6 +29,15 @@ namespace _Game.Scripts.Gameplay
             SetVisible(false, true);
         }
 
+        private void OnEnable()
+        {
+            // Popup bị SetActive(false) lúc bắt đầu level (GameManager.PlayStartLevelSequence)
+            // rồi SetActive(true) lúc show. Awake chỉ chạy 1 lần nên chuẩn hoá scale
+            // mỗi lần bật để tránh tàng hình do scale 0 còn sót.
+            if (canvasGroup != null)
+                canvasGroup.transform.localScale = Vector3.one;
+        }
+
         private void ValidateRefs()
         {
             if (canvasGroup == null) Debug.LogWarning("[LosePopup] Chưa kéo canvasGroup.", this);
@@ -104,6 +113,9 @@ namespace _Game.Scripts.Gameplay
             if (canvasGroup != null)
             {
                 canvasGroup.DOKill();
+                // DOKill trên CanvasGroup chỉ kill tween target = component,
+                // không kill tween scale (target = transform) -> kill tay.
+                canvasGroup.transform.DOKill();
                 if (visible)
                 {
                     if (instant)
@@ -113,16 +125,18 @@ namespace _Game.Scripts.Gameplay
                     }
                     else
                     {
+                        // Set scale = 1 NGAY rồi mới tween: nếu tween bị chặn/không chạy
+                        // (timeScale 0, object vừa bật) popup vẫn hiện đủ scale.
                         canvasGroup.alpha = 0f;
-                        canvasGroup.transform.localScale = Vector3.zero;
+                        canvasGroup.transform.localScale = Vector3.one;
                         canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
                         canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
                     }
                 }
                 else
                 {
+                    // Ẩn bằng alpha, không set scale 0 để lần show sau luôn hiện được.
                     canvasGroup.alpha = 0f;
-                    canvasGroup.transform.localScale = Vector3.zero;
                 }
                 canvasGroup.interactable = visible;
                 canvasGroup.blocksRaycasts = visible;

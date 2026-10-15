@@ -1,4 +1,4 @@
-﻿// GameManager.cs
+// GameManager.cs
 
 using System;
 using System.Collections;
@@ -1171,6 +1171,12 @@ namespace _Game.Scripts.Gameplay
 
         public bool CanInteractWithGame()
         {
+            // MoreBoosterPopupUI khoá input vài frame sau khi đóng do mua thành công:
+            // uGUI xử lý onClick ở PointerUp, LeanTouch fire OnFingerTap cùng frame nên
+            // nếu không khoá thì cú click mua sẽ xuyên xuống và kích hoạt dây/part.
+            if (MoreBoosterPopupUI.IsBlockingGameplayInput)
+                return false;
+
             return !isGameOver && !isCheckingLose && !isAnimatingStartLevel;
         }
 

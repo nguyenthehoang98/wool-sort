@@ -2,6 +2,8 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using _Game.Scripts;
+using _Game.Scripts.UI;
 
 namespace _Game.Scripts.Gameplay
 {
@@ -18,11 +20,8 @@ namespace _Game.Scripts.Gameplay
         public TextMeshProUGUI messageText;
         public Button btnCoin;
         public Button btnAds;
-        public TextMeshProUGUI coinBarText; // UI element displaying total coins
-        public TextMeshProUGUI coinText; // UI element showing reward amount (e.g., "x60")
 
-
-
+        private bool _isNextAnimating;
 
         private void Awake()
         {
@@ -32,6 +31,16 @@ namespace _Game.Scripts.Gameplay
             SetVisible(false, true);
         }
 
+        private void OnEnable()
+        {
+            // Popup có thể bị SetActive(false) khi bắt đầu level (xem
+            // GameManager.PlayStartLevelSequence) rồi SetActive(true) lúc show.
+            // Awake chỉ chạy 1 lần nên nếu lần show trước để lại scale 0 thì
+            // popup sẽ tàng hình. Chuẩn hoá lại mỗi lần bật.
+            if (canvasGroup != null)
+                canvasGroup.transform.localScale = Vector3.one;
+        }
+
         private void ValidateRefs()
         {
             if (canvasGroup == null) Debug.LogWarning("[WinPopup] Chưa kéo canvasGroup.", this);
@@ -39,19 +48,17 @@ namespace _Game.Scripts.Gameplay
             if (messageText == null) Debug.LogWarning("[WinPopup] Chưa kéo messageText.", this);
             if (btnCoin == null) Debug.LogWarning("[WinPopup] Chưa kéo btnCoin.", this);
             if (btnAds == null) Debug.LogWarning("[WinPopup] Chưa kéo btnAds.", this);
-            if (coinText == null) Debug.LogWarning("[WinPopup] Chưa kéo coinText.", this);
-
         }
 
         public void Show(int coinReward = 60)
         {
+            _isNextAnimating = false;
             var canvas = GetComponentInParent<Canvas>();
             Debug.Log("[WinPopup.Show] refs: canvasGroup=" + (canvasGroup != null)
                 + " cardRect=" + (cardRect != null)
                 + " messageText=" + (messageText != null)
                 + " btnCoin=" + (btnCoin != null)
                 + " btnAds=" + (btnAds != null)
-                + " coinText=" + (coinText != null)
     
                 + " | activeSelf=" + gameObject.activeSelf
                 + " | canvas=" + (canvas != null ? canvas.name + " scale=" + canvas.transform.localScale : "NULL"), this);
@@ -63,13 +70,12 @@ namespace _Game.Scripts.Gameplay
 
             if (messageText != null) messageText.text = "Great job!";
             CoinManager.Instance?.AddCoins(coinReward);
-            if (coinText != null) coinText.text = "x" + coinReward;
 
             if (btnCoin != null)
             {
                 btnCoin.interactable = true;
                 btnCoin.onClick.RemoveAllListeners();
-                btnCoin.onClick.AddListener(() => GameUIController.Instance.OnWinNext());
+                btnCoin.onClick.AddListener(OnClickNext);
             }
             if (btnAds != null)
             {
@@ -93,6 +99,32 @@ namespace _Game.Scripts.Gameplay
                 + " childCount=" + transform.childCount, this);
         }
 
+        // Nút Next: sinh coin bay từ nút tới coin bar, nảy bar + burst, rồi sang level mới.
+        // Nếu thiếu hiệu ứng thì đi tiếp ngay (không chặn flow).
+        private void OnClickNext()
+        {
+            if (_isNextAnimating) return;
+
+            var target = CoinHUD.Instance != null ? CoinHUD.Instance.IconTransform.gameObject : null;
+            var splash = SplashItem.Instance;
+
+            if (splash != null && target != null && btnCoin != null)
+            {
+                _isNextAnimating = true;
+                splash.SplashCoin(5, btnCoin.gameObject, target, 0.6f, null,
+                    () => { if (CoinHUD.Instance != null) CoinHUD.Instance.ShowVFX(); },
+                    () =>
+                    {
+                        _isNextAnimating = false;
+                        GameUIController.Instance.OnWinNext();
+                    });
+            }
+            else
+            {
+                GameUIController.Instance.OnWinNext();
+            }
+        }
+
         public void Hide()
         {
             SetVisible(false, false);
@@ -105,6 +137,9 @@ namespace _Game.Scripts.Gameplay
             if (canvasGroup != null)
             {
                 canvasGroup.DOKill();
+                // Kill luôn tween scale còn sót (DOKill trên CanvasGroup chỉ kill
+                // tween target = component, không kill tween target = transform).
+                canvasGroup.transform.DOKill();
                 if (visible)
                 {
                     if (instant)
@@ -114,18 +149,19 @@ namespace _Game.Scripts.Gameplay
                     }
                     else
                     {
+                        // BUG CŨ: chỉ DOFade, thiếu DOScale -> card kẹt ở scale 0
+                        // (do trạng thái ẩn set localScale=zero) nên popup vô hình.
                         canvasGroup.alpha = 0f;
-                        canvasGroup.transform.localScale = Vector3.zero;
+                        canvasGroup.transform.localScale = Vector3.one;
                         canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
-                        // Update coin bar with total coins
-                        if (coinBarText != null)
-                            coinBarText.text = "Coins: " + CoinManager.Instance.GetBalance();
+                        canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack);
                     }
                 }
                 else
                 {
+                    // Ẩn bằng alpha, KHÔNG set scale 0: giữ scale nguyên để lần show
+                    // sau không phụ thuộc vào việc tween scale có chạy hay không.
                     canvasGroup.alpha = 0f;
-                    canvasGroup.transform.localScale = Vector3.zero;
                 }
                 canvasGroup.interactable = visible;
                 canvasGroup.blocksRaycasts = visible;
