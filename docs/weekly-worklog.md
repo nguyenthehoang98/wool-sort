@@ -402,6 +402,111 @@ ShopPage (dưới SafeArea)
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Dangling refs | 55 — tất cả là GUID script của **package** (`VerticalLayoutGroup` mới thêm); validator (có PackageCache) PASS |
 
+## Vòng 7 — Coin HUD kiểu Gameplay cho tab Shop (2026-10-20)
+
+Yêu cầu: cho một coin HUD giống Gameplay ở tab Shop; khi mua thì coin phải **± thật**.
+
+### Coin HUD
+
+Target **đã có sẵn** prefab `_Game/Prefab/CoinHUD.prefab` (dùng ở Gameplay):
+
+```
+CoinHUD          (anchor top-right, 360x100)
+├── Bg          Image Frame_Popup_2.png
+├── IconCoin    Image Icon_Coin_S.png (76x76)
+└── TxtCoin     TMP "Coins: 0"
++ CoinHUD       (coinText → TxtCoin, iconCoin → IconCoin)
+```
+
+Nên thay vì dựng lại, đã **instance prefab này** vào `ShopPage` của `Home.unity` → **chỉ hiện ở tab Shop** (yêu cầu: không hiện ở cả 3 tab). Bỏ luôn `CoinBar` rời (TMP số trần) nên không có 2 màn hiển thị coin.
+
+`ShopTopBar` đặt ở góc trên-trái (560x150 tại `(30,-30)`) để không đè lên coin HUD ở góc trên-phải.
+
+> Hệ quả: tab Home và Coming Soon **không còn hiện số coin** (trước đó là `CoinBar` TMP số trần). Nếu muốn có coin ở 2 tab đó thì cần thêm lại một HUD riêng.
+
+### CoinHUD dùng được ngoài Gameplay
+
+`CoinHUD.cs` cũ chỉ nghe `CoinManager.OnBalanceChanged` — mà `CoinManager` chỉ tồn tại trong scene Gameplay, nên ở Home/Shop HUD sẽ đứng yên ở 0. Đã sửa:
+
+- Thêm nguồn `EconomyService.OnCoinChanged` (nguồn coin chung của Home/Shop/Gameplay); `CoinManager` chỉ còn là lớp delegate trong Gameplay.
+- `BindEconomy()` / `UnbindEconomy()` theo dõi instance đang subscribe (tránh subscribe trùng khi HUD bật/tắt nhiều lần).
+- `Refresh()` ưu tiên `EconomyService`, fallback `CoinManager` (khi mở `Gameplay.unity` trực tiếp, không qua Entry).
+- Bind lại ở `Awake`, `OnEnable` và `Start` vì thứ tự Awake giữa các object trong scene không xác định.
+
+### Coin thật khi mua
+
+`ShopService.Buy()` gọi `EconomyService.SpendCoins` / `AddCoins` / `AddBooster` — cả hai hàm tiền đều `Save()` rồi raise `OnCoinChanged`:
+
+| Mua gói | Coin thay đổi |
+|---|---|
+| coin nhỏ (190) | −190 rồi +500 |
+| coin lớn (490) | −490 rồi +1400 |
+| booster (80/120/60) | chỉ trừ, không cộng coin |
+
+Coin HUD subscribe `OnCoinChanged` nên hiển thị đúng ngay sau mỗi lần trừ/cộng; `ShopItemView.OnBuy` cũng khoá nút BUY khi không đủ coin.
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` / `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
+## Vòng 8 — Fix nút BUY không bấm được + test luồng mua (2026-10-20)
+
+Báo cáo: "bấm buy chưa được". Log Unity cho thấy **chưa từng vào Play mode** (không có dòng "Entering Playmode") → trong Editor item shop **chưa tồn tại** vì được tạo lúc runtime. Nhưng khi rà lại code tìm ra 3 lỗi thật sẽ làm BUY hỏng lúc chạy.
+
+### Lỗi đã sửa
+
+| Lỗi | Nguyên nhân | Sửa |
+|---|---|---|
+| Shop **không dựng được item** khi mở `Home.unity` trực tiếp | `ShopUI.Awake()` cache `ShopService.Instance` một lần. `HomeUI.Awake` tạo service sau (thứ tự Awake giữa các object trong scene không xác định) → `_shop` null **vĩnh viễn** → `Refresh()` luôn return | `ShopUI` không cache ở Awake, mà resolve `ShopService.Instance` **lúc dùng** (`Refresh`). Tương tự `CoinHUD`, thêm `BindEconomy()` ở `Awake`/`OnEnable`/`Start` |
+| Nút BUY **bị khoá** (xám) khi không đủ coin | `btnBuy.interactable = _shop.CanBuy(...)` → mặc định chỉ có 100 coin, 3/5 gói giá ≥ 120 → 3 nút khoá, bấm không có phản hồi gì | Nút **luôn bấm được**; khi không đủ coin sẽ hiện thông báo "Không đủ coin để mua". Giá chuyển **màu đỏ** khi không đủ, trắng khi đủ |
+| Thông báo mua bị **menu bar che** | `TxtNotify` ở `y=90` trong khi menu bar (`MenuBar.prefab`) cao 180px ở đáy | `TxtNotify` lên `y=195`; `ItemContainer` đáy từ 0.1 → 0.16 để không đè nhau |
+
+Thêm: `ShopUI` subscribe `EconomyService.OnCoinChanged` → khi coin đổi, trạng thái màu giá của mọi item cập nhật ngay (không phải reload shop).
+
+### Test PlayMode
+
+Thêm `Assets/Tests/PlayMode/ShopPurchaseTests.cs` (cùng asmdef `ResultPopupProgressionTests`): load scene `Home` → bật tab Shop → assert item được dựng ra → bấm BUY dòng "Magic Box" → assert **coin bị trừ** và **booster được cộng**.
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly (kể cả test) | PASS — 0 error |
+| Validator `Home.unity` / `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
+> Test PlayMode **chưa chạy** (Editor đang mở nên không `-batchmode` được). Cần chạy trong Test Runner để có bằng chứng runtime.
+
+## Vòng 9 — Nút BUY theo 4 trạng thái (2026-10-20)
+
+Spec từ người dùng cho nút BUY trong `ShopItem`:
+
+| Trạng thái | Hành vi mong muốn |
+|---|---|
+| Chưa nhấn | Nút ở trạng thái bình thường, bấm được |
+| Nhấn + không đủ tiền | **Báo tooltip** |
+| Nhấn + đủ tiền (mua booster) | Trừ tiền + cộng item |
+| Nhấn + đủ tiền (mua gói coin) | Trừ tiền + cộng coin |
+
+### Đã làm
+
+- `ShopItemView.OnBuy`: kiểm tra `CanBuy` **trước**, không đủ coin → báo qua **`KitTooltipManager.Show()`** (tooltip của dự án, giống bản gốc) thay vì chỉ chữ thông báo; đủ coin → `ShopService.Buy()` (đã trừ coin rồi cộng booster hoặc coin theo loại gói) → báo tooltip "Mua thành công {tên}". `txtNotify` vẫn giữ làm fallback.
+- `KitTooltipManager` (`_KIT/GUI/Runtime/`): thêm **singleton guard** trong `Awake`/`OnDestroy`. Trước đó `Instance = this` không kiểm tra nên scene nào có instance cũng ghi đè — giờ bản mới tự huỷ, giữ bản đã tồn tại (instance của `EntryScene` sống sang `Home` do `DontDestroyOnLoad`).
+- `Home.unity`: thêm instance **`TooltipManager.prefab`** ở gốc scene (khối PrefabInstance được trích nguyên từ `EntryScene.unity`) → tooltip hoạt động cả khi mở `Home.unity` trực tiếp để test, không phụ thuộc đi qua Entry.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` / `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Hierarchy `Home.unity` | 5 root: Main Camera, EventSystem, Canvas, HomeManager, TooltipManager |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

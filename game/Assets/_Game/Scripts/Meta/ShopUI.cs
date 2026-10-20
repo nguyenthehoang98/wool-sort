@@ -19,18 +19,27 @@ namespace _Game.Scripts.Meta
         [SerializeField] private TMP_Text txtNotify;
         [SerializeField] private float notifyDuration = 2f;
 
-        private ShopService _shop;
-        private EconomyService _economy;
-        private readonly List<GameObject> _spawnedItems = new List<GameObject>();
+        private readonly List<ShopItemView> _items = new List<ShopItemView>();
         private float _notifyTimer;
+        private EconomyService _economy;
 
         private void Awake()
         {
-            _shop = ShopService.Instance;
             _economy = EconomyService.Instance;
         }
 
-        private void OnEnable() => Refresh();
+        private void OnEnable()
+        {
+            if (_economy == null) _economy = EconomyService.Instance;
+            if (_economy != null) _economy.OnCoinChanged += OnCoinChanged;
+
+            Refresh();
+        }
+
+        private void OnDisable()
+        {
+            if (_economy != null) _economy.OnCoinChanged -= OnCoinChanged;
+        }
 
         private void Update()
         {
@@ -42,18 +51,28 @@ namespace _Game.Scripts.Meta
             }
         }
 
+        private void OnCoinChanged(int amount) => RefreshAffordability();
+
         public void Refresh()
         {
             ClearItems();
-            if (_shop == null || itemContainer == null) return;
 
-            if (itemPrefab == null)
+            // Service có thể được tạo SAU khi HUD này Awake (HomeUI.Awake tạo
+            // EconomyService/ShopService khi mở scene Home trực tiếp) -> phải
+            // resolve lúc dùng, không cache ở Awake.
+            var shop = ShopService.Instance;
+            if (shop == null)
             {
-                Debug.LogError("[ShopUI] Chưa gán itemPrefab (ShopItem.prefab).");
+                Debug.LogError("[ShopUI] Chưa có ShopService — không dựng được item.");
+                return;
+            }
+            if (itemContainer == null || itemPrefab == null)
+            {
+                Debug.LogError("[ShopUI] Thiếu itemContainer hoặc itemPrefab (ShopItem.prefab).");
                 return;
             }
 
-            foreach (var item in _shop.GetItems())
+            foreach (var item in shop.GetItems())
             {
                 var go = Instantiate(itemPrefab, itemContainer);
 
@@ -65,18 +84,28 @@ namespace _Game.Scripts.Meta
                     continue;
                 }
 
-                view.Bind(item, _shop, ShowNotify);
-                _spawnedItems.Add(go);
+                view.Bind(item, shop, ShowNotify);
+                _items.Add(view);
             }
         }
 
         private void ClearItems()
         {
-            foreach (var go in _spawnedItems)
+            foreach (var view in _items)
             {
-                if (go != null) Destroy(go);
+                if (view != null) Destroy(view.gameObject);
             }
-            _spawnedItems.Clear();
+            _items.Clear();
+        }
+
+        private void RefreshAffordability()
+        {
+            var shop = ShopService.Instance;
+            if (shop == null) return;
+            foreach (var view in _items)
+            {
+                if (view != null) view.RefreshAffordable();
+            }
         }
 
         private void ShowNotify(string message)

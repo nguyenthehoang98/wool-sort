@@ -19,6 +19,10 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Button btnBuy;
         [SerializeField] private TMP_Text btnLabel;
 
+        [Header("Màu khi không đủ coin")]
+        [SerializeField] private Color affordableColor = new Color(1f, 1f, 1f, 1f);
+        [SerializeField] private Color notAffordableColor = new Color(1f, 0.35f, 0.35f, 1f);
+
         private ShopService _shop;
         private ShopItem _item;
 
@@ -35,16 +39,21 @@ namespace _Game.Scripts.Meta
 
             if (btnBuy != null)
             {
+                // Nút luôn bấm được: nếu không đủ coin thì báo "Không đủ coin để mua"
+                // thay vì khoá nút (người chơi không hiểu vì sao bấm không được).
+                btnBuy.interactable = true;
                 btnBuy.onClick.RemoveAllListeners();
                 btnBuy.onClick.AddListener(() => OnBuy(onNotify));
             }
-            RefreshInteractable();
+            RefreshAffordable();
         }
 
-        public void RefreshInteractable()
+        /// <summary>Cập nhật trạng thái đủ coin (màu giá) sau khi coin thay đổi.</summary>
+        public void RefreshAffordable()
         {
-            if (btnBuy == null || _shop == null || _item == null) return;
-            btnBuy.interactable = _shop.CanBuy(_item.id);
+            if (cost == null || _item == null || _shop == null) return;
+            bool enough = _shop.CanBuy(_item.id);
+            cost.color = enough ? affordableColor : notAffordableColor;
         }
 
         private static string BuildAmount(ShopItem item)
@@ -58,15 +67,29 @@ namespace _Game.Scripts.Meta
         {
             if (_shop == null || _item == null) return;
 
+            if (!_shop.CanBuy(_item.id))
+            {
+                Notify("Không đủ coin để mua", onNotify);
+                return;
+            }
+
             if (_shop.Buy(_item.id))
             {
-                onNotify?.Invoke($"Mua thành công {_item.displayName}");
+                Notify($"Mua thành công {_item.displayName}", onNotify);
             }
             else
             {
-                onNotify?.Invoke("Không đủ coin để mua");
+                Notify("Không đủ coin để mua", onNotify);
             }
-            RefreshInteractable();
+            RefreshAffordable();
+        }
+
+        /// <summary>Báo kết quả bằng tooltip (giống phần báo của dự án gốc).</summary>
+        private static void Notify(string message, Action<string> onNotify)
+        {
+            var tooltip = _KIT.KitTooltipManager.Instance;
+            if (tooltip != null) tooltip.Show(message);
+            onNotify?.Invoke(message);
         }
     }
 }

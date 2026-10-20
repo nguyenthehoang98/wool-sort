@@ -18,6 +18,14 @@ namespace _KIT
 
         private void Awake()
         {
+            // Singleton: scene nào cũng có thể chứa 1 instance. Instance đã tồn tại
+            // (ví dụ do EntryScene tạo và DontDestroyOnLoad sang Home) thì giữ instance đó,
+            // bản mới tự huỷ để không có 2 tooltip cùng lúc.
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
@@ -66,7 +74,7 @@ namespace _KIT
 
         private void OnDestroy()
         {
-            Instance = null;
+            if (Instance == this) Instance = null;
         }
 
         public void ForceHideCurrentToolTip()

@@ -2,6 +2,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using _Game.Scripts.Core;
 using _Game.Scripts.Gameplay;
 
 
@@ -9,6 +10,7 @@ namespace _Game.Scripts.UI
 {
     // Simple HUD to display current coin balance.
     // Attach this component to a UI GameObject that has a TextMeshProUGUI reference.
+    // Dùng được ở Gameplay (CoinManager) và ở Home/Shop (EconomyService).
     public class CoinHUD : MonoBehaviour
     {
         public static CoinHUD Instance { get; private set; }
@@ -21,6 +23,7 @@ namespace _Game.Scripts.UI
 
         private RectTransform _rectTransform;
         private Vector3 _oriAnchoredPos;
+        private EconomyService _economy;
 
         private void Awake()
         {
@@ -28,12 +31,13 @@ namespace _Game.Scripts.UI
             _rectTransform = transform as RectTransform;
             if (_rectTransform != null) _oriAnchoredPos = _rectTransform.anchoredPosition;
 
-            // Initialize display
-            UpdateCoinText(CoinManager.Instance?.GetBalance() ?? 0);
+            BindEconomy();
+            Refresh();
         }
 
         private void OnDestroy()
         {
+            UnbindEconomy();
             if (Instance == this) Instance = null;
         }
 
@@ -60,19 +64,57 @@ namespace _Game.Scripts.UI
         private void OnEnable()
         {
             CoinManager.OnBalanceChanged += UpdateCoinText;
-            UpdateCoinText(CoinManager.Instance != null ? CoinManager.Instance.GetBalance() : 0);
+            BindEconomy();
+            Refresh();
         }
 
         private void OnDisable()
         {
             CoinManager.OnBalanceChanged -= UpdateCoinText;
+            UnbindEconomy();
         }
 
         private void Start()
         {
-            // CoinManager.Awake may run after this HUD's Awake/OnEnable,
-            // so refresh once more after all Awake calls have finished.
-            UpdateCoinText(CoinManager.Instance != null ? CoinManager.Instance.GetBalance() : 0);
+            // CoinManager.Awake / EconomyService có thể chạy sau HUD này,
+            // nên refresh + bind lại lần nữa khi mọi Awake đã xong.
+            BindEconomy();
+            Refresh();
+        }
+
+        /// <summary>
+        /// EconomyService là nguồn coin chung (Home/Shop/Gameplay đều dùng),
+        /// CoinManager chỉ là lớp delegate trong Gameplay.
+        /// </summary>
+        private void BindEconomy()
+        {
+            var eco = EconomyService.Instance;
+            if (eco == null) return;
+            if (ReferenceEquals(_economy, eco)) return;
+
+            UnbindEconomy();
+            _economy = eco;
+            _economy.OnCoinChanged += OnEconomyCoinChanged;
+        }
+
+        private void UnbindEconomy()
+        {
+            if (_economy != null) _economy.OnCoinChanged -= OnEconomyCoinChanged;
+            _economy = null;
+        }
+
+        private void OnEconomyCoinChanged(int amount) => UpdateCoinText(amount);
+
+        private void Refresh()
+        {
+            if (_economy != null)
+            {
+                UpdateCoinText(_economy.GetCoin());
+                return;
+            }
+
+            var cm = CoinManager.Instance;
+            if (cm != null) UpdateCoinText(cm.GetBalance());
         }
 
         private void UpdateCoinText(int newBalance)

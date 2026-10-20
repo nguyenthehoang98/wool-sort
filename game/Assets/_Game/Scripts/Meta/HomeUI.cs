@@ -106,8 +106,8 @@ namespace _Game.Scripts.Meta
             if (homePage != null) homePage.SetActive(tab == HomeTab.Home);
             if (shopPage != null) shopPage.SetActive(tab == HomeTab.Shop);
             if (comingSoonPage != null) comingSoonPage.SetActive(tab == HomeTab.ComingSoon);
-
-            if (tab == HomeTab.Shop && shopUI != null) shopUI.Refresh();
+            // ShopUI tự Refresh() trong OnEnable khi ShopPage được bật -> không
+            // cần gọi thêm ở đây (gọi thêm sẽ dựng lại item lần nữa).
         }
 
         private void RefreshCoin()
