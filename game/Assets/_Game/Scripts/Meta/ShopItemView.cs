@@ -81,7 +81,6 @@ namespace _Game.Scripts.Meta
         private static string ReasonToMessage(string reason) => reason switch
         {
             "not_enough_coin" => "Không đủ coin để mua",
-            "free_pack_already_taken" => "Bạn đã nhận gói coin miễn phí rồi",
             "item_not_found" => "Không tìm thấy gói này",
             "economy_missing" => "Chưa sẵn sàng, thử lại sau",
             _ => "Không mua được",

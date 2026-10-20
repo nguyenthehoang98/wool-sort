@@ -76,9 +76,9 @@ public class ShopPurchaseTests
         Assert.AreEqual(boosterBefore + 1, boosterAfter, "Booster Magic Box không được cộng.");
     }
 
-    /// <summary>Gói coin miễn phí: bấm BUY phải +coin, và chỉ nhận được 1 lần.</summary>
+    /// <summary>Gói coin: bấm BUY phải +coin, và mua lại được nhiều lần.</summary>
     [UnityTest]
-    public IEnumerator FreeCoinPack_AddsCoin_OnlyOnce()
+    public IEnumerator CoinPack_AddsCoin_AndIsRepeatable()
     {
         Assert.IsNotNull(economy, "Không có EconomyService trong scene Home.");
 
@@ -91,11 +91,11 @@ public class ShopPurchaseTests
         var views = new System.Collections.Generic.List<Component>();
         foreach (var o in found) views.Add((Component)o);
 
-        Component target = FindByTitle(views, "Gói coin miễn phí");
-        Assert.IsNotNull(target, "Không thấy gói coin miễn phí trong shop.");
+        Component target = FindByTitle(views, "Gói coin nhỏ");
+        Assert.IsNotNull(target, "Không thấy gói 'Gói coin nhỏ' trong shop.");
 
         var btn = GetPrivate(target, "btnBuy") as Button;
-        Assert.IsNotNull(btn, "Gói coin miễn phí không có nút BUY.");
+        Assert.IsNotNull(btn, "Gói coin không có nút BUY.");
 
         int coinBefore = (int)Invoke(economy, "GetCoin");
 
@@ -103,14 +103,14 @@ public class ShopPurchaseTests
         yield return null;
 
         int coinAfter = (int)Invoke(economy, "GetCoin");
-        Assert.Greater(coinAfter, coinBefore, "Gói coin miễn phí không cộng coin.");
+        Assert.Greater(coinAfter, coinBefore, "Gói coin không cộng coin.");
 
-        // Lần thứ hai phải bị chặn (tránh vòng lặp coin vô hạn).
+        // Mua lần 2 vẫn được (không giới hạn 1 lần).
         btn.onClick.Invoke();
         yield return null;
 
         int coinAfter2 = (int)Invoke(economy, "GetCoin");
-        Assert.AreEqual(coinAfter, coinAfter2, "Gói coin miễn phí bị mua lần thứ 2.");
+        Assert.Greater(coinAfter2, coinAfter, "Gói coin không mua lại được lần 2.");
     }
 
     private Component FindByTitle(System.Collections.Generic.List<Component> views, string title)

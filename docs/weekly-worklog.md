@@ -553,12 +553,26 @@ Vì các gói coin giờ đều có `coinCost == 0`, luật "chỉ nhận 1 lầ
 | Clean | 120 coin | +1 booster | không giới hạn |
 | Magic Box | 60 coin | +1 booster | không giới hạn |
 
+### Bỏ gói coin miễn phí (2026-10-20)
+
+Theo yêu cầu: xoá gói `coin_pack_free` khỏi shop. Kèm dọn code chết:
+
+- `ShopService.items`: bỏ dòng `coin_pack_free`.
+- Bỏ toàn bộ luật "chỉ nhận 1 lần": hằng `FreeCoinPackId`, hàm `IsFreeCoinPack`, nhánh chặn trong `CanBuy`/`Buy`, nhánh `"Đã nhận"` trong `GetPriceLabel`, và lý do `"free_pack_already_taken"`.
+- `PlayerData`: bỏ cờ `freeCoinPackTaken` (không còn dùng).
+- `ShopItemView`: bỏ case `"free_pack_already_taken"` trong `ReasonToMessage`.
+- Xoá asset `_Game/Resources/Shop/Icon_Coin.png` + `.meta` (copy làm riêng cho gói miễn phí, không còn tham chiếu — đã verify 0 ref theo GUID).
+- Test PlayMode `FreeCoinPack_AddsCoin_OnlyOnce` → đổi thành `CoinPack_AddsCoin_AndIsRepeatable` (mua "Gói coin nhỏ" 2 lần → coin tăng 2 lần).
+
+Shop còn 5 gói: Gói coin nhỏ (0 coin, +500), Gói coin lớn (0 coin, +1400), Add Slot (80), Clean (120), Magic Box (60).
+
 ### Verify
 
 | Kiểm tra | Kết quả |
 |---|---|
 | Compile 3 assembly | PASS — 0 error |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Ref còn lại tới asset đã xoá | 0 (kiểm tra theo GUID `2dd5a8f7…`) |
 
 ## Tổng kết sau mỗi tuần
 
