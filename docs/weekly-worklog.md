@@ -232,6 +232,57 @@ Trong lúc làm, người dùng xóa trong Unity Project window lúc **16:06–1
 - Chưa có Play-mode smoke test trong Editor (bắt buộc để chốt W3-01b).
 - UI Shop, chọn level, Settings, Daily Reward chưa làm (theo phạm vi đã chốt).
 
+## Vòng 4 — Pick menu bottom gốc (`MenuBar`) + vuốt đổi tab (2026-10-20)
+
+Yêu cầu: pick menu + menu bottom ở Home (3 nút), lấy **code và UI trước**.
+
+### Tìm thấy ở bản gốc
+
+`D:\BB_Project\wool-sort\Assets\_Game\_HomeFrame\`:
+
+| File | Vai trò |
+|---|---|
+| `Resources/MenuBar.prefab` | prefab menu bottom: `BottomBar` → `Tabs` → `ButtonHome` / `ButtonShop` / `ButtonRanking` |
+| `GUI/HomeScreen/MenuBarManager.cs` | quản lý 3 nút, focus/unfocus, `OptionMenu` |
+| `GUI/HomeScreen/MenuBarButton.cs` | một nút: tween scale + ẩn/hiện nền focus |
+| `GUI/FitPositionWithAds.cs` | đặt thanh bottom (bản gốc đẩy lên khi có banner ads) |
+| `SwipUIRaycast.cs` | **kéo thả / vuốt ngang** để đổi tab |
+
+Lưu ý: bản gốc dùng **3 nút Home / Shop / Ranking** (nút Ranking hiện "Coming soon!"). Map sang target: Home / Shop / **ComingSoon**.
+
+### Code đã pick (giữ nguyên path + GUID → prefab không phải sửa)
+
+Đặt đúng path của bản gốc và copy `.meta` để giữ GUID:
+
+| File | Thay đổi so với bản gốc |
+|---|---|
+| `_Game/_HomeFrame/GUI/HomeScreen/MenuBarButton.cs` | bỏ `SettingManager.PlaySound` + `LFramework.Vibration` (target chưa có 2 hệ này, `_Game/Sounds` rỗng) |
+| `_Game/_HomeFrame/GUI/HomeScreen/MenuBarManager.cs` | bỏ `Databuckets`/`IAPPlacement`, `GameConst.OnReloadBanner`, `KitSDK` analytics, `using Dreamteck`; `Singleton<T>` lấy bản target (`HyperSonic`); `MoveContentsBy` giữ nhưng có guard null |
+| `_Game/_HomeFrame/GUI/FitPositionWithAds.cs` | bỏ `BravestarsSDK.MediationManager` → luôn đặt bar ở vị trí "no ads" |
+| `_Game/_HomeFrame/SwipUIRaycast.cs` | bỏ `FrameManager.instance.CountFramesActive()`; vuốt giờ gọi `OpenHome/OpenShop/OpenRanking` để event về HomeUI |
+| `_Game/Scripts/Utils/Extentions.cs` | copy nguyên văn (cần `CheckKillTween` cho DOTween) |
+
+### UI đã pick
+
+`MenuBar.prefab` + 6 texture, copy kèm `.meta` (giữ GUID): `Icon_Shop.png`, `Icon_Lock.png`, `Frame_Bar_1/2/3.png`, `Home_icon_big.png`.
+
+Trong prefab có 1 sprite `5cbe0dc4…` **đã hỏng sẵn ở bản gốc** (không có trong Assets gốc) — nó gán cho 3 Image trên Button với **alpha 0** nên không ảnh hưởng hiển thị; đã set `m_Sprite: {fileID: 0}` để prefab resolve trọn vẹn.
+
+### Nối vào scene `Home`
+
+- Xoá tab bar tự dựng (3 nút GameObject rời) → thay bằng **instance của `MenuBar.prefab`** dưới `SafeArea` (PrefabInstance + stripped Transform + stripped MonoBehaviour để `HomeUI` tham chiếu được `MenuBarManager` bên trong prefab).
+- `HomeUI` đổi từ 3 field Button → 1 field `MenuBarManager menuBar`; subscribe `OnClickOpenHome/OpenShop/OpenRanking` → `ShowTab(...)`.
+- `CanvasScaler` của `Home` đổi 1080x1920 → **1080x2160** (khớp `Home.unity` gốc và `Gameplay.unity` của target; 3 nút rộng đúng 1080).
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` / `EntryScene.unity` | PASS cả 2 |
+| Dependency closure `MenuBar.prefab` | PASS — 11/11 GUID resolve, 0 thiếu |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

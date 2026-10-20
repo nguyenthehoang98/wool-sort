@@ -11,10 +11,8 @@ namespace _Game.Scripts.Meta
         public static HomeUI Instance { get; private set; }
 
         [Header("Tab bar (đặt dưới màn hình)")]
-        [SerializeField] private RectTransform tabBar;
-        [SerializeField] private Button btnTabHome;
-        [SerializeField] private Button btnTabShop;
-        [SerializeField] private Button btnTabComingSoon;
+        [Tooltip("MenuBar gốc (3 nút Home / Shop / Ranking)")]
+        [SerializeField] private MenuBarManager menuBar;
 
         [Header("Trang chủ (chỉ hiện khi tab Home được chọn)")]
         [SerializeField] private GameObject homePage;
@@ -43,7 +41,7 @@ namespace _Game.Scripts.Meta
             }
             Instance = this;
             // Không DontDestroyOnLoad: HomeUI gắn với scene Home, giữ lại sẽ để lại
-            // reference tới UI của scene cũ (đã bị destroy) và làm tab bar chết.
+            // reference tới UI của scene cũ (đã bị destroy) và làm menu chết.
         }
 
         private void OnDestroy()
@@ -62,6 +60,7 @@ namespace _Game.Scripts.Meta
             WireStart();
 
             ShowTab(HomeTab.Home);
+            if (menuBar != null) menuBar.Focus(MenuBarOption.Home);
             RefreshCoin();
             RefreshLevel();
 
@@ -73,19 +72,25 @@ namespace _Game.Scripts.Meta
 
         private void WireTabs()
         {
-            if (btnTabHome != null) btnTabHome.onClick.AddListener(() => ShowTab(HomeTab.Home));
-            if (btnTabShop != null) btnTabShop.onClick.AddListener(() => ShowTab(HomeTab.Shop));
-            if (btnTabComingSoon != null) btnTabComingSoon.onClick.AddListener(() => ShowTab(HomeTab.ComingSoon));
+            if (menuBar == null)
+            {
+                Debug.LogWarning("[HomeUI] MenuBar chưa được gán.");
+                return;
+            }
+
+            // MenuBar tự lo focus/unfocus; HomeUI chỉ lo bật/tắt trang.
+            menuBar.OnClickOpenHome += () => ShowTab(HomeTab.Home);
+            menuBar.OnClickOpenShop += () => ShowTab(HomeTab.Shop);
+            menuBar.OnClickOpenRanking += () => ShowTab(HomeTab.ComingSoon);
         }
 
         private void WireStart()
         {
-            if (btnStart != null)
-                btnStart.onClick.AddListener(() =>
-                {
-                    var flow = _Game.Scripts.Core.EntryFlow.Instance;
-                    flow?.StartCurrentLevel();
-                });
+            if (btnStart != null) btnStart.onClick.AddListener(() =>
+            {
+                var flow = _Game.Scripts.Core.EntryFlow.Instance;
+                flow?.StartCurrentLevel();
+            });
         }
 
         private void ShowTab(HomeTab tab)
@@ -93,13 +98,6 @@ namespace _Game.Scripts.Meta
             if (homePage != null) homePage.SetActive(tab == HomeTab.Home);
             if (shopPage != null) shopPage.SetActive(tab == HomeTab.Shop);
             if (comingSoonPage != null) comingSoonPage.SetActive(tab == HomeTab.ComingSoon);
-
-            if (btnTabHome != null) btnTabHome.interactable = tab != HomeTab.Home;
-            if (btnTabShop != null) btnTabShop.interactable = tab != HomeTab.Shop;
-            if (btnTabComingSoon != null) btnTabComingSoon.interactable = tab != HomeTab.ComingSoon;
-
-            if (tab == HomeTab.Shop && shopUI != null)
-                shopUI.Refresh();
         }
 
         private void RefreshCoin()
