@@ -3,8 +3,9 @@
 ## Snapshot đã đọc
 
 - Reference Unity: `2022.3.50f1`; target Unity: `6000.3.21f1` trong `game/ProjectSettings/ProjectVersion.txt`. Reference chỉ dùng để đối chiếu, không copy code.
-- Target hiện là Unity template trống tại `game/`; các scene, script và số liệu bên dưới là snapshot của reference, chưa phải trạng thái đã có trong target.
-- Build scenes: `EntryScene`, `Home`, `Gameplay`.
+- Reference project trên máy này nằm ở `D:\BB_Project\wool-sort` (không phải `C:/Users/Admin/Documents/Projects/wool-sort` như `tasks/todo.md` ghi ban đầu).
+- Target ở `game/` đã là bản clone rút gọn: 20 thư mục asset của reference đã bị prune (gồm `BravestarsSDK/`, `GameAnalytics/`, `I2/`, `Firebase/`, `FacebookSDK/`, `Spine/`, `GoogleMobileAds/`…).
+- Build scenes: `EntryScene`, `Home`, `Gameplay`. Trong target hiện có `Assets/Scenes/Gameplay.unity` (viết tay) và `Assets/Scenes/EntryScene.unity` (port từ reference 2026-10-20, giữ nguyên GUID). **`Home.unity` chưa có** dù `EditorBuildSettings.asset` vẫn trỏ tới → Build Settings báo missing scene.
 - Core gameplay nằm trong `Assets/_Game/Scripts`.
 - 156 C# file trong `Assets/_Game`; có thêm SDK/package lớn bên ngoài.
 - 300 level definition trong `Resources/Configs/GeneralConfig.asset`, nhưng thứ tự chơi hiện tại chỉ có 88 entry.

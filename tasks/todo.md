@@ -45,8 +45,9 @@
 
 ## Tuần 3 — Navigation, progression và save
 
-- [ ] **W3-01 — Entry routing** — W3D1. Load config/save và route level 1 vào Gameplay, level sau vào Home. **Verify:** test cả hai nhánh và SDK fail.
-- [ ] **W3-02 — Home và level selection intents** — W3D2. Implement/đặc tả Play, chọn level, Settings, Shop, Daily Reward. **Verify:** modal không cho input xuyên xuống board.
+- [~] **W3-01 — Entry routing** — W3D1. Load config/save và route level 1 vào Gameplay, level sau vào Home. **Verify:** test cả hai nhánh và SDK fail. **Tiến độ 2026-10-20:** `game/Assets/Scenes/EntryScene.unity` đã port từ dự án gốc (GUID `cbee448845f34a54d8ca189f7f7b56d7`, khớp `EditorBuildSettings.asset`); driver là `EntryBootstrap` + `EntryFlow` của target. Còn thiếu: Play-mode verify nhánh level ≥ 2 (bị chặn bởi W3-02 vì chưa có scene `Home`).
+- [ ] **W3-01b — Dựng scene `Home`** — W3D2. Scene `Home` **chưa tồn tại** ở target nhưng `EditorBuildSettings.asset` vẫn trỏ `Assets/Scenes/Home.unity` (GUID `cbc1002ad8ffb9f49972eb4440f5da68`) → Build Settings báo missing scene. Bản gốc không dùng được: `Home.unity` của reference phụ thuộc `_Game/_HomeFrame/Resources/HomeFrame.prefab`, `HomeController.cs`, `_HomeFrame/HomeFrame.cs` — cả 3 đã bị prune khỏi target. **Verify:** dựng `Home.unity` bằng UI native của target (`_Game/Scripts/Meta/HomeUI.cs`, `ShopUI.cs`, `EntryFlow.StartCurrentLevel`), giữ GUID `cbc1002ad8ffb9f49972eb4440f5da68`; Entry → Home → Gameplay chạy được. **Deps:** W3-01.
+- [ ] **W3-02 — Home và level selection intents** — W3D2. Implement/đặc tả Play, chọn level, Settings, Shop, Daily Reward. **Verify:** modal không cho input xuyên xuống board. **Deps:** W3-01b.
 - [ ] **W3-03 — Progression/economy facade** — W3D3. Gom coin, heart, infinite heart, booster inventory và completed level vào service. **Verify:** balance không âm, retry không cộng hai lần.
 - [ ] **W3-04 — Save/load migration** — W3D4. Version schema, load/save atomic và migration từ `new_game_data`/PlayerPrefs cũ. **Verify:** save/reload giữ progress và resource.
 - [ ] **W3-05 — Navigation smoke checkpoint** — W3D5. Chạy Entry → Home/Gameplay → back/reload. **Verify:** scene không giữ singleton/listener cũ. **Deps:** W3-01..04.
@@ -98,6 +99,10 @@
 
 ## Blocked / quyết định cần người dùng
 
-- [ ] Chốt Android device matrix và package/platform matrix trước W2D3. `C:/Users/Admin/Documents/Projects/wool-sort` chỉ là reference, không phải nơi AI được phép sửa.
+- [ ] Chốt Android device matrix và package/platform matrix trước W2D3. Reference Unity project thật nằm ở `D:\BB_Project\wool-sort` (Unity `2022.3.50f1`), **không phải** `C:/Users/Admin/Documents/Projects/wool-sort` như ghi ở đầu file này — path cũ không tồn tại trên máy. Reference chỉ để đối chiếu, không sửa trực tiếp.
 - [!] Xác nhận 5 ngày/tuần có đúng lịch làm việc không; nếu không, chỉ cần đổi cột ngày, không đổi dependency.
 - [!] Chốt target Android OS/device matrix và Unity/package version chính thức.
+- [ ] **Quyết định (cần duyệt) — mức độ port của scene `Entry`.** Bản `EntryScene.unity` đã port **không kéo theo SDK** vì target đã prune 20 thư mục asset gốc (`BravestarsSDK/`, `GameAnalytics/`, `I2/`, `Firebase/`, `Spine/`…). Ba lựa chọn:
+  1. **(đang làm) Giữ bản đã port** — scene chạy được, không phụ thuộc SDK; mất: màn loading có progress bar, nút "Remove Ads", banner NoAds, localization runtime, In-App Review. **Khuyến nghị** vì đây là hướng target đang đi.
+  2. **Hồi sinh SDK** — copy ngược `BravestarsSDK/`, `GameAnalytics/`, `I2/` + `.jar`/gradle/manifest; tốn kém, rủi ro build Android cao, trái với quyết định prune trước đó.
+  3. **Bù bằng code target** — viết loading progress bar + banner NoAds bằng UI của target; giữ được UX nhưng mất luôn localization/IAP.

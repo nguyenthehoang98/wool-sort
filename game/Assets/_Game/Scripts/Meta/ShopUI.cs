@@ -2,6 +2,7 @@ namespace _Game.Scripts.Meta
 {
     using System.Collections.Generic;
     using _Game.Scripts.Core;
+    using _Game.Scripts.Gameplay;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;

@@ -1579,6 +1579,7 @@ MonoBehaviour:
   txtLevel: {fileID: 541313733}
   winPopup: {fileID: 830000004}
   losePopup: {fileID: 840000004}
+  moreBoosterPopup: {fileID: 0}
   enableDebugHotkeys: 1
 --- !u!1 &700000001
 GameObject:
@@ -2196,6 +2197,7 @@ MonoBehaviour:
   objNoti: {fileID: 810000036}
   countText: {fileID: 810000043}
   objPlus: {fileID: 810000044}
+  moreBoosterPopup: {fileID: 0}
 --- !u!1 &810000016
 GameObject:
   m_ObjectHideFlags: 0
@@ -3008,6 +3010,7 @@ MonoBehaviour:
   objNoti: {fileID: 810000086}
   countText: {fileID: 810000093}
   objPlus: {fileID: 810000094}
+  moreBoosterPopup: {fileID: 0}
 --- !u!1 &810000066
 GameObject:
   m_ObjectHideFlags: 0
@@ -3820,6 +3823,7 @@ MonoBehaviour:
   objNoti: {fileID: 810000136}
   countText: {fileID: 810000143}
   objPlus: {fileID: 810000144}
+  moreBoosterPopup: {fileID: 0}
 --- !u!1 &810000116
 GameObject:
   m_ObjectHideFlags: 0

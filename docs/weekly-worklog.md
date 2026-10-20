@@ -34,7 +34,7 @@ Worklog này bám theo đề cương 9 tuần trong file DOCX. Đây là **mẫu
 
 | Ngày | Công việc và đầu ra bắt buộc | Acceptance / verification | Ngày thực tế | Status | Evidence | Ghi chú/kết quả |
 |---|---|---|---|---|---|---|
-| W3D1 | Entry load config/save và route level 1/later levels | Pass cả hai nhánh, kể cả service fail |  | TODO |  |  |
+| W3D1 | Entry load config/save và route level 1/later levels | Pass cả hai nhánh, kể cả service fail | 2026-10-20 | PARTIAL | `game/Assets/Scenes/EntryScene.unity` | Scene `Entry` đã có và trỏ đúng GUID trong `EditorBuildSettings.asset`; driver `EntryBootstrap` + `EntryFlow`. Chưa verify nhánh level ≥ 2 vì thiếu scene `Home` (xem W3D2). |
 | W3D2 | Home, level selection và modal intents | Popup không nhận input xuyên xuống gameplay |  | TODO |  |  |
 | W3D3 | Progression/economy facade | Coin/heart/booster không âm; retry idempotent |  | TODO |  |  |
 | W3D4 | Versioned save/load và migration | Reload giữ progress/resource |  | TODO |  |  |
@@ -100,13 +100,84 @@ Worklog này bám theo đề cương 9 tuần trong file DOCX. Đây là **mẫu
 | W9D4 | Viết hướng dẫn, demo script, slide/checklist bảo vệ | Người khác chạy theo được |  | TODO |  |  |
 | W9D5 | Final handover và đóng backlog | Known limitations, build/test instructions đầy đủ |  | TODO |  |  |
 
+## Vòng 1 — Port `EntryScene` từ dự án gốc (2026-10-20)
+
+Nguồn gốc: reference Unity project thật ở `D:\BB_Project\wool-sort` (Unity `2022.3.50f1`), scene `Assets/Scenes/EntryScene.unity` (96 KB, 20 GameObject, 35 MonoBehaviour).
+Path `C:/Users/Admin/Documents/Projects/wool-sort` ghi trong `tasks/todo.md` **không tồn tại** trên máy này.
+
+### Đã đổi
+
+| Nhóm | Trước | Sau | Ghi chú |
+|---|---|---|---|
+| Scene | `game/Assets/Scenes/` chỉ có `Gameplay.unity` | thêm `EntryScene.unity` (31 KB) + `.meta` | Giữ nguyên GUID `cbee448845f34a54d8ca189f7f7b56d7` → `EditorBuildSettings.asset` không phải sửa |
+| Driver scene | `GameEntry.cs` (thiếu, cần `BravestarsSDK`) | `EntryBootstrap` + `EntryFlow` (code native của target) | `GameEntry` gốc không compile được: kéo `KitSDK`, `KitSetting`, `UnityEventBus`, `BravestarsSDK` |
+| Prefab instance | 12 (11 không tồn tại ở target) | 1 (`_KIT/GUI/Prefab/TooltipManager.prefab`) | Xóa SDKManager, IAPManager, SettingManager, CanvasLoading, GameAnalytics, UMPManager, MediationManager, FrameManager, AppOpenAdManager, CheckQC, DEVTOOL |
+| GameObject | 20 | 8 | Xóa `HeartSystemManager`, `InAppReview`, `Databuckets`, `DayChangeService`, `LanguageManager`, `AdLoading`, `NoAdsBanner`, `ImgPanel`, `BtnNoAds`, `Extension`, `Holder` (script hoặc sprite không tồn tại ở target) |
+| Font TMP | `LiberationSans SDF.asset` (không có ở target) | `GoogleSans-Bold SDF.asset` | Theo đúng pattern của `Gameplay.unity` |
+| Sprite nền | `28fb229f0b2b75c449785d2275d45b28` | `null` + màu nền `{0.212, 0.227, 0.259}` | GUID này **đã hỏng sẵn trong dự án gốc** (không có trong Assets cũng không phải built-in của Unity) → nền trắng; đã đổi sang màu lấy từ `RenderSettings.m_AmbientSkyColor` của scene gốc |
+| `.meta` thiếu | 41 asset không có `.meta` | 0 | 8 file `.cs` quan trọng (`Core/*.cs`, `Meta/HomeUI.cs`, `Meta/ShopUI.cs`) **chưa từng được Unity compile** vì thiếu `.meta`; 33 folder + 1 thư mục IDE junk `.idea` đã dọn |
+| Lỗi compile | 2 lỗi namespace ẩn | 0 lỗi | `ShopService.cs` và `ShopUI.cs` thiếu `using _Game.Scripts.Gameplay;` (dùng `BoosterType`) |
+
+### Đã giữ
+
+| Nhóm | Giữ lại | Lý do |
+|---|---|---|
+| Cấu trúc scene | `Canvas` → `BG` → `Text (TMP)`, `SafeArea`, `Main Camera`, `EventSystem`, `SpashManager` | Bố cục và transform lấy nguyên từ scene gốc |
+| `TooltipManager` prefab | `_KIT/GUI/Prefab/TooltipManager.prefab` | GUID khớp, có sẵn ở target |
+| `KitSafeArea`, `KitScaleCanvas`, `KitButton`, `SplashItem` | nguyên bản | GUID khớp 1-1 với target |
+| Routing | level 1 → `Gameplay`, level ≥ 2 → `Home` | Giữ đúng ngữ nghĩa của `GameEntry` gốc, nhưng cài bằng `EntryFlow` |
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Validator scene (fileID, GUID, cây transform, `SceneRoots`) | PASS — 43 block, 7 root, mọi GUID resolve |
+| Compile `Assembly-CSharp` (Unity Roslyn + rsp của Bee) | PASS — 0 error, 15 warning (đều pre-existing: `FindObjectOfType` deprecated, field không dùng) |
+| Compile `Assembly-CSharp-Editor` | PASS — 0 error, 4 warning |
+| Compile `ResultPopupProgressionTests` (asmdef test) | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng, 56 dangling ref (đều là GUID của package — không tăng so với trước) |
+
+### Còn thiếu
+
+- Scene `Home.unity` **chưa tồn tại** ở target nhưng `EditorBuildSettings.asset` vẫn trỏ tới → Build Settings báo missing scene. Bản gốc không port được (`HomeFrame.prefab`, `HomeController.cs`, `_HomeFrame/HomeFrame.cs` đã bị prune). Đã tạo task `W3-01b`.
+- Chưa có Play-mode smoke test trong Editor (bị chặn bởi W3-01b cho nhánh level ≥ 2).
+
+## Vòng 2 — Kiểm tra sau khi xóa nhầm `_Game/Scripts` (2026-10-20)
+
+### Chẩn đoán
+
+Đọc **Recycle Bin** (giải mã record `$I` → đường dẫn gốc) cho thấy lúc **15:50** folder `game/Assets/_Game/Scripts` (448 KB) bị xóa nhầm rồi được khôi phục; **15:56** xóa tiếp 15 folder rỗng còn sót (`_Game/Editor`, `Icon`, `Media`, `Prefabs`, `Sounds`, `Scripts/{Board,Canh,Configs,Home,Manager,TestSpiral}`, `Textures/{Home,String_Fabric_Pattern,Wool_Pattern_2}`) — **không mất script nào** vì các folder này rỗng.
+
+Đối chiếu `git ls-tree -r HEAD` với đĩa: **3118/3118 entry còn nguyên, 0 file bị mất**. GUID `Scripts.meta` (`723c4225…`) không đổi (diff chỉ là khác biệt LF/CRLF).
+
+### Đã sửa
+
+| Vấn đề | Nguyên nhân | Cách sửa |
+|---|---|---|
+| `CS0246: 'BoosterType' could not be found` (`ShopService.cs:14`) | Khôi phục folder đã **rollback** fix `using _Game.Scripts.Gameplay;` của Vòng 1 | Thêm lại `using _Game.Scripts.Gameplay;` |
+| `CS0246: 'BoosterType' could not be found` (`ShopUI.cs:142`) | Như trên | Thêm lại `using _Game.Scripts.Gameplay;` |
+| `CS0246: '_Game' could not be found` (`KitPool.cs:3`) | Lỗi **tạm thời** lúc folder `_Game/Scripts` đang nằm trong Recycle Bin, Unity compile giữa chừng | Tự hết khi folder về lại; hiện 0 lỗi |
+| `woodring.fbx` thiếu | Prune trước bỏ sót, nhưng `Slot.prefab` + `SlotWaiting.prefab` vẫn tham chiếu | Copy lại từ reference kèm `.meta` (giữ GUID `26f39453…`) |
+| `Frame_Tooltips.png` thiếu | Prune trước bỏ sót, `_KIT/GUI/Prefab/TooltipManager.prefab` vẫn tham chiếu | Copy lại từ reference kèm `.meta` (giữ GUID `8dbbc090…`) |
+| `Readme.asset` → `Readme.cs` thiếu | Folder `TutorialInfo/` bị prune nhưng asset `Readme.asset` ở gốc `Assets/` còn lại | Copy lại gói `TutorialInfo/` từ reference (script + editor + icon + layout) |
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Missing script references (scene/prefab/asset → script GUID không resolve) | **0** (trước: 1) |
+| Asset thiếu nhưng folder cha còn tồn tại | **0** (trước: 2) |
+| Compile `Assembly-CSharp` / `-Editor` / `ResultPopupProgressionTests` | PASS — 0 error cả 3 assembly |
+| Audit asset | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng; dangling 56 → **52** (phần còn lại đều là GUID của package) |
+| `EntryScene.unity` validator | PASS — 0 lỗi |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
 |---|---|---|---|---|---|
 | 1 | Scope, state, command, core resolver và acceptance contract đã chốt | Chưa có Application/Unity scene integration | Không có blocker cho pure core; W4-01 tiếp tục mở rộng/integrate | `docs/week1-core-contract.md`, `docs/features/F01-core-puzzle.md`, `docs/evidence/w1-editmode-tests.md` | Bắt đầu W2 inventory/data; giữ Core thuần C# và reskin qua ThemeProfile. |
 | 2 |  |  |  |  |  |
-| 3 |  |  |  |  |  |
+| 3 | Scene `Entry` đã có trong target, trỏ đúng GUID build settings, driver native (`EntryBootstrap`/`EntryFlow`); compile sạch 3 assembly | W3-01 chưa verify nhánh level ≥ 2; W3-01b (dựng scene `Home`) chưa làm | Thiếu scene `Home` — bản gốc phụ thuộc `HomeFrame.prefab`/`HomeController.cs` đã bị prune | `game/Assets/Scenes/EntryScene.unity`, `docs/weekly-worklog.md` (Vòng 1) | Quyết định cần duyệt: giữ bản port không-SDK hay hồi sinh SDK stack; xem `tasks/todo.md` |
 | 4 |  |  |  |  |  |
 | 5 |  |  |  |  |  |
 | 6 | Booster playable ở bản core: test AddSlot/Clean/MagicBox, panel debug, đấu dây scene | W6-01..03 còn chờ chạy Test Runner + Play scene | Thiếu source gốc (GameData/SettingManager/shop) nên dùng stub | `docs/evidence/w6-booster-tests.md`, `booster-html.html` | Giữ stub tới khi có source gốc; chạy test rồi mới đóng W6 |

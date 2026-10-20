@@ -2,6 +2,7 @@ namespace _Game.Scripts.Core
 {
     using System;
     using System.Collections.Generic;
+    using _Game.Scripts.Gameplay;
     using UnityEngine;
 
     [Serializable]
