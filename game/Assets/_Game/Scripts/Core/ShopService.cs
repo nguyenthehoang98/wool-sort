@@ -29,8 +29,8 @@ namespace _Game.Scripts.Core
         [SerializeField] private List<ShopItem> items = new List<ShopItem>
         {
             new ShopItem { id = "coin_pack_free", displayName = "Gói coin miễn phí", coinCost = 0, coinAmount = 100, iconResPath = "Shop/Icon_Coin" },
-            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 190, coinAmount = 500, iconResPath = "Shop/coinShopPack1" },
-            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 490, coinAmount = 1400, iconResPath = "Shop/coinShopPack2" },
+            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 0, coinAmount = 500, iconResPath = "Shop/coinShopPack1" },
+            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 0, coinAmount = 1400, iconResPath = "Shop/coinShopPack2" },
             new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1, iconResPath = "Shop/power1_120x120" },
             new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1, iconResPath = "Shop/power2_120x120" },
             new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1, iconResPath = "Shop/power3_120x120" },
@@ -96,8 +96,11 @@ namespace _Game.Scripts.Core
             return _economy.GetCoin() >= item.coinCost;
         }
 
+        /// <summary>Gói coin "miễn phí" được tặng 1 lần, không phải gói mua lại được.</summary>
+        private const string FreeCoinPackId = "coin_pack_free";
+
         private static bool IsFreeCoinPack(ShopItem item) =>
-            item != null && item.coinCost <= 0 && item.coinAmount > 0;
+            item != null && item.id == FreeCoinPackId;
 
         public bool Buy(string itemId)
         {

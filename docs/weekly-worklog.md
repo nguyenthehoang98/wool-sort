@@ -538,6 +538,21 @@ Unity tạo `Assets/_Recovery/0.unity` (bản cứu scene) khi phát hiện `Hom
 
 > Bài học: khi người dùng đang sửa scene trong Editor, phải sửa scene bằng text edit có chọn lọc thay vì regenerate từ đầu.
 
+### Chỉnh giá gói coin về 0 (2026-10-20)
+
+Theo yêu cầu: `coin_pack_small` 190 → **0**, `coin_pack_big` 490 → **0** (gói booster giữ nguyên 80/120/60).
+
+Vì các gói coin giờ đều có `coinCost == 0`, luật "chỉ nhận 1 lần" (trước đó nhận diện bằng `coinCost <= 0 && coinAmount > 0`) sẽ vô tình khóa cả 3 gói. Đã đổi nhận diện theo **id** (`coin_pack_free`) → chỉ gói "Gói coin miễn phí" mới bị giới hạn 1 lần; "Gói coin nhỏ"/"Gói coin lớn" mua lại được.
+
+| Gói | Giá | Nhận | Số lần |
+|---|---|---|---|
+| Gói coin miễn phí | 0 coin | +100 coin | 1 lần (`freeCoinPackTaken`) |
+| Gói coin nhỏ | 0 coin | +500 coin | không giới hạn |
+| Gói coin lớn | 0 coin | +1400 coin | không giới hạn |
+| Add Slot | 80 coin | +1 booster | không giới hạn |
+| Clean | 120 coin | +1 booster | không giới hạn |
+| Magic Box | 60 coin | +1 booster | không giới hạn |
+
 ### Verify
 
 | Kiểm tra | Kết quả |
