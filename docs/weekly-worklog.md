@@ -171,6 +171,67 @@ Path `C:/Users/Admin/Documents/Projects/wool-sort` ghi trong `tasks/todo.md` **k
 | Audit asset | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng; dangling 56 → **52** (phần còn lại đều là GUID của package) |
 | `EntryScene.unity` validator | PASS — 0 lỗi |
 
+## Vòng 3 — Dựng scene `Home` + luồng Entry → Home → Gameplay (2026-10-20)
+
+Yêu cầu: dựng `Home` scene nhưng **chỉ làm luồng** — Home có nút vào Gameplay, Shop chưa cần UI, Coming soon rỗng, và 3 nút ở đáy.
+
+### Scene `Home` (dựng mới, không port từ bản gốc)
+
+`Home.unity` của bản gốc phụ thuộc `_Game/_HomeFrame/Resources/HomeFrame.prefab` + `HomeController.cs` + `_HomeFrame/HomeFrame.cs` — cả 3 đã bị prune nên **không port được**. Dựng mới bằng UI native của target, giữ nguyên GUID `cbc1002ad8ffb9f49972eb4440f5da68` (khớp `EditorBuildSettings.asset`).
+
+```
+Main Camera                      Camera + AudioListener
+EventSystem                      EventSystem + StandaloneInputModule
+Canvas                           Canvas + CanvasScaler(1080x1920) + GraphicRaycaster + KitScaleCanvas
+└── SafeArea                     KitSafeArea
+    ├── CoinBar                  TMP (txtCoin)  ← EconomyService.GetCoin()
+    ├── HomePage
+    │   ├── TxtLevel             TMP "LEVEL 1"  ← EconomyService.GetLevel()
+    │   └── BtnStart             Button + KitButton "PLAY" → EntryFlow.StartCurrentLevel()
+    ├── ShopPage                 (rỗng — placeholder, chưa làm UI shop)
+    ├── ComingSoonPage           (rỗng — placeholder)
+    └── TabBar                   3 nút ở đáy
+        ├── BtnTabHome           "HOME"
+        ├── BtnTabShop           "SHOP"
+        └── BtnTabComingSoon     "SOON"
+HomeManager                      HomeUI (script native của target) — nối hết reference ở trên
+```
+
+`HomeUI` (đã có sẵn trong target) lo phần chuyển tab: `ShowTab()` bật/tắt `homePage` / `shopPage` / `comingSoonPage` và khoá nút tab đang chọn.
+
+### Sửa code để khép kín luồng
+
+| Vấn đề | Sửa |
+|---|---|
+| Entry nhảy thẳng Gameplay (level 1) thay vì vào Home — đúng hành vi bản gốc nhưng không đúng luồng mong muốn (Entry là scene boot, Home là menu chính) | `EntryFlow` thêm cờ `alwaysGoHome` (mặc định **bật**) → Entry luôn vào Home. Tắt cờ thì quay về hành vi bản gốc (level 1 → Gameplay). Đã serialize `alwaysGoHome: 1` trong `EntryScene.unity` |
+| `GameManager` luôn load `debugStartLevel` (=1) → nút PLAY trên Home mở sai level | `GameManager.Start()` ưu tiên level trong `EconomyService` khi `debugStartLevel <= 1`; `debugStartLevel > 1` vẫn là override để dev test |
+| `GameManager.LoadNextLevel()` không ghi level về save → `EconomyService.currentLevel` kẹt ở 1 → Entry **không bao giờ** route sang Home | `LoadNextLevel()` gọi `EconomyService.Instance.SetLevel(nextLevel)` |
+| `HomeUI` gọi `DontDestroyOnLoad` → reload scene Home sẽ giữ instance cũ với reference tới UI đã destroy, tab bar chết | Bỏ `DontDestroyOnLoad`, thêm `OnDestroy` reset `Instance` |
+| Canvas trong `EntryScene` bị tắt sẵn ở bản gốc (nó nằm dưới `AdLoading`) → màn loading không hiện | Bật Canvas trong `EntryScene` |
+
+### Ghi nhận: người dùng đang dọn project song song
+
+Trong lúc làm, người dùng xóa trong Unity Project window lúc **16:06–16:09**: các folder rỗng còn sót (`_HomeFrame/`, `_SettingManager/`, `_UISystem/`, `Prefab/Utils`, `Textures/Image`) và 2 asset vừa được khôi phục ở Vòng 2 (`_Game/Mesh/woodring.fbx`, gói `TutorialInfo/`). **Không khôi phục lại** — tôn trọng lựa chọn của người dùng. Hệ quả còn lại (ghi nhận, không tự sửa):
+
+- `Slot.prefab` + `SlotWaiting.prefab` trỏ tới `woodring.fbx` → mất mesh, Unity hiện "missing".
+- `Readme.asset` trỏ tới `TutorialInfo/Scripts/Readme.cs` → mất script trên asset Readme (chỉ là asset readme của template Unity, không ảnh hưởng gameplay).
+- Người dùng cũng gỡ `Home` khỏi `EditorBuildSettings.asset` → `LoadScene("Home")` sẽ fail; đã thêm lại (bắt buộc cho luồng).
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Validator `Home.unity` | PASS — 76 block, 4 root, 11 link cha–con, mọi GUID resolve, 0 key YAML trùng |
+| Validator `EntryScene.unity` | PASS — 0 lỗi (kèm fix Canvas active) |
+| Compile `Assembly-CSharp` / `-Editor` / `ResultPopupProgressionTests` | PASS — 0 error cả 3 assembly |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng; dangling 55 (đều là GUID package + ref cũ của `YarnColorDatabase`) |
+| `EditorBuildSettings.asset` | Đủ 3 scene: Entry → Home → Gameplay |
+
+### Còn lại
+
+- Chưa có Play-mode smoke test trong Editor (bắt buộc để chốt W3-01b).
+- UI Shop, chọn level, Settings, Daily Reward chưa làm (theo phạm vi đã chốt).
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

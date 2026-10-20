@@ -42,7 +42,13 @@ namespace _Game.Scripts.Meta
                 return;
             }
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // Không DontDestroyOnLoad: HomeUI gắn với scene Home, giữ lại sẽ để lại
+            // reference tới UI của scene cũ (đã bị destroy) và làm tab bar chết.
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         private void Start()

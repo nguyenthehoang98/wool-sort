@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using _Game.Scripts;
+using _Game.Scripts.Core;
 using _Game.Scripts.Utils;
 using _KIT.Utils;
 using DG.Tweening;
@@ -114,6 +115,14 @@ namespace _Game.Scripts.Gameplay
         void Start()
         {
             currentLevel = Mathf.Max(1, debugStartLevel);
+            // Entry/Home lưu level hiện tại vào EconomyService -> ưu tiên level đó để
+            // nút PLAY trên Home mở đúng level. debugStartLevel > 1 là override
+            // thủ công để dev test một level cụ thể.
+            if (currentLevel <= 1 && EconomyService.Instance != null)
+            {
+                var savedLevel = EconomyService.Instance.GetLevel();
+                if (savedLevel > 1) currentLevel = savedLevel;
+            }
             InitEmptyScreen();
 
             this.WaitNextFrame(LoadLevel);
@@ -220,6 +229,9 @@ namespace _Game.Scripts.Gameplay
                 nextLevel = 1;
 
             currentLevel = nextLevel;
+            // Lưu tiến độ để Entry/Home đọc lại level hiện tại.
+            if (EconomyService.Instance != null)
+                EconomyService.Instance.SetLevel(nextLevel);
             LoadLevel();
         }
 

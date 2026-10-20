@@ -13,6 +13,11 @@ namespace _Game.Scripts.Core
         [Tooltip("Scene Gameplay")]
         [SerializeField] private string gameplaySceneName = "Gameplay";
 
+        [Header("Routing")]
+        [Tooltip("Bật: Entry luôn vào Home (menu chính), Home bấm PLAY mới vào Gameplay. " +
+                 "Tắt: level 1 đi thẳng Gameplay (đúng hành vi bản gốc), level từ 2 mới vào Home.")]
+        [SerializeField] private bool alwaysGoHome = true;
+
         [Header("Auto-advance")]
         [SerializeField] private bool autoLoad = true;
         [SerializeField] private float autoLoadDelay = 0.75f;
@@ -46,13 +51,15 @@ namespace _Game.Scripts.Core
         }
 
         /// <summary>
-        /// Level 1 đi thẳng Gameplay; từ level 2 trở đi vào Home (theo spec progression).
+        /// Entry là scene boot: mặc định luôn vào Home (menu chính), người chơi bấm PLAY ở Home
+        /// mới vào Gameplay. Bật alwaysGoHome = false thì quay về hành vi bản gốc:
+        /// level 1 đi thẳng Gameplay, level từ 2 trở đi vào Home.
         /// </summary>
         [ContextMenu("Load Target Scene Now")]
         public void LoadTargetScene()
         {
             var level = _economy != null ? _economy.GetLevel() : 1;
-            var target = level == 1 ? gameplaySceneName : homeSceneName;
+            var target = (!alwaysGoHome && level == 1) ? gameplaySceneName : homeSceneName;
             Debug.Log($"[EntryFlow] Level={level} -> chuyển vào {target}");
             if (!string.IsNullOrEmpty(target))
                 SceneManager.LoadScene(target);
