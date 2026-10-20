@@ -11,6 +11,7 @@ namespace _Game.Scripts.Core
         public string id;
         public string displayName;
         public Sprite icon; // gán từ project gốc qua Inspector
+        public string iconResPath; // đường dẫn Resources để load icon khi tạo runtime
         public int coinCost;
         public BoosterType boosterType; // None nếu là gói coin
         public int boosterAmount; // số lượng booster nếu mua booster
@@ -27,11 +28,11 @@ namespace _Game.Scripts.Core
         [Header("Gói có sẵn trong shop (mua bằng coin)")]
         [SerializeField] private List<ShopItem> items = new List<ShopItem>
         {
-            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 190, coinAmount = 500 },
-            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 490, coinAmount = 1400 },
-            new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1 },
-            new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1 },
-            new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1 },
+            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 190, coinAmount = 500, iconResPath = "Shop/coinShopPack1" },
+            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 490, coinAmount = 1400, iconResPath = "Shop/coinShopPack2" },
+            new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1, iconResPath = "Shop/power1_120x120" },
+            new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1, iconResPath = "Shop/power2_120x120" },
+            new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1, iconResPath = "Shop/power3_120x120" },
         };
 
         private EconomyService _economy;
@@ -45,6 +46,23 @@ namespace _Game.Scripts.Core
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            LoadIcons();
+        }
+
+        /// <summary>Icon lấy từ Resources/Shop (asset pick từ dự án gốc).</summary>
+        private void LoadIcons()
+        {
+            foreach (var item in items)
+            {
+                if (item == null) continue;
+                if (item.icon != null) continue;
+                if (string.IsNullOrEmpty(item.iconResPath)) continue;
+
+                item.icon = Resources.Load<Sprite>(item.iconResPath);
+                if (item.icon == null)
+                    Debug.LogWarning($"[ShopService] Không load được icon '{item.iconResPath}' cho '{item.id}'.");
+            }
         }
 
         private void Start()

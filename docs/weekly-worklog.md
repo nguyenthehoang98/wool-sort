@@ -329,6 +329,79 @@ Vì asset này là nền Home, đã dùng luôn cho `Home.unity` (thêm `BG` là
 
 Còn 2 dangling (đều do người dùng xóa ở Vòng 2, không khôi phục): `Readme.asset` → `TutorialInfo/Scripts/Readme.cs`, và `Slot.prefab`/`SlotWaiting.prefab` → `_Game/Mesh/woodring.fbx`.
 
+## Vòng 6 — Pick nội dung shop (local, không IAP/IAA) (2026-10-20)
+
+Yêu cầu: pick nội dung shop, chỉ giữ phần coin, **không làm IAP, IAA**, chỉ làm local các gói `{coin, booster}`.
+
+### Bản gốc: loại bỏ gì
+
+`HomeShop.cs` + `Shop.prefab` của dự án gốc là **100% IAP/IAA**:
+
+| Phần | Loại | Vì sao |
+|---|---|---|
+| `Remove Ads Bundle` + `iconRemoveAd2.png` | bỏ | IAP (mua tiền thật) |
+| Text `$1.99` | bỏ | giá IAP |
+| `KitSDK.OpenAdReward("free_coin")` (xem ads nhận coin) | bỏ | IAA |
+| `MediationManager.ToggleIsShowingAds` | bỏ | banner ads |
+| `Databuckets.PushEventIAPShow` / `KitSDK.IsNoAds` / `IsBuyBeginnerBundle` | bỏ | analytics + IAP state |
+
+Giữ lại: **gói coin + booster mua bằng coin** — khớp đúng danh sách `ShopService.items` của target (2 gói coin + 3 booster, tất cả trừ bằng `EconomyService` coin).
+
+### Asset đã pick (copy kèm `.meta` → giữ GUID, đặt vào `Resources/Shop`)
+
+| File | Dùng cho |
+|---|---|
+| `coinShopPack1.png` / `coinShopPack2.png` | icon 2 gói coin |
+| `power1_120x120.png` / `power2_120x120.png` / `power3_120x120.png` | icon 3 booster (Add Slot / Clean / Magic Box) |
+| `btn2Green.png` | nút BUY (có border → dùng Sliced) |
+| `slot2.png` | nền 1 dòng item (không border → Simple) |
+| `shopTopBar2.png` | thanh tiêu đề shop |
+
+Đặt trong `_Game/Resources/Shop/` (giống `_Game/Resources/WinLoseUI/` sẵn có) để `Resources.Load` gọi được theo tên.
+
+### Code
+
+- `ShopItem`: thêm `iconResPath` (đường dẫn Resources).
+- `ShopService`: mỗi item khai báo `iconResPath`; `Awake()` load icon qua `Resources.Load<Sprite>`, cảnh báo nếu thiếu.
+- `HomeUI`: `ShowTab` gọi `shopUI.Refresh()`; `Awake` tự tạo `EconomyService`/`ShopService` nếu thiếu (để mở `Home.unity` test trực tiếp cũng được).
+
+### ShopItem thành prefab (sửa sau review)
+
+Ban đầu `ShopUI` tự dựng item bằng code (`BuildDefaultItem`). Đã đổi sang **prefab**:
+
+- Thêm `_Game/Scripts/Meta/ShopItemView.cs` — MonoBehaviour gắn trên prefab, giữ serialized ref tới `icon / title / amount / cost / btnBuy / btnLabel`, và chứa logic bind + mua (logic trước nằm trong inner class của `ShopUI`).
+- Thêm `_Game/Prefab/UI/ShopItem.prefab`:
+  ```
+  ShopItem        Image slot2 (820x150)
+  ├── Icon       Image (sprite gán runtime)
+  ├── Title      TMP
+  ├── Amount     TMP
+  ├── Cost       TMP
+  └── BtnBuy     Button + Image btn2Green (Sliced)
+      └── Label  TMP "BUY"
+  ```
+- `ShopUI` giờ **chỉ instantiate prefab rồi bind**: `Instantiate(itemPrefab, itemContainer)` → `GetComponent<ShopItemView>()` → `view.Bind(item, _shop, ShowNotify)`. Xoá hẳn `BuildDefaultItem` và inner class; thiếu prefab thì log lỗi rõ ràng.
+- `ShopUI.itemPrefab` trong `Home.unity` trỏ tới prefab (GUID `81fd9d44…`).
+
+### Scene `Home.unity`
+
+```
+ShopPage (dưới SafeArea)
+├── ShopTopBar      Image shopTopBar2 + TMP "SHOP"
+├── ItemContainer   RectTransform + VerticalLayoutGroup  ← itemContainer của ShopUI
+└── TxtNotify       TMP (thông báo mua)                  ← txtNotify của ShopUI
+```
+`HomeUI.shopUI` trỏ tới component `ShopUI` trên `ShopPage`.
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` / `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Dangling refs | 55 — tất cả là GUID script của **package** (`VerticalLayoutGroup` mới thêm); validator (có PackageCache) PASS |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

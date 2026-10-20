@@ -42,6 +42,14 @@ namespace _Game.Scripts.Meta
             Instance = this;
             // Không DontDestroyOnLoad: HomeUI gắn với scene Home, giữ lại sẽ để lại
             // reference tới UI của scene cũ (đã bị destroy) và làm menu chết.
+
+            // Khi mở scene Home trực tiếp để test thì chưa qua Entry -> tự tạo
+            // service để shop/coin vẫn hoạt động. Trong luồng thật (Entry -> Home)
+            // các service đã tồn tại nên nhánh này không chạy.
+            if (EconomyService.Instance == null)
+                new GameObject("EconomyService").AddComponent<EconomyService>();
+            if (ShopService.Instance == null)
+                new GameObject("ShopService").AddComponent<ShopService>();
         }
 
         private void OnDestroy()
@@ -98,6 +106,8 @@ namespace _Game.Scripts.Meta
             if (homePage != null) homePage.SetActive(tab == HomeTab.Home);
             if (shopPage != null) shopPage.SetActive(tab == HomeTab.Shop);
             if (comingSoonPage != null) comingSoonPage.SetActive(tab == HomeTab.ComingSoon);
+
+            if (tab == HomeTab.Shop && shopUI != null) shopUI.Refresh();
         }
 
         private void RefreshCoin()
