@@ -507,6 +507,44 @@ Spec từ người dùng cho nút BUY trong `ShopItem`:
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Hierarchy `Home.unity` | 5 root: Main Camera, EventSystem, Canvas, HomeManager, TooltipManager |
 
+## Vòng 10 — Gói coin miễn phí + sửa nhánh +coin (2026-10-20)
+
+Báo cáo: "khi bấm mua thì chưa + coin {mua gói coin miễn phí}".
+
+### Chẩn đoán
+
+| Nguyên nhân | Chi tiết |
+|---|---|
+| **Gói miễn phí không tồn tại** | `ShopService` **không có trong scene** nào — nó luôn được `EntryBootstrap`/`HomeUI` tạo lúc runtime (`new GameObject("ShopService").AddComponent<ShopService>()`). Vậy `items` luôn là list **hardcode trong C#**, không sửa được qua Inspector (dù field `icon` còn ghi "gán từ project gốc qua Inspector"). Thêm item trong Inspector sẽ bị mất khi chạy. |
+| **Nhánh `+coin` không bao giờ chạy được** | Mặc định chỉ có **100 coin** (`EconomyService.defaultCoin`), mà gói coin giá **190 / 490** → `CanBuy` trả false → bấm BUY chỉ báo "không đủ tiền", không vào được nhánh `AddCoins`. |
+
+### Đã làm
+
+1. **Thêm gói "Gói coin miễn phí"** (`coin_pack_free`, giá **0**, cho **+100 coin**) vào `ShopService.items` — nằm đầu danh sách. Icon: copy `_Game/BoosterUI_Picked/Icon_Coin_S.png` → `_Game/Resources/Shop/Icon_Coin.png` (asset mới, GUID riêng).
+2. **Gói miễn phí chỉ nhận 1 lần** — cờ mới `PlayerData.freeCoinPackTaken`:
+   - `CanBuy` trả `false` nếu đã nhận.
+   - `Buy` chặn với lý do `free_pack_already_taken`.
+   - Cờ được set **trước** khi gọi `AddCoins`/`AddBooster` (hàm này gọi `Save()`, nên nếu set sau thì cờ không được ghi xuống PlayerPrefs).
+3. **`ShopService`**: thêm `LastError` (lý do thất bại) + `GetPriceLabel(item)` → gói đã nhận hiện "Đã nhận" thay vì giá.
+4. **`ShopItemView`**: tooltip dùng đúng lý do (`not_enough_coin` → "Không đủ coin để mua", `free_pack_already_taken` → "Bạn đã nhận gói coin miễn phí rồi", …).
+5. **Test PlayMode** `FreeCoinPack_AddsCoin_OnlyOnce`: bấm BUY gói miễn phí → coin **tăng**; bấm lần 2 → coin **không đổi**.
+
+### Ghi nhận thêm: khôi phục sửa của user trong Editor
+
+Unity tạo `Assets/_Recovery/0.unity` (bản cứu scene) khi phát hiện `Home.unity` bị đổi trên đĩa. So sánh cho thấy bản đó chứa sửa tay của người dùng: **nền BG → `Frame_Bar_1.png` + Sliced** (giống hệt sửa trong `EntryScene`) — bị lần regenerate của tôi ghi đè mất. Đã:
+- Khôi phục lại `Home.unity`: nền `Frame_Bar_1` + `m_Type: 1` (Sliced).
+- Sửa generator để dùng `Frame_Bar_1` + Sliced cho `Home` → lần regenerate sau không còn ghi đè lựa chọn này.
+- Xoá `Assets/_Recovery/` và thêm `game/Assets/_Recovery` + `.meta` vào `.gitignore` (artifact của Unity, không commit).
+
+> Bài học: khi người dùng đang sửa scene trong Editor, phải sửa scene bằng text edit có chọn lọc thay vì regenerate từ đầu.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

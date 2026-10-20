@@ -31,6 +31,7 @@ namespace _Game.Scripts.Core
         public bool vibration = true;
         public bool tutorialDone = false;
         public bool dailyRewardSeen = false;
+        public bool freeCoinPackTaken = false;
 
         public int GetBoosterCount(BoosterType type) => type switch
         {

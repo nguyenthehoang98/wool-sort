@@ -34,7 +34,7 @@ namespace _Game.Scripts.Meta
             if (icon != null) icon.sprite = item != null ? item.icon : null;
             if (title != null) title.text = item != null ? item.displayName : string.Empty;
             if (amount != null) amount.text = BuildAmount(item);
-            if (cost != null) cost.text = item != null ? item.coinCost + " coin" : string.Empty;
+            if (cost != null) cost.text = shop != null ? shop.GetPriceLabel(item) : string.Empty;
             if (btnLabel != null) btnLabel.text = "BUY";
 
             if (btnBuy != null)
@@ -67,22 +67,25 @@ namespace _Game.Scripts.Meta
         {
             if (_shop == null || _item == null) return;
 
-            if (!_shop.CanBuy(_item.id))
-            {
-                Notify("Không đủ coin để mua", onNotify);
-                return;
-            }
-
             if (_shop.Buy(_item.id))
             {
                 Notify($"Mua thành công {_item.displayName}", onNotify);
             }
             else
             {
-                Notify("Không đủ coin để mua", onNotify);
+                Notify(ReasonToMessage(_shop.LastError), onNotify);
             }
             RefreshAffordable();
         }
+
+        private static string ReasonToMessage(string reason) => reason switch
+        {
+            "not_enough_coin" => "Không đủ coin để mua",
+            "free_pack_already_taken" => "Bạn đã nhận gói coin miễn phí rồi",
+            "item_not_found" => "Không tìm thấy gói này",
+            "economy_missing" => "Chưa sẵn sàng, thử lại sau",
+            _ => "Không mua được",
+        };
 
         /// <summary>Báo kết quả bằng tooltip (giống phần báo của dự án gốc).</summary>
         private static void Notify(string message, Action<string> onNotify)

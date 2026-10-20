@@ -28,12 +28,16 @@ namespace _Game.Scripts.Core
         [Header("Gói có sẵn trong shop (mua bằng coin)")]
         [SerializeField] private List<ShopItem> items = new List<ShopItem>
         {
+            new ShopItem { id = "coin_pack_free", displayName = "Gói coin miễn phí", coinCost = 0, coinAmount = 100, iconResPath = "Shop/Icon_Coin" },
             new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 190, coinAmount = 500, iconResPath = "Shop/coinShopPack1" },
             new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 490, coinAmount = 1400, iconResPath = "Shop/coinShopPack2" },
             new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1, iconResPath = "Shop/power1_120x120" },
             new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1, iconResPath = "Shop/power2_120x120" },
             new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1, iconResPath = "Shop/power3_120x120" },
         };
+
+        /// <summary>Lý do mua thất bại gần nhất (để UI hiện tooltip đúng nội dung).</summary>
+        public string LastError { get; private set; } = "";
 
         private EconomyService _economy;
 
@@ -74,32 +78,64 @@ namespace _Game.Scripts.Core
 
         public IReadOnlyList<ShopItem> GetItems() => items;
 
+        /// <summary>Nhãn giá hiển thị trên item (gói miễn phí đã nhận thì hiện "Đã nhận").</summary>
+        public string GetPriceLabel(ShopItem item)
+        {
+            if (item == null) return string.Empty;
+            if (IsFreeCoinPack(item) && _economy != null && _economy.Data.freeCoinPackTaken)
+                return "Đã nhận";
+            return item.coinCost + " coin";
+        }
+
         public bool CanBuy(string itemId)
         {
             var item = items.Find(x => x.id == itemId);
             if (item == null) return false;
             if (_economy == null) return false;
+            if (IsFreeCoinPack(item) && _economy.Data.freeCoinPackTaken) return false;
             return _economy.GetCoin() >= item.coinCost;
         }
 
+        private static bool IsFreeCoinPack(ShopItem item) =>
+            item != null && item.coinCost <= 0 && item.coinAmount > 0;
+
         public bool Buy(string itemId)
         {
+            LastError = "";
+
             var item = items.Find(x => x.id == itemId);
             if (item == null)
             {
-                OnPurchaseFailed?.Invoke(itemId, "item_not_found");
+                LastError = "item_not_found";
+                OnPurchaseFailed?.Invoke(itemId, LastError);
                 return false;
             }
             if (_economy == null)
             {
-                OnPurchaseFailed?.Invoke(itemId, "economy_missing");
+                LastError = "economy_missing";
+                OnPurchaseFailed?.Invoke(itemId, LastError);
                 return false;
             }
+
+            // Gói coin miễn phí chỉ nhận 1 lần, nếu không sẽ thành vòng lặp coin vô hạn.
+            if (IsFreeCoinPack(item) && _economy.Data.freeCoinPackTaken)
+            {
+                LastError = "free_pack_already_taken";
+                OnPurchaseFailed?.Invoke(itemId, LastError);
+                return false;
+            }
+
             if (!_economy.SpendCoins(item.coinCost, "shop_purchase", itemId))
             {
-                OnPurchaseFailed?.Invoke(itemId, "not_enough_coin");
+                LastError = "not_enough_coin";
+                OnPurchaseFailed?.Invoke(itemId, LastError);
                 return false;
             }
+
+            // Set cờ TRƯỚC khi cộng tiền: AddCoins/AddBooster gọi Save() nên cờ
+            // mới được ghi xuống PlayerPrefs cùng lúc.
+            if (IsFreeCoinPack(item))
+                _economy.Data.freeCoinPackTaken = true;
 
             if (item.boosterType != BoosterType.None && item.boosterAmount > 0)
                 _economy.AddBooster(item.boosterType, item.boosterAmount, "shop_purchase", itemId);
