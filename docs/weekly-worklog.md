@@ -283,6 +283,52 @@ Trong prefab có 1 sprite `5cbe0dc4…` **đã hỏng sẵn ở bản gốc** (k
 | Dependency closure `MenuBar.prefab` | PASS — 11/11 GUID resolve, 0 thiếu |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 5 — Pick tooltip + nền cho Entry scene (2026-10-20)
+
+Yêu cầu: pick tooltip ở EntryScene + background Entry scene (kèm asset).
+
+### Tooltip
+
+`TooltipManager.prefab` (`_KIT/GUI/Prefab/TooltipManager.prefab`) **đã có** trong target và đã được instance trong `EntryScene` từ Vòng 1, nhưng còn thiếu 1 thứ: font TMP của prefab trỏ tới `_Game/Fonts/BALOO-REGULAR SDF.asset` — thư mục `_Game/Fonts` đã bị prune nên font mất.
+
+Đã pick (kèm `.meta`, giữ GUID):
+
+| File | GUID | Kích thước |
+|---|---|---|
+| `_Game/Fonts/BALOO-REGULAR SDF.asset` | `201d8ba9…` | 2.1 MB |
+| `_Game/Fonts/BALOO-REGULAR.TTF` | `1e49e8a3…` | 630 KB |
+
+Dependency closure của `TooltipManager.prefab` giờ **11/11 GUID resolve** (trước: 9/11).
+
+> **Điều chỉnh sau khi người dùng review: bỏ font mới, dùng font có sẵn của dự án.**
+> `_Game/Fonts/BALOO-REGULAR SDF.asset` + `.TTF` (2.7 MB) đã **bị gỡ** cùng folder `_Game/Fonts`; TMP trong `TooltipManager.prefab` được repoint sang `TextMesh Pro/Resources/Fonts & Materials/GoogleSans-Bold SDF.asset` (đúng font mà `Gameplay.unity` và `Home.unity` đang dùng), `m_sharedMaterial` → `fileID 2536004628413606107`. `GoogleSans-Bold SDF.asset` có `m_FallbackFontAssetTable: []` nên không sinh dangling mới. Closure vẫn **11/11 resolve**.
+
+`BALOO-REGULAR SDF.asset` khai báo `NotoSansJP-Bold SDF.asset` làm **fallback font** — font Nhật 8.5 MB + TTF 5.4 MB cho game không có text Nhật (localization đã prune). Thay vì kéo 14 MB vào, đã **cắt entry fallback** (`m_FallbackFontAssetTable: []`), giữ nguyên line ending CRLF.
+
+### Nền Entry
+
+Sprite mà scene gốc trỏ tới (`28fb229f…`) **không tồn tại ở đâu**: không có trong `Assets` của dự án gốc, không phải built-in của Unity → nền Entry **đã hỏng sẵn ở bản gốc** (trước đó mình set null + màu nền để tạm).
+
+Đã pick asset nền thật: `_Game/Textures/Home/background.png` (1082x2160 — khớp canvas 1080x2160), giữ GUID `e6a87fcc…`.
+
+Áp vào `EntryScene`:
+- `BG` Image: sprite → `background.png`, màu trắng, `m_RaycastTarget: 0` (nền phủ kín không được chặn click xuống UI).
+- `BG` RectTransform: anchor `(0,0)→(1,1)`, sizeDelta 0 → phủ kín canvas (gốc là 400x400 ở giữa).
+- `CanvasScaler` Entry: 1080x1920 → **1080x2160** cho khớp `Gameplay` + `Home`.
+
+Vì asset này là nền Home, đã dùng luôn cho `Home.unity` (thêm `BG` là con đầu của `Canvas`, trước `SafeArea`).
+
+### Verification
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `EntryScene` / `Home` | PASS cả 2 |
+| Dependency closure `TooltipManager.prefab` | PASS — 11/11 resolve |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng; dangling 55 → **54** |
+
+Còn 2 dangling (đều do người dùng xóa ở Vòng 2, không khôi phục): `Readme.asset` → `TutorialInfo/Scripts/Readme.cs`, và `Slot.prefab`/`SlotWaiting.prefab` → `_Game/Mesh/woodring.fbx`.
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
