@@ -70,6 +70,9 @@ namespace _Game.Scripts.Meta
             if (_shop.Buy(_item.id))
             {
                 Notify($"Mua thành công {_item.displayName}", onNotify);
+                // Màn hình nhận thưởng sau khi mua.
+                var popup = PurchaseSuccessPopup.Instance;
+                if (popup != null) popup.Show(_item);
             }
             else
             {

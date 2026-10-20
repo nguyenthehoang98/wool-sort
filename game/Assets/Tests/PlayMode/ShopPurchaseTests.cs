@@ -113,6 +113,40 @@ public class ShopPurchaseTests
         Assert.Greater(coinAfter2, coinAfter, "Gói coin không mua lại được lần 2.");
     }
 
+    /// <summary>Mua xong phải hiện màn hình nhận thưởng.</summary>
+    [UnityTest]
+    public IEnumerator Buy_ShowsRewardPopup()
+    {
+        var popupType = Type.GetType("_Game.Scripts.Meta.PurchaseSuccessPopup, Assembly-CSharp");
+        Assert.IsNotNull(popupType, "Thiếu type PurchaseSuccessPopup.");
+
+        var popup = UnityEngine.Object.FindFirstObjectByType(popupType);
+        Assert.IsNotNull(popup, "Không thấy PurchaseSuccessPopup trong scene Home.");
+
+        var card = GetPrivate(popup, "card") as GameObject;
+        Assert.IsNotNull(card, "Popup không có field card.");
+        Assert.IsFalse(card.activeSelf, "Màn nhận thưởng phải ẩn trước khi mua.");
+
+        var menuBar = UnityEngine.Object.FindFirstObjectByType(menuBarType);
+        menuBarType.GetMethod("OpenShop").Invoke(menuBar, null);
+        yield return null;
+
+        var found = UnityEngine.Object.FindObjectsByType(itemViewType, FindObjectsSortMode.None);
+        var views = new System.Collections.Generic.List<Component>();
+        foreach (var o in found) views.Add((Component)o);
+
+        Component target = FindByTitle(views, "Gói coin nhỏ");
+        Assert.IsNotNull(target, "Không thấy gói 'Gói coin nhỏ' trong shop.");
+
+        var btn = GetPrivate(target, "btnBuy") as Button;
+        Assert.IsNotNull(btn, "Gói coin không có nút BUY.");
+
+        btn.onClick.Invoke();
+        yield return null;
+
+        Assert.IsTrue(card.activeSelf, "Màn nhận thưởng không hiện sau khi mua.");
+    }
+
     private Component FindByTitle(System.Collections.Generic.List<Component> views, string title)
     {
         foreach (var v in views)

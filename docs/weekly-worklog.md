@@ -574,6 +574,59 @@ Shop còn 5 gói: Gói coin nhỏ (0 coin, +500), Gói coin lớn (0 coin, +1400
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Ref còn lại tới asset đã xoá | 0 (kiểm tra theo GUID `2dd5a8f7…`) |
 
+## Vòng 11 — Màn hình nhận thưởng sau khi mua (2026-10-20)
+
+Yêu cầu: sau khi mua hàng phải có màn hình nhận thưởng; check + pick màn hình nhận thưởng từ dự án gốc.
+
+### Bản gốc: `PurchaseSuccessPopup`
+
+`_Game/Resources/PurchaseSuccessPopup.prefab` (102 KB) + `PurchaseSuccessPopup.cs` + `PurchaseSuccessItem.cs`. Popup dạng lưới 6 ô (No Ads / Coin / InfiHeart / Hole / Clean / Basket), tiêu đề "Purchase Successful!", nút Continue + Close.
+
+**Phụ thuộc đã bị prune nên không port thẳng được:**
+
+| Phụ thuộc | Trạng thái | Xử lý |
+|---|---|---|
+| `FrameBase` (lớp base của popup) | pruned | viết lại popup không kế thừa base |
+| `UIScale`, `UIAnimation` | pruned | bỏ, dùng DOTween trực tiếp |
+| `I2 Localize` (3 component) | pruned | bỏ, text viết thẳng tiếng Việt |
+| `BALOO-REGULAR SDF` + 3 material outline | pruned | dùng font có sẵn `GoogleSans-Bold SDF` |
+| `CoinBar.prefab` | pruned | bỏ |
+| `Frame_Popup_1/2`, `Button_Green`, `Button_Close`, `Icon_Slot_3`, `Icon_Spool_2` | có sẵn ở target | dùng lại |
+| `Frame_Popup_3.png`, `Frame_Popup_4.png` | thiếu | **đã pick** từ bản gốc vào `_Game/Textures/UIV2/` |
+
+Các ô IAP (No Ads / InfiHeart / Basket) không dùng cho shop local nên bỏ — chỉ hiện đúng gói vừa mua.
+
+### Đã làm
+
+- **Asset**: pick `Frame_Popup_3.png` (278x68, 9-slice) + `Frame_Popup_4.png` (820x142) từ bản gốc → `_Game/Textures/UIV2/` (giữ nguyên GUID).
+- **Script** `_Game/Scripts/Meta/PurchaseSuccessPopup.cs`: singleton (`Instance`), hiện/ẩn `shade` + `card`, đổi icon/tên/số lượng theo `ShopItem`, animation scale bằng DOTween, nút OK + Close đóng popup.
+- **Prefab** `_Game/Prefab/UI/PurchaseSuccessPopup.prefab`:
+  ```
+  PurchaseSuccessPopup
+  ├── Shade    (đen 0.75, chặn input)
+  └── Card
+      ├── Panel      Image Frame_Popup_1 (9-slice)
+      │   ├── TitleBar  Image Frame_Popup_4 + TxtTitle "Nhận thưởng!"
+      │   ├── Icon      Image (icon gói vừa mua)
+      │   ├── TxtName   TMP
+      │   ├── TxtAmount TMP
+      │   ├── BtnOk     Button + Image Button_Green (9-slice) + "OK"
+      │   └── BtnClose  Button + Image Button_Close
+  ```
+  Màu chữ TMP: trắng; tiêu đề 56, tên 44, số lượng 40 (vàng).
+- **`Home.unity`**: instance `PurchaseSuccessPopup.prefab` dưới gốc `Canvas` (nằm trên cùng, ngoài `SafeArea` nên không bị che).
+- **`ShopItemView.OnBuy`**: mua thành công → `PurchaseSuccessPopup.Instance.Show(item)`.
+- **Test PlayMode** `Buy_ShowsRewardPopup`: popup phải ẩn trước khi mua và **hiện** sau khi bấm BUY.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly (kể cả test) | PASS — 0 error |
+| Validator `PurchaseSuccessPopup.prefab` / `Home.unity` / `EntryScene.unity` | PASS cả 3 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Hierarchy `Home.unity` | Canvas → BG / SafeArea / **PurchaseSuccessPopup** |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
