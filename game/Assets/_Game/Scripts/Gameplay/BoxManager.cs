@@ -50,9 +50,14 @@ namespace _Game.Scripts.Gameplay
 
         private int printtingPropress;
 
-        // Số lượt PrintImage đang chạy (in ảnh + dây bay lên ảnh). Mỗi lượt kết thúc
-        // sau đúng thời lượng in của nó; dùng để biết level đã in xong hết chưa.
+        // Số lượt PrintImage đang chạy. Vòng đời được đóng theo TÍN HIỆU THẬT
+        // (JamImage.IsPrinting + dây in đã bay xong), không đoán bằng đồng hồ,
+        // vì tốc độ in có thể bị tăng (RushPrinting) lúc win.
         private int printingCount;
+
+        // Dây in đang bay (rope nối box -> JamImage.Pointer). Đếm riêng để biết
+        // dây in đã bay xong chưa, tách khỏi dây waiting→box không liên quan.
+        private int printRopeCount;
 
         /// <summary>
         /// True khi còn box đang in ảnh lên board (ảnh hoặc dây in chưa xong).
@@ -62,6 +67,7 @@ namespace _Game.Scripts.Gameplay
         /// </summary>
         public bool IsAnyPrinting =>
             printingCount > 0
+            || printRopeCount > 0
             || (JamImage.Instance != null && JamImage.Instance.IsPrinting);
 
         // có đang có ít nhất 1 box đang xử lý không
@@ -287,6 +293,15 @@ namespace _Game.Scripts.Gameplay
             var matches = new List<(YarnPart part, Slot boxSlot)>();
             foreach (var part in tempParts)
             {
+                // Sợi len của level trước có thể còn nằm trong _tempParts (BoosterManager.Reset
+                // chưa được gọi khi load level) -> đọc CurrentColor sẽ ném MissingReference và
+                // giết coroutine, làm mất hết slot đã giành ở vòng lặp dưới.
+                if (part == null)
+                {
+                    Debug.LogWarning("[BoxManager] _tempParts chứa YarnPart đã bị huỷ — bỏ qua. " +
+                                     "Kiểm tra BoosterManager.Reset() khi load level.", this);
+                    continue;
+                }
                 if (part.CurrentColor != box.BoxColor) continue;
                 var boxSlot = SlotManager.Instance.GetNextAvailableSlot(part.CurrentColor, false);
                 if (boxSlot == null) continue;
@@ -296,7 +311,18 @@ namespace _Game.Scripts.Gameplay
             int remaining = matches.Count;
             foreach (var (part, boxSlot) in matches)
             {
-                boxSlot.Fill(part);
+                // Vòng lặp trên đã "giành" (Unregister) slot cho MỌI part khớp màu; nếu
+                // fill không được thì phải trả slot lại, nếu không hộp trông còn trống
+                // nhưng logic không bao giờ nhận len vào nữa.
+                if (part == null || !boxSlot.Fill(part))
+                {
+                    string partName = part == null ? "null" : part.name;
+                    Debug.LogWarning($"[BoxManager] RefillFromTempBox không fill được slot " +
+                                     $"(part={partName}, màu {box.BoxColor}) — trả slot về SlotManager.", this);
+                    SlotManager.Instance.ReleaseSlot(boxSlot);
+                    remaining--;
+                    continue;
+                }
                 bm.RemoveTempPart(part);
                 YarnRopeController.Instance.SpawnRopeBoard(BoosterManager.Instance.TempBoxContainer,
                     boxSlot.GetAnchorTransform(), part.CurrentColor, 1f);
@@ -423,21 +449,44 @@ namespace _Game.Scripts.Gameplay
             }
             currentWaitOfTime = time;
             float progress = pixelCount > 0 ? currentWaitOfTime / pixelCount : currentWaitOfTime;
-            if (JamImage.Instance != null)
-                JamImage.Instance.Print(boxInfo.BoxColor, progress);
-            YarnRopeController.Instance.SpawnRopeBoard(boxInfo.GetTargetRope(), JamImage.Instance.Pointer, boxInfo.BoxColor, currentWaitOfTime);
+            // Chốt thời lượng của RIÊNG lượt in này: currentWaitOfTime là field dùng
+            // chung, box khác in xen vào sẽ ghi đè -> phải giữ bản cục bộ.
+            float ropeTime = time;
 
-            // Theo dõi lượt in này để biết khi nào xong hẳn (ảnh + dây bay lên ảnh).
-            // Dùng chung thời lượng với JamImage.Print (mỗi pixel nghỉ `progress` giây)
-            // nên mốc kết thúc khớp với lúc pixel cuối được tô.
-            // +0.05s đệm để pixel/dây cuối kịp render.
+            bool printed = JamImage.Instance != null && JamImage.Instance.Print(boxInfo.BoxColor, progress);
+            YarnRopeController.Instance.SpawnRopeBoard(boxInfo.GetTargetRope(), JamImage.Instance.Pointer, boxInfo.BoxColor, ropeTime);
+            printRopeCount++;
+
+            // Đóng vòng đời theo TÍN HIỆU THẬT thay vì đồng hồ: đợi tới khi ảnh in xong
+            // và dây in đã bay xong. Nhờ vậy khi RushPrinting tăng tốc lúc win, cờ này
+            // hạ xuống ngay theo tiến độ thật, không giữ popup chờ thừa.
             printingCount++;
-            StartCoroutine(TrackPrintRoutine(Mathf.Max(0f, time) + 0.05f));
+            StartCoroutine(TrackPrintRoutine(printed, ropeTime));
         }
 
-        private IEnumerator TrackPrintRoutine(float duration)
+        /// <summary>
+        /// Chờ lượt in kết thúc thật sự: ảnh không còn in nữa, rồi chờ dây in bay xong
+        /// (đúng thời lượng dây của lượt này) và thêm 1 frame đệm cho dây cuối render.
+        /// </summary>
+        private IEnumerator TrackPrintRoutine(bool hadImagePrint, float ropeTime)
         {
-            yield return new WaitForSeconds(duration);
+            // 1) Đợi ảnh in xong (nếu lượt này có tô pixel).
+            if (hadImagePrint && JamImage.Instance != null)
+            {
+                float imgDeadline = Time.time + 30f;
+                while (JamImage.Instance != null
+                       && JamImage.Instance.IsPrinting
+                       && Time.time < imgDeadline)
+                    yield return null;
+            }
+
+            // 2) Đợi dây in bay xong. Thời gian thật = ropeTime / tốc độ hiện tại
+            //    (RushRopes lúc win làm dây bay nhanh hơn -> chờ ít hơn, không over-wait).
+            float speed = Mathf.Max(1f, RopeBoard.SpeedMultiplier);
+            yield return new WaitForSeconds(Mathf.Max(0f, ropeTime) / speed + 0.05f);
+            yield return null;
+
+            printRopeCount = Mathf.Max(0, printRopeCount - 1);
             printingCount = Mathf.Max(0, printingCount - 1);
         }
 
@@ -445,6 +494,7 @@ namespace _Game.Scripts.Gameplay
         private void ResetPrintTracking()
         {
             printingCount = 0;
+            printRopeCount = 0;
             printtingPropress = 0;
         }
 

@@ -189,7 +189,17 @@ namespace _Game.Scripts.Gameplay
             boxManager.OnAllBoxesClosed += HandleAllBoxesClosed;
             boxManager.SpawnAllAtStart();
 
+            // Level mới: xoá giỏ tạm của Clean ở level trước. _tempParts giữ YarnPart của
+            // level cũ (đã bị Destroy khi load level) -> RefillFromTempBox sẽ ném lỗi và
+            // làm mất slot của box mới, len cùng màu bị đẩy xuống waiting.
+            if (BoosterManager.Instance != null)
+                BoosterManager.Instance.Reset();
+
             YarnRopeController.Instance.ClearAllRopes();
+            // Level mới: trả tốc độ in/dây về mặc định (lượt win trước đã tăng tốc).
+            YarnRopeController.Instance.ResetRopeSpeed();
+            if (JamImage.Instance != null)
+                JamImage.Instance.ResetPrintingSpeed();
 
             // --- 5) Sau đó khởi tạo UI
             GameUIController.Instance.InitUI(currentLevel);

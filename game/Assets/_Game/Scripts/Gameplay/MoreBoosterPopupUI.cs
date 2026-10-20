@@ -39,6 +39,13 @@ namespace _Game.Scripts.Gameplay
         private static MoreBoosterPopupUI _instance;
 
         /// <summary>
+        /// True khi đã bị instance khác thay thế và sắp bị Destroy.
+        /// Instance bị Destroy vẫn có thể bị gọi Show() trong frame đó -> phải chặn,
+        /// nếu không sẽ mở popup trên object đã hỏng.
+        /// </summary>
+        private bool _replaced;
+
+        /// <summary>
         /// Số frame còn lại phải chặn input gameplay sau khi popup đóng.
         /// Lý do: uGUI xử lý onClick ở PointerUp, LeanTouch fire OnFingerTap CÙNG frame.
         /// Nếu Buy thành công -> Hide() -> cho dùng booster ngay, thì chính cú click
@@ -48,6 +55,9 @@ namespace _Game.Scripts.Gameplay
 
         /// <summary>True khi input gameplay đang bị chặn do popup vừa đóng.</summary>
         public static bool IsBlockingGameplayInput => _inputBlockFrames > 0;
+
+        /// <summary>Instance hiện tại (để nơi khác gán hoặc kiểm tra nhanh).</summary>
+        public static MoreBoosterPopupUI Instance => _instance;
 
         private static readonly string[] Titles = { "ADD SLOT", "CLEAN", "MAGIC SPOOL" };
         private static readonly string[] Descs =
@@ -65,11 +75,28 @@ namespace _Game.Scripts.Gameplay
             _inputBlockFrames = 0;
             // Popup luôn active trong hierarchy, ẩn/hiện bằng alpha
             SetVisible(false, true);
-            // Ensure singleton instance
-            if (_instance == null)
+
+            // Đăng ký instance: nếu ĐÃ có instance sống khác thì nhường (tránh 2 popup
+            // tranh nhau). Dùng so sánh kiểu "còn sống" thay vì != null vì instance cũ
+            // có thể đã bị Destroy nhưng biến static vẫn giữ tham chiếu "giả null".
+            if (_instance == null || _instance == this)
+            {
                 _instance = this;
-            else if (_instance != this)
+                _replaced = false;
+            }
+            else
+            {
+                Debug.LogWarning("[MoreBoosterPopupUI] Có nhiều hơn 1 popup trong scene — object này sẽ bị huỷ. Chỉ giữ 1 cái.", this);
+                _replaced = true;
                 Destroy(gameObject);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Nhả static để lần Show sau không trỏ vào object đã chết.
+            if (_instance == this)
+                _instance = null;
         }
 
         private void Update()
@@ -82,31 +109,74 @@ namespace _Game.Scripts.Gameplay
         /// <summary>Static accessor to show popup.</summary>
         public static void Show(BoosterType type)
         {
-            if (_instance == null)
+            var target = ResolveInstance();
+            if (target == null)
             {
-                // Try to find existing instance in scene
-                _instance = FindObjectOfType<MoreBoosterPopupUI>();
-                if (_instance == null)
-                {
-                    Debug.LogError("[MoreBoosterPopupUI] No instance found in scene. Please place MoreBoosterPopupUI under Canvas_2 Overlays.");
-                    return;
-                }
+                Debug.LogError("[MoreBoosterPopupUI] Không tìm thấy popup trong scene. " +
+                               "Hãy kéo MoreBoosterPopupUI (con của Canvas_2 Overlays) vào ô 'moreBoosterPopup' " +
+                               "trên GameUIController, hoặc đặt nó trong scene.");
+                return;
             }
-            _instance.ShowPopup(type);
+            target.ShowPopup(type);
+        }
+
+        /// <summary>
+        /// Mở popup trên chính instance này (dùng khi đã có ref kéo thả trong Inspector,
+        /// không cần qua singleton/Find).
+        /// </summary>
+        public void ShowFor(BoosterType type)
+        {
+            // Ref kéo thả có thể trỏ vào object đã bị huỷ.
+            if (this == null) return;
+
+            // Đảm bảo đây là instance được Show() dùng tới.
+            if (_instance == null || _instance == this)
+                _instance = this;
+
+            ShowPopup(type);
+        }
+
+        /// <summary>
+        /// Lấy instance đang sống. Tự dọn tham chiếu đã bị Destroy và tự tìm lại
+        /// trong scene nếu cần.
+        /// </summary>
+        private static MoreBoosterPopupUI ResolveInstance()
+        {
+            // Lưu ý: UnityEngine.Object có "fake null" — object đã Destroy thì == null
+            // trả true, nên phép so sánh này tự loại instance đã chết.
+            if (_instance != null)
+                return _instance;
+
+            // Ưu tiên ref kéo thả trong Inspector (không phụ thuộc Find).
+            var wired = GameUIController.Instance != null
+                ? GameUIController.Instance.moreBoosterPopup
+                : null;
+            if (wired != null)
+            {
+                _instance = wired;
+                return _instance;
+            }
+
+            _instance = FindObjectOfType<MoreBoosterPopupUI>(true);
+            return _instance;
         }
 
         /// <summary>Static accessor to close the popup.</summary>
         public static void CloseCurrent()
         {
-            if (_instance != null)
+            var target = ResolveInstance();
+            if (target != null)
             {
-                _instance.Hide();
+                target.Hide();
             }
         }
 
         /// <summary>Internal instance method to show popup.</summary>
         private void ShowPopup(BoosterType type)
         {
+            // Object đã bị thay thế/huỷ thì không mở nữa.
+            if (_replaced || this == null) return;
+
             // Huỷ lượt "dùng booster sau khi đóng" còn treo (nếu user mở lại popup
             // trước khi coroutine cũ chạy xong) để không dùng booster ngoài ý muốn.
             StopAllCoroutines();

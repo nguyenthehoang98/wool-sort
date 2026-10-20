@@ -135,7 +135,16 @@ namespace _Game.Scripts.Gameplay
             var part = waitSlot.CurrentPart;
 
             // 1) Chạy logic fill ngay, mọi đếm, refill, win/lose v.v.
-            boxSlot.Fill(part, true);
+            //    Nếu không fill được (part null, hoặc màu sợi lệch màu slot hộp) thì
+            //    trả slot hộp đã "giành" ở TryRefillSlot về SlotManager và dừng: giữ
+            //    nguyên waiting-slot để không mất sợi len.
+            if (part == null || !boxSlot.Fill(part, true))
+            {
+                Debug.LogWarning($"[WaitingAreaManager] Refill waiting→box thất bại (màu {color}) — " +
+                                 "trả slot hộp về SlotManager để không mất slot.", this);
+                SlotManager.Instance.ReleaseSlot(boxSlot);
+                return;
+            }
 
             // 2) Clear waiting-slot về state Idle
             waitSlot.UnFill(() =>

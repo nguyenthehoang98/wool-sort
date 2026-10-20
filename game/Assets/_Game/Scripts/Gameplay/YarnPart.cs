@@ -212,7 +212,14 @@ namespace _Game.Scripts.Gameplay
                     }
 
                     if (!GameManager.Instance.TryBeginYarnTap() ||
-                        !SlotManager.Instance.SpawnRope(this, slot)) return;
+                        !SlotManager.Instance.SpawnRope(this, slot))
+                    {
+                        // GetSlotToRope đã lấy slot ra khỏi SlotManager (kiểu "giành chỗ"),
+                        // không fill được thì phải trả lại, nếu không slot đó mất vĩnh viễn:
+                        // hộp vẫn trông trống nhưng logic không thấy nữa.
+                        SlotManager.Instance.ReleaseSlot(slot);
+                        return;
+                    }
 
                     IsDissolving = true;
                     Debug.Log("Handle Finger Tap " + part.name);

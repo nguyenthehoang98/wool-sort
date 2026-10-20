@@ -44,6 +44,18 @@ namespace _Game.Scripts.Gameplay
             allSlots.Remove(slot);
         }
 
+        /// <summary>
+        /// Trả lại slot mà <see cref="GetNextAvailableSlot"/> đã "giành" (đã Unregister) khi
+        /// phía gọi không fill được nó. Bắt buộc phải gọi ở mọi nhánh thất bại, nếu không
+        /// slot mất hẳn khỏi allSlots: hộp vẫn trông còn trống nhưng logic không bao giờ
+        /// thấy nữa, nên mọi sợi cùng màu sau đó bị đẩy xuống waiting area.
+        /// </summary>
+        public void ReleaseSlot(Slot slot)
+        {
+            if (slot == null) return;
+            if (!allSlots.Contains(slot)) allSlots.Add(slot);
+        }
+
         public void UnregisterAllSlots()
         {
             allSlots.Clear();
@@ -126,7 +138,12 @@ namespace _Game.Scripts.Gameplay
             {
                 var chosen = waitingSlots[0];
                 UnregisterSlot(chosen); // Xoá khỏi danh sách quản lý
-                Debug.Log($"Chọn Waiting-slot ở vị trí X={chosen.transform.position.x}");
+                // Chẩn đoán: "trống: >0" nghĩa là slot hộp còn nhưng không nhận màu này
+                // (lệch màu); "trống: 0" nghĩa là slot hộp đã bị mất khỏi allSlots (leak).
+                int boxManaged = allSlots.Count(s => s.Area == Slot.AreaType.Box);
+                int boxEmpty = allSlots.Count(s => s.Area == Slot.AreaType.Box && !s.IsFilled);
+                Debug.Log($"Không có Box-slot nhận màu {partColor} → dùng Waiting-slot ở vị trí X={chosen.transform.position.x}. " +
+                          $"Box-slot trong allSlots: {boxManaged} (trống: {boxEmpty})");
                 return chosen;
             }
 

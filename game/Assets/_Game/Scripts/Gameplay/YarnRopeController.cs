@@ -126,6 +126,21 @@ namespace _Game.Scripts.Gameplay
         }
 
         /// <summary>
+        /// Khi thắng: tăng tốc dây đang bay (nhất là dây in box -> ảnh) để không phải
+        /// đợi dây bay xong mới thấy WinPopup.
+        /// </summary>
+        public void RushRopes(float multiplier = 8f)
+        {
+            RopeBoard.SpeedMultiplier = Mathf.Max(1f, multiplier);
+        }
+
+        /// <summary>Trả tốc độ dây về mặc định (gọi khi load level mới).</summary>
+        public void ResetRopeSpeed()
+        {
+            RopeBoard.SpeedMultiplier = 1f;
+        }
+
+        /// <summary>
         /// Xóa sạch mọi rope đang tồn tại.
         /// </summary>
         public void ClearAllRopes()

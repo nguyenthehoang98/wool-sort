@@ -31,15 +31,24 @@ namespace _Game.Scripts
         public Transform Pointer => pointer != null ? pointer : transform;
 
         /// <summary>
-        /// True khi coroutine tô ảnh còn đang chạy. Dùng để chặn show WinPopup
-        /// khi ảnh chưa in xong.
+        /// True khi còn coroutine tô ảnh đang chạy. Dùng để chặn show WinPopup
+        /// khi ảnh chưa in xong. Đếm theo số lượt in đang chạy vì nhiều box có thể
+        /// in chồng nhau (flag bool đơn sẽ bị lượt xong sớm tắt oan).
         /// </summary>
-        public bool IsPrinting { get; private set; }
+        public bool IsPrinting => _activePrintCount > 0;
+
+        private int _activePrintCount;
 
         /// <summary>
         /// Số pixel batch đã in xong (tăng dần), dùng để biết tiến độ in.
         /// </summary>
         public int PrintedBatchCount { get; private set; }
+
+        /// <summary>
+        /// Hệ số tăng tốc khi in. Khi win, set > 1 để các pixel còn lại chạy nhanh
+        /// (thay vì bắt người chơi đợi in hết mới thấy WinPopup).
+        /// </summary>
+        public float PrintSpeedMultiplier { get; set; } = 1f;
 
         private void Awake()
         {
@@ -59,8 +68,10 @@ namespace _Game.Scripts
             // Level mới: dừng mọi coroutine tô ảnh còn sót của level trước và reset cờ,
             // nếu không IsPrinting giữ true -> WinPopup của level sau chờ vô hạn.
             StopAllCoroutines();
-            IsPrinting = false;
+            _activePrintCount = 0;
             PrintedBatchCount = 0;
+            // Level mới: trả tốc độ in về mặc định (lượt win trước có thể đã tăng tốc).
+            PrintSpeedMultiplier = 1f;
 
             // Load theo level: Resources/Images/{levelName} - LOI NEU KO TIM THAY
             if (!string.IsNullOrEmpty(levelName))
@@ -134,6 +145,21 @@ namespace _Game.Scripts
             return BuildNextRevealCells(color).Count;
         }
 
+        /// <summary>
+        /// Khi thắng: tăng tốc in các pixel còn lại để không bắt người chơi đợi.
+        /// Các lượt in đang chạy sẽ nhanh lên ngay (đọc multiplier mỗi pixel).
+        /// </summary>
+        public void RushPrinting(float multiplier = 8f)
+        {
+            PrintSpeedMultiplier = Mathf.Max(1f, multiplier);
+        }
+
+        /// <summary>Trả tốc độ in về mặc định (gọi khi load level mới).</summary>
+        public void ResetPrintingSpeed()
+        {
+            PrintSpeedMultiplier = 1f;
+        }
+
         public bool Print(YarnColor color, float timePerPixel)
         {
             if (!initialized || runtimePixels == null || (targetTexture == null && activeMatrix == null))
@@ -145,7 +171,7 @@ namespace _Game.Scripts
 
             // Đánh dấu đang in NGAY (đồng bộ) để caller có thể chặn show popup
             // ngay trong frame này, không phải đợi coroutine chạy frame đầu.
-            IsPrinting = true;
+            _activePrintCount++;
             PrintedBatchCount++;
             StartCoroutine(RevealPixels(cells, Mathf.Max(0.001f, timePerPixel)));
             return true;
@@ -227,12 +253,15 @@ namespace _Game.Scripts
                     runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
                     runtimeTexture.Apply(false, false);
 
-                    yield return new WaitForSeconds(timePerPixel);
+                    // Đọc multiplier MỖI pixel: tăng tốc giữa chừng (vd lúc win) có
+                    // hiệu lực ngay cho lượt in đang chạy, không phải chờ lượt sau.
+                    float step = timePerPixel / Mathf.Max(0.0001f, PrintSpeedMultiplier);
+                    yield return new WaitForSeconds(step);
                 }
             }
             finally
             {
-                IsPrinting = false;
+                _activePrintCount = Mathf.Max(0, _activePrintCount - 1);
             }
         }
 

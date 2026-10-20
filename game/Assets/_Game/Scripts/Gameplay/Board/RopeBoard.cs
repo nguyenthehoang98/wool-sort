@@ -1,4 +1,4 @@
-﻿using _Game.Scripts.Pool;
+using _Game.Scripts.Pool;
 using Dreamteck.Splines;
 using UnityEngine;
 
@@ -134,6 +134,13 @@ namespace _Game.Scripts.Gameplay
 
         private bool _nullLogged;
 
+        /// <summary>
+        /// Hệ số tăng tốc dây bay. Khi win, bật > 1 để dây in bay lên ảnh nhanh hơn,
+        /// không bắt người chơi đợi dây mới thấy WinPopup.
+        /// Static vì dây lấy từ pool và tăng tốc áp cho mọi dây đang bay.
+        /// </summary>
+        public static float SpeedMultiplier = 5f;
+
         void Update()
         {
             // Nếu chưa khởi tạo spline hoặc điểm bắt đầu/kết thúc thì bỏ qua
@@ -148,7 +155,9 @@ namespace _Game.Scripts.Gameplay
             }
 
             Vector3 topWorld = ComputePos(topPoint, false);
-            _ropeFlyElapsed += Time.deltaTime;
+            // Nhân deltaTime theo SpeedMultiplier: tăng tốc giữa chừng có hiệu lực
+            // ngay cho dây đang bay (vd lúc win), không phải chờ dây sau.
+            _ropeFlyElapsed += Time.deltaTime * Mathf.Max(0.0001f, SpeedMultiplier);
             float progress = Mathf.Clamp01(_ropeFlyElapsed / _ropeFlyDuration);
 
             // Dây co dần trong đúng thời lượng animation, nên quãng đường dài/ngắn

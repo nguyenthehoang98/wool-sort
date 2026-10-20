@@ -22,6 +22,10 @@ namespace _Game.Scripts.Gameplay
 
         [SerializeField] private GameObject objPlus;
 
+        [Header("Popup mua booster (kéo thả, tùy chọn)")]
+        [Tooltip("Để trống cũng được — sẽ lấy từ GameUIController.moreBoosterPopup.")]
+        [SerializeField] private MoreBoosterPopupUI moreBoosterPopup;
+
         private ButtonBoosterState _btnBoosterState;
         private bool isUnlocked;
         public bool IsUnlocked => isUnlocked;
@@ -182,6 +186,18 @@ namespace _Game.Scripts.Gameplay
 
         private void OpenBuyPopup()
         {
+            // Ưu tiên ref kéo thả trên GameUIController; nếu chưa gán thì
+            // MoreBoosterPopupUI.Show tự tìm instance trong scene.
+            var popup = moreBoosterPopup != null
+                ? moreBoosterPopup
+                : (GameUIController.Instance != null ? GameUIController.Instance.moreBoosterPopup : null);
+
+            if (popup != null)
+            {
+                popup.ShowFor(type);
+                return;
+            }
+
             MoreBoosterPopupUI.Show(type);
         }
 

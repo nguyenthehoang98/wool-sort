@@ -43,6 +43,8 @@ namespace _Game.Scripts.Gameplay
         [Header("Popups (kéo thả trong Inspector)")]
         public WinPopup winPopup;
         public LosePopup losePopup;
+        [Tooltip("Popup mua booster (MoreBoosterPopupUI trong scene). Kéo thả vào đây để BoosterItem mở được popup.")]
+        public MoreBoosterPopupUI moreBoosterPopup;
         private bool resultPopupShown;
         private bool resultWon;
 
@@ -230,6 +232,13 @@ namespace _Game.Scripts.Gameplay
                 return;
             }
 
+            // Vào win: tăng tốc in pixel + dây bay để không phải đợi lâu, thay vì
+            // chờ nguyên tốc độ in bình thường mới hiện popup.
+            if (JamImage.Instance != null)
+                JamImage.Instance.RushPrinting();
+            if (YarnRopeController.Instance != null)
+                YarnRopeController.Instance.RushRopes();
+
             // Chờ 2 điều kiện rồi mới show WinPopup:
             //  1) box cuối cùng đã đóng xong animation
             //  2) ảnh + dây in đã xong hết (nếu không popup hiện khi dây còn đang in)
@@ -239,33 +248,31 @@ namespace _Game.Scripts.Gameplay
                 return;
             }
 
-            // Chờ box cuối đóng (event) rồi chuyển sang chờ print xong.
-            Action onClosed = null;
-            onClosed = () =>
-            {
-                boxManager.OnAllBoxesClosed -= onClosed;
-                StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
-            };
-            boxManager.OnAllBoxesClosed += onClosed;
+            // Luôn chạy coroutine chờ print: nó tự xử lý cả trường hợp box chưa đóng.
+            // Không dùng event OnAllBoxesClosed làm điểm hẹn duy nhất vì event chỉ fire
+            // 1 lần và có thể đã fire trước khi ta kịp đăng ký.
+            StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
 
-            // Nếu box đã đóng hết từ trước thì event sẽ không fire nữa -> chờ print trực tiếp.
-            if (boxManager.HasFiredAllBoxesClosed)
-            {
-                boxManager.OnAllBoxesClosed -= onClosed;
-                StartCoroutine(WaitPrintDoneThenShowWin(boxManager));
-            }
-
-            Debug.Log("Core gameplay level complete; waiting for final box animation + print done");
+            Debug.Log("Core gameplay level complete; waiting for box close + print done");
         }
 
         /// <summary>
-        /// Chờ tới khi box cuối in xong ảnh và dây bay lên ảnh xong, rồi mới show WinPopup.
-        /// Có timeout an toàn để không kẹt màn hình thắng nếu cờ print bị treo.
+        /// Chờ tới khi box cuối đóng xong VÀ ảnh in + dây bay lên ảnh xong, rồi mới show WinPopup.
+        /// Trong lúc chờ đã bật RushPrinting nên thời gian chờ rất ngắn.
         /// </summary>
         private IEnumerator WaitPrintDoneThenShowWin(BoxManager boxManager)
         {
-            float deadline = Time.time + 10f;
-            while (boxManager != null && boxManager.IsAnyPrinting && Time.time < deadline)
+            // Giai đoạn 1: đợi box cuối đóng (thường chỉ vài chục ms sau khi win).
+            float closeDeadline = Time.time + 5f;
+            while (boxManager != null
+                   && !boxManager.HasFiredAllBoxesClosed
+                   && Time.time < closeDeadline)
+                yield return null;
+
+            // Giai đoạn 2: đợi in xong. Đã rush nên chỉ còn rất ngắn; timeout rộng
+            // để không kẹt màn hình thắng nếu cờ print bị treo.
+            float printDeadline = Time.time + 5f;
+            while (boxManager != null && boxManager.IsAnyPrinting && Time.time < printDeadline)
                 yield return null;
 
             if (boxManager != null && boxManager.IsAnyPrinting)
