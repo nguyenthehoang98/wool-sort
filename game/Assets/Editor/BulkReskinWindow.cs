@@ -268,9 +268,17 @@ public sealed class BulkReskinWindow : EditorWindow
     /// <summary>Chiều cao dòng = chiều cao preview (co theo anh) + field + label.</summary>
     private float RowHeight(Entry e)
     {
-        int h = Mathf.Max(ImgHeight(e.oldPath), ImgHeight(e.newPath));
-        h = Mathf.Clamp(h, 64, ThumbSize);
-        return h + 40f;
+        int h = Mathf.Clamp(Mathf.Max(ImgHeight(e.oldPath), ImgHeight(e.newPath)), 64, ThumbSize);
+        float baseH = h + 40f;
+
+        // phai cho du chieu cao cho cac dong "dung o" (moi noi 1 dong)
+        float usageH = 0f;
+        if (showUsage && !string.IsNullOrEmpty(e.oldPath))
+        {
+            int n = GetUsage(e).Count;
+            usageH = (n == 0 ? 1 : n + 1) * 16f + 26f;
+        }
+        return Mathf.Max(baseH, usageH);
     }
 
     private int ImgHeight(string path)
@@ -377,10 +385,28 @@ public sealed class BulkReskinWindow : EditorWindow
     {
         var warnRect = new Rect(cell.x, cell.y + 2f, cell.width - 4f, 16f);
         EditorGUI.LabelField(warnRect, BuildWarn(e), EditorStyles.miniLabel);
-        if (showUsage && !string.IsNullOrEmpty(e.oldPath))
+
+        if (!showUsage || string.IsNullOrEmpty(e.oldPath)) return;
+
+        // moi noi dung mot dong rieng de doc de
+        var list = GetUsage(e);
+        float y = cell.y + 20f;
+
+        if (list.Count == 0)
         {
-            var usageRect = new Rect(cell.x, cell.y + 20f, cell.width - 4f, 16f);
-            EditorGUI.LabelField(usageRect, BuildUsage(e), EditorStyles.miniLabel);
+            EditorGUI.LabelField(new Rect(cell.x, y, cell.width - 4f, 16f),
+                "Dùng ở: (không asset nào)", EditorStyles.miniLabel);
+            return;
+        }
+
+        EditorGUI.LabelField(new Rect(cell.x, y, cell.width - 4f, 16f), "Dùng ở:", EditorStyles.miniBoldLabel);
+        y += 16f;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            string p = list[i].StartsWith("Assets/") ? list[i].Substring(7) : list[i];
+            EditorGUI.LabelField(new Rect(cell.x, y, cell.width - 4f, 16f), "· " + p, EditorStyles.miniLabel);
+            y += 16f;
         }
     }
 
@@ -489,11 +515,12 @@ public sealed class BulkReskinWindow : EditorWindow
         return result;
     }
 
-    private string BuildUsage(Entry e)
+    /// <summary>Danh sách asset đang trỏ tới ảnh này (bỏ tiền tố "Assets/").</summary>
+    private List<string> GetUsage(Entry e)
     {
-        if (string.IsNullOrEmpty(e.oldPath)) return "";
-        if (!usageMap.TryGetValue(e.oldPath, out var list)) return "Dùng ở: …";
-        return list.Count == 0 ? "Dùng ở: (không asset nào)" : "Dùng ở: " + string.Join(", ", list);
+        if (string.IsNullOrEmpty(e.oldPath)) return new List<string>();
+        if (!usageMap.TryGetValue(e.oldPath, out var list)) return new List<string>();
+        return list;
     }
 
     private Vector2Int GetSize(string path)
@@ -510,6 +537,28 @@ public sealed class BulkReskinWindow : EditorWindow
         v = ReadBorder(assetPath);
         borderCache[assetPath] = v;
         return v;
+    }
+
+    /// <summary>Dựng bảng ngược "asset nào trỏ tới ảnh nào" (chạy theo lô, không đơ).</summary>
+    private void StartUsageIndexScan()
+    {
+        scanConsumers.Clear();
+        foreach (var p in AssetDatabase.GetAllAssetPaths())
+        {
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+            string ext = Path.GetExtension(p).ToLower();
+            if (ext != ".unity" && ext != ".prefab" && ext != ".mat" && ext != ".asset") continue;
+            scanConsumers.Enqueue(p);
+        }
+        scanQueue.Clear();
+        scanFolderFiles.Clear();
+        scanIsFolderScan = false;
+        scanPhase = 1;
+        scanProgress = 0f;
+        scanLabel = "Đang dựng bảng nơi dùng…";
+        scanning = true;
+        EditorApplication.update -= OnScanTick;
+        EditorApplication.update += OnScanTick;
     }
 
     // ================================================================== quét
@@ -665,7 +714,7 @@ public sealed class BulkReskinWindow : EditorWindow
                 {
                     if (!usageMap.TryGetValue(dep, out var list))
                         usageMap[dep] = list = new List<string>();
-                    if (list.Count < 4 && !list.Contains(consumer)) list.Add(consumer);
+                    if (list.Count < 8 && !list.Contains(consumer)) list.Add(consumer);
                 }
                 done++;
             }
@@ -705,6 +754,13 @@ public sealed class BulkReskinWindow : EditorWindow
                 EditorApplication.update -= OnScanTick;
                 report = "Đã nạp " + entries.Count + " dòng từ folder.";
             }
+        }
+        else if (scanQueue.Count == 0)
+        {
+            // chi dung bang nguoc, khong co dong nao de them
+            scanning = false;
+            EditorApplication.update -= OnScanTick;
+            report = "Đã dựng bảng nơi dùng.";
         }
         else
         {
@@ -752,6 +808,7 @@ public sealed class BulkReskinWindow : EditorWindow
             if (map.entries != null) entries.AddRange(map.entries);
             SeedKnownPaths();
             report = "Đã nạp bảng: " + entries.Count + " dòng.";
+            if (entries.Count > 0) StartUsageIndexScan();
         }
         catch (Exception e)
         {
