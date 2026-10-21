@@ -110,7 +110,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: e84b57271c8fd0549bbfc806fced706a, type: 3}
-  m_Type: 1
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -176,7 +176,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 
 --- !u!224 &771000010
 RectTransform:
@@ -229,8 +229,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: fdb0a5d66bfa0124d8b538da2d0f654e, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 0
+  m_Type: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -450,12 +450,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 821c157dc7a4111fbd994ab967f0d317, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Meta.LevelList
-  template: {fileID: 771000009}
+  template: {fileID: 771000018}
   content: {fileID: 771000008}
   normalSprite: {fileID: 21300000, guid: fdb0a5d66bfa0124d8b538da2d0f654e, type: 3}
   currentSprite: {fileID: 21300000, guid: 620c7da647dd59249973949e0e76756e, type: 3}
   hardSprite: {fileID: 21300000, guid: b55ca67156a4b434f86db58c64d408c3, type: 3}
   veryHardSprite: {fileID: 21300000, guid: 95cc4092a4be1464b9a459bcac69fa14, type: 3}
   maxLevel: 7
-  spacing: 150
+  spacing: 145
 

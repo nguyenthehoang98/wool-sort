@@ -35,7 +35,11 @@ namespace _Game.Scripts.Meta
 
         private void Build()
         {
-            if (template == null || content == null) return;
+            if (template == null || content == null)
+            {
+                Debug.LogError("[LevelList] Thiếu template/content — không sinh được danh sách màn.");
+                return;
+            }
 
             // dọn nút cũ nếu build lại
             for (int i = content.childCount - 1; i >= 0; i--)
