@@ -4561,12 +4561,12 @@ MonoBehaviour:
   iconLock: {fileID: 21300000, guid: 372dec2909f5f9c4d997bdd2bf09c170, type: 3}
   iconPlus: {fileID: 21300000, guid: 8da6fb6706494384b9c2536f00e33e61, type: 3}
   iconNoti: {fileID: 21300000, guid: 86ede35ceb8de83429453f07e08b87e7, type: 3}
-  iconAddSlot: {fileID: 21300000, guid: 6f94f94d816492a4e84210ec54a0529f, type: 3}
-  iconClean: {fileID: 21300000, guid: 9739307558ef05a4784b9e172fde771e, type: 3}
-  iconMagic: {fileID: 21300000, guid: fa90802c56dbfde4e9a58765b2fb2f39, type: 3}
-  iconAddSlotGray: {fileID: 21300000, guid: 1b4fa80e02ae70848b601e0fb45db867, type: 3}
-  iconCleanGray: {fileID: 21300000, guid: b0d96032fa8ff1b4fb1341f6587aabba, type: 3}
-  iconMagicGray: {fileID: 21300000, guid: f9805c1fe473d284bb3c0b2e4bb9e967, type: 3}
+  iconAddSlot: {fileID: 21300000, guid: 1f415c3909938534b900fa75f8bff260, type: 3}
+  iconClean: {fileID: 21300000, guid: 0310f7fbabd3e85438373fbad5838871, type: 3}
+  iconMagic: {fileID: 21300000, guid: fd471c411b36dad4c98be7dfe8c44e9a, type: 3}
+  iconAddSlotGray: {fileID: 21300000, guid: 1f415c3909938534b900fa75f8bff260, type: 3}
+  iconCleanGray: {fileID: 21300000, guid: 0310f7fbabd3e85438373fbad5838871, type: 3}
+  iconMagicGray: {fileID: 21300000, guid: fd471c411b36dad4c98be7dfe8c44e9a, type: 3}
   containerAnchoredPos: {x: 0, y: 137}
   buttonSpacing: 263
   buttonYOffset: -10
@@ -4675,9 +4675,9 @@ MonoBehaviour:
   cardBg: {fileID: 21300000, guid: 0455705ef2d7e6042803df6a7425f7aa, type: 3}
   buttonBlue: {fileID: 21300000, guid: 8e090e593e6aa25469722ca6b6086127, type: 3}
   buttonGreen: {fileID: 21300000, guid: 8613f5d74e9cf544f9a2e77b23ae202e, type: 3}
-  buttonClose: {fileID: 21300000, guid: 7f837d85b6992d945ab2cb7aa75f7a73, type: 3}
-  coinIcon: {fileID: 21300000, guid: ab0a109847726e9489040ebe7fd8c34d, type: 3}
-  adsIcon: {fileID: 21300000, guid: eafa307af92a26b4c95c8bcf6180202c, type: 3}
+  buttonClose: {fileID: 21300000, guid: cbb1e767e6c064f40b2c11a0fa7a224c, type: 3}
+  coinIcon: {fileID: 21300000, guid: 05b1d054b369ad14bb2a5752e78d2c5c, type: 3}
+  adsIcon: {fileID: 21300000, guid: 0cb1f168035789b43894051d7ed501c8, type: 3}
   contentIcons:
   - {fileID: 21300000, guid: 1f415c3909938534b900fa75f8bff260, type: 3}
   - {fileID: 21300000, guid: 0310f7fbabd3e85438373fbad5838871, type: 3}
@@ -5521,7 +5521,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ab0a109847726e9489040ebe7fd8c34d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 05b1d054b369ad14bb2a5752e78d2c5c, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -9626,7 +9626,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ab0a109847726e9489040ebe7fd8c34d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 05b1d054b369ad14bb2a5752e78d2c5c, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
