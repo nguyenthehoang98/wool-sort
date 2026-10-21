@@ -29,11 +29,15 @@ public sealed class BulkReskinWindow : EditorWindow
 
     // layout: mọi cột dùng chung bề rộng để header với dòng không lệch
     private const int ToggleW = 18;
-    private const int CellOldW = 250;
-    private const int CellNewW = 250;
     private const int CellDestW = 300;
-    private const int ThumbSize = 72;
-    private const int LabelW = 60;
+
+    private static readonly int[] ThumbSizes = { 72, 160, 360 };
+    private int thumbIndex = 2;
+    private int ThumbSize => ThumbSizes[Mathf.Clamp(thumbIndex, 0, ThumbSizes.Length - 1)];
+
+    // ô ảnh rộng bằng (hoặc rộng hơn) ô preview để preview vuông
+    private int CellOldW => Mathf.Max(250, ThumbSize + 10);
+    private int CellNewW => Mathf.Max(250, ThumbSize + 10);
 
     private static readonly string[] ImageExts = { ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".tif", ".tiff", ".webp" };
 
@@ -95,8 +99,9 @@ public sealed class BulkReskinWindow : EditorWindow
     {
         EditorApplication.update -= OnScanTick;
         scanning = false;
+        // chỉ destroy texture do tao tu file ngoai project;
+        // oldPreviewCache chua texture cua asset nen KHONG destroy
         foreach (var t in previewCache.Values) DestroyImmediate(t);
-        foreach (var t in oldPreviewCache.Values) DestroyImmediate(t);
         previewCache.Clear();
         oldPreviewCache.Clear();
     }
@@ -144,6 +149,12 @@ public sealed class BulkReskinWindow : EditorWindow
             mirrorBooster = GUILayout.Toggle(mirrorBooster, "Mirror BoosterUI", EditorStyles.toolbarButton, GUILayout.Width(110));
             showDestColumn = GUILayout.Toggle(showDestColumn, "Cột đường path", EditorStyles.toolbarButton, GUILayout.Width(100));
             showUsage = GUILayout.Toggle(showUsage, "Cột nơi dùng", EditorStyles.toolbarButton, GUILayout.Width(95));
+
+            GUILayout.Label("Preview", EditorStyles.miniLabel, GUILayout.Width(42));
+            int newIdx = EditorGUILayout.Popup(thumbIndex,
+                new[] { "72", "160", "360" }, EditorStyles.toolbarPopup, GUILayout.Width(50));
+            if (newIdx != thumbIndex) { thumbIndex = newIdx; Repaint(); }
+
             GUILayout.Label(entries.Count + " dòng", EditorStyles.miniLabel);
         }
     }
@@ -229,23 +240,19 @@ public sealed class BulkReskinWindow : EditorWindow
     {
         using (new EditorGUILayout.VerticalScope(GUILayout.Width(CellOldW)))
         {
-            using (new EditorGUILayout.HorizontalScope())
+            // preview ảnh cũ (ảnh gốc, hiện trọn + scale theo tỉ lệ)
+            var rect = EditorGUILayout.GetControlRect(false, ThumbSize);
+            DrawThumb(rect, e.oldPath != null ? GetOldTexture(e.oldPath) : null);
+
+            var tex = e.oldPath != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.oldPath) : null;
+            var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false, GUILayout.Width(CellOldW - 4));
+            var pickedPath = picked != null ? AssetDatabase.GetAssetPath(picked) : null;
+            if (pickedPath != e.oldPath)
             {
-                var tex = e.oldPath != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.oldPath) : null;
-                var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false,
-                    GUILayout.Width(CellOldW - ThumbSize - 6), GUILayout.Height(ThumbSize));
-
-                var pickedPath = picked != null ? AssetDatabase.GetAssetPath(picked) : null;
-                if (pickedPath != e.oldPath)
-                {
-                    e.oldPath = pickedPath;
-                    if (string.IsNullOrEmpty(e.destPath)) e.destPath = pickedPath;
-                }
-
-                // preview ảnh cũ (preview chính thức của Unity, đúng sprite rect)
-                var rect = GUILayoutUtility.GetRect(ThumbSize, ThumbSize, GUILayout.Width(ThumbSize), GUILayout.Height(ThumbSize));
-                DrawThumb(rect, e.oldPath != null ? GetOldPreview(e.oldPath) : null);
+                e.oldPath = pickedPath;
+                if (string.IsNullOrEmpty(e.destPath)) e.destPath = pickedPath;
             }
+
             EditorGUILayout.LabelField(e.oldPath != null ? e.oldPath : "(chưa chọn ảnh cũ)",
                 EditorStyles.miniLabel, GUILayout.Width(CellOldW - 4));
         }
@@ -255,18 +262,18 @@ public sealed class BulkReskinWindow : EditorWindow
     {
         using (new EditorGUILayout.VerticalScope(GUILayout.Width(CellNewW)))
         {
+            // preview ảnh mới — cũng là vùng thả file từ Explorer
+            var rect = EditorGUILayout.GetControlRect(false, ThumbSize);
+            HandleDragDrop(e, rect);
+            DrawThumb(rect, e.newPath != null ? GetPreview(e.newPath) : null);
+
             using (new EditorGUILayout.HorizontalScope())
             {
-                // kéo file từ Explorer / Texture2D trong project vào ô này
-                var dropRect = GUILayoutUtility.GetRect(LabelW, ThumbSize, GUILayout.Width(LabelW), GUILayout.Height(ThumbSize));
-                HandleDragDrop(e, dropRect);
-                GUI.Label(dropRect, "kéo\nfile", EditorStyles.miniLabel);
-
                 var tex = e.newPath != null && e.newPath.StartsWith("Assets/")
                     ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.newPath)
                     : null;
                 var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false,
-                    GUILayout.Width(CellNewW - ThumbSize - LabelW - 12), GUILayout.Height(ThumbSize));
+                    GUILayout.Width(CellNewW - 30));
                 if (picked != null)
                 {
                     string p = AssetDatabase.GetAssetPath(picked);
@@ -277,27 +284,30 @@ public sealed class BulkReskinWindow : EditorWindow
                     e.newPath = null;
                 }
 
-                if (GUILayout.Button("…", GUILayout.Width(22), GUILayout.Height(22)))
+                if (GUILayout.Button("…", GUILayout.Width(22)))
                 {
                     var file = EditorUtility.OpenFilePanel("Chọn ảnh mới", string.Empty, "");
                     if (!string.IsNullOrEmpty(file)) e.newPath = file;
                 }
             }
 
-            // preview ảnh mới
-            var rect = GUILayoutUtility.GetRect(ThumbSize, ThumbSize, GUILayout.Width(ThumbSize), GUILayout.Height(ThumbSize));
-            DrawThumb(rect, e.newPath != null ? GetPreview(e.newPath) : null);
-
             EditorGUILayout.LabelField(e.newPath != null ? e.newPath : "(chưa gán ảnh mới)",
                 EditorStyles.miniLabel, GUILayout.Width(CellNewW - 4));
         }
     }
 
+    // Vẽ ảnh trong ô: giữ đúng tỉ lệ, PHÓNG TO nếu ảnh nhỏ, luôn thấy trọn ảnh.
     private static void DrawThumb(Rect rect, Texture2D tex)
     {
-        EditorGUI.DrawRect(rect, new Color(0.16f, 0.16f, 0.16f));
-        if (tex != null)
-            GUI.DrawTexture(rect, tex, ScaleMode.ScaleToFit, true);
+        EditorGUI.DrawRect(rect, new Color(0.14f, 0.14f, 0.14f));
+        if (tex != null && tex.width > 0 && tex.height > 0)
+        {
+            float k = Mathf.Min(rect.width / tex.width, rect.height / tex.height);
+            float w = tex.width * k;
+            float h = tex.height * k;
+            var r = new Rect(rect.x + (rect.width - w) * 0.5f, rect.y + (rect.height - h) * 0.5f, w, h);
+            GUI.DrawTexture(r, tex, ScaleMode.StretchToFill, true);
+        }
         var border = new Color(0f, 0f, 0f, 0.6f);
         EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), border);
         EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), border);
@@ -689,7 +699,7 @@ public sealed class BulkReskinWindow : EditorWindow
             if (!File.Exists(full)) { previewCache[path] = null; return null; }
             var bytes = File.ReadAllBytes(full);
             tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
-            if (ImageConversion.LoadImage(tex, bytes)) tex = Scale(tex);
+            if (ImageConversion.LoadImage(tex, bytes)) tex = Scale(tex, 512);
             else { DestroyImmediate(tex); tex = null; }
         }
         catch { tex = null; }
@@ -697,17 +707,17 @@ public sealed class BulkReskinWindow : EditorWindow
         return tex;
     }
 
-    private Texture2D GetOldPreview(string assetPath)
+    private Texture2D GetOldTexture(string assetPath)
     {
         if (oldPreviewCache.TryGetValue(assetPath, out var cached)) return cached;
-        var tex = AssetPreview.GetAssetPreview(AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath));
+        // load texture GOC de hien tron anh (khong dung AssetPreview de khong bi cat vien)
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
         oldPreviewCache[assetPath] = tex;
         return tex;
     }
 
-    private static Texture2D Scale(Texture2D src)
+    private static Texture2D Scale(Texture2D src, int max)
     {
-        const int max = ThumbSize * 2;
         if (src.width <= max && src.height <= max) return src;
         float k = max / (float)Math.Max(src.width, src.height);
         var dst = new Texture2D(Math.Max(1, (int)(src.width * k)), Math.Max(1, (int)(src.height * k)),
