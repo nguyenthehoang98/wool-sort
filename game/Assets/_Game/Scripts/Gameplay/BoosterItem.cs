@@ -154,7 +154,7 @@ namespace _Game.Scripts.Gameplay
             if (_btnBoosterState == ButtonBoosterState.Lock)
             {
                 var unlockLevel = Configs.GetBoosterUnlockLevel(type);
-                ShowTooltip($"Unlock at level {unlockLevel}");
+                ShowTooltip($"Mở khoá ở level {unlockLevel}");
                 return;
             }
 
@@ -175,13 +175,9 @@ namespace _Game.Scripts.Gameplay
 
         private static void ShowTooltip(string message)
         {
-            // KitTooltipManager thường nằm ở scene Entry/Home (DontDestroyOnLoad),
-            // mở thẳng scene Gameplay thì Instance null -> fallback log, không crash.
-            var tooltip = KitTooltipManager.Instance;
-            if (tooltip != null)
-                tooltip.Show(message);
-            else
-                Debug.Log($"[Booster Tooltip] {message}");
+            // KitTooltipManager tự tạo instance nếu scene chưa có (mở thẳng scene
+            // Gameplay) → thông báo luôn hiện lên màn hình.
+            KitTooltipManager.ShowMessage(message);
         }
 
         private void OpenBuyPopup()

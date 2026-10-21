@@ -37,6 +37,33 @@ namespace _KIT
             StartCoroutine(UpdateCameraCanvasIE());
         }
 
+        /// <summary>
+        /// Tự tạo tooltip nếu scene hiện tại không có instance nào.
+        ///
+        /// Trước đây tooltip nằm trong instance của scene Entry/Home (DontDestroyOnLoad
+        /// nên sang Gameplay vẫn còn) — nhưng khi mở thẳng scene Gameplay (cách test
+        /// booster) thì không có instance, Instance = null và mọi thông báo chỉ in ra
+        /// Console chứ không hiện lên màn hình. Prefab nằm trong Resources/ để tự load
+        /// được ở mọi scene.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void EnsureInstance()
+        {
+            if (Instance != null) return;
+
+            var prefab = Resources.Load<GameObject>(PrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning("[KitTooltipManager] Không tìm thấy prefab '" + PrefabResourcePath +
+                                 "' trong Resources/ — thông báo sẽ không hiện lên màn hình.");
+                return;
+            }
+
+            Instantiate(prefab);
+        }
+
+        private const string PrefabResourcePath = "TooltipManager";
+
         private IEnumerator UpdateCameraCanvasIE()
         {
             while (true)
@@ -70,6 +97,28 @@ namespace _KIT
             item.Show(content, duration);
 
             currentItem = item;
+        }
+
+        /// <summary>
+        /// Hiện thông báo từ code, không cần giữ reference tới instance.
+        /// Tự tạo instance nếu scene chưa có (trường hợp mở thẳng scene Gameplay).
+        /// </summary>
+        public static void ShowMessage(string message, float duration = 3f)
+        {
+            var inst = Instance;
+            if (inst == null)
+            {
+                var prefab = Resources.Load<GameObject>(PrefabResourcePath);
+                if (prefab == null)
+                {
+                    Debug.LogWarning("[KitTooltipManager] Không tìm thấy prefab trong Resources/ — " +
+                                     "chỉ in ra Console: " + message);
+                    return;
+                }
+                inst = Instantiate(prefab).GetComponent<KitTooltipManager>();
+            }
+
+            if (inst != null) inst.Show(message, duration);
         }
 
         private void OnDestroy()

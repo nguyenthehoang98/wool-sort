@@ -96,7 +96,7 @@ namespace _Game.Scripts.Gameplay
                     {
                         if(needShowToolTip)
                         {
-                            ShowTooltip("No more slots available");
+                            ShowTooltip("Vùng chờ đã đầy, không thêm được ô");
                         }
                     }
 
@@ -107,7 +107,7 @@ namespace _Game.Scripts.Gameplay
                     {
                         if(needShowToolTip)
                         {
-                            ShowTooltip("Waiting area is empty");
+                            ShowTooltip("Vùng chờ đang trống, không có len nào để dọn");
                         }
                     }
                     return !flag2;
@@ -133,13 +133,9 @@ namespace _Game.Scripts.Gameplay
 
         private static void ShowTooltip(string message)
         {
-            // KitTooltipManager thường nằm ở scene Entry/Home (DontDestroyOnLoad),
-            // mở thẳng scene Gameplay thì Instance null -> fallback log, không crash.
-            var tooltip = KitTooltipManager.Instance;
-            if (tooltip != null)
-                tooltip.Show(message);
-            else
-                Debug.Log($"[Booster Tooltip] {message}");
+            // KitTooltipManager tự tạo instance nếu scene chưa có (mở thẳng scene
+            // Gameplay) → thông báo luôn hiện lên màn hình.
+            KitTooltipManager.ShowMessage(message);
         }
 
         public void UseBooster(BoosterType type, bool isRevive = false)

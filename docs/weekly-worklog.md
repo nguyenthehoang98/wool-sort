@@ -1041,6 +1041,53 @@ code tự bật được nên không còn phụ thuộc trạng thái active tro
 | Compile 3 assembly | PASS — 0 error |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 21 — Thông báo khi bấm booster không đủ điều kiện (2026-10-21)
+
+Yêu cầu: *"bấm booster nhưng ko đủ điều kiện → bắn thông báo lên"*.
+
+### Chẩn đoán
+
+Logic thông báo **đã có sẵn** trong code:
+
+| Tình huống | Chỗ xử lý | Message cũ |
+|---|---|---|
+| Booster bị khoá (chưa tới level) | `BoosterItem.OnClick` | "Unlock at level N" |
+| AddSlot khi vùng chờ đã đầy | `BoosterManager.CanUseBooster` | "No more slots available" |
+| Clean khi vùng chờ trống | `BoosterManager.CanUseBooster` | "Waiting area is empty" |
+
+Nhưng **thông báo không hiện** vì `KitTooltipManager.Instance` bị null:
+
+- Instance của `TooltipManager.prefab` chỉ có trong **EntryScene** và **Home** (có
+  `DontDestroyOnLoad` nên sang Gameplay vẫn còn).
+- **`Gameplay.unity` không có instance** → mở thẳng scene Gameplay (cách test booster)
+  thì `Instance == null` → `ShowTooltip` chỉ `Debug.Log` → **không có gì trên màn hình**.
+
+### Đã sửa
+
+- **Chuyển `TooltipManager.prefab`** từ `_KIT/GUI/Prefab/` → `_KIT/GUI/Resources/`
+  (giữ nguyên `.meta` → **GUID không đổi** → instance trong Entry/Home vẫn resolve).
+- **`KitTooltipManager`**: thêm `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)] EnsureInstance()`
+  → nếu scene nào không có instance thì **tự load prefab trong `Resources/` và tạo** →
+  tooltip có mặt ở **mọi scene**, kể cả mở thẳng Gameplay.
+- **`KitTooltipManager.ShowMessage(string)`** (static mới): hiện thông báo từ code, không cần
+  giữ reference; tự tạo instance nếu thiếu.
+- **`BoosterItem` / `BoosterManager`**: `ShowTooltip` dùng `KitTooltipManager.ShowMessage(...)`
+  thay vì tự check `Instance` rồi fallback `Debug.Log`.
+- **Dịch message sang tiếng Việt** cho khớp phần UI còn lại:
+  - "Vùng chờ đã đầy, không thêm được ô"
+  - "Vùng chờ đang trống, không có len nào để dọn"
+  - "Mở khoá ở level N"
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| GUID `TooltipManager.prefab` sau khi đổi path | `b659f97418d9ed841b50c63803a3d44d` — **không đổi** ✓ |
+| GUID đó có nằm trong danh sách dangling? | không ✓ (instance Entry/Home vẫn resolve) |
+| Script trong prefab (`KitTooltip`, `KitTooltipManager`) | resolve ✓ |
+| Compile 3 assembly | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
