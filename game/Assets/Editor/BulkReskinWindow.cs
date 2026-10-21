@@ -60,12 +60,17 @@ public sealed class BulkReskinWindow : EditorWindow
     private Vector2 scroll;
     private string filter = "";
     private string report = "";
+    private string lastScanSummary = "";
     private bool mirrorBooster = true;
     private bool showDestColumn = true;
     private bool showUsage = true;
     private bool includeResources = false;
+    private bool onlyRuntime = true;   // quet theo "asset co thuc su chay"
+    private bool showOnlyNotRunning = false;
     private string rootsText =
         "Assets/Scenes/EntryScene.unity;Assets/Scenes/Home.unity;Assets/Scenes/Gameplay.unity";
+    private readonly Dictionary<string, ReskinRuntimeScanner.RunState> runStates =
+        new Dictionary<string, ReskinRuntimeScanner.RunState>();
 
     // ---- quét (chunked, không đơ)
     private bool scanning;
@@ -174,6 +179,16 @@ public sealed class BulkReskinWindow : EditorWindow
             rootsText = EditorGUILayout.TextField(rootsText);
             includeResources = EditorGUILayout.ToggleLeft("Kèm ảnh trong Resources/", includeResources, GUILayout.Width(160));
         }
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            onlyRuntime = EditorGUILayout.ToggleLeft(
+                new GUIContent("Chỉ quét asset CHẠY THẬT", "Bỏ ảnh fallback (Resources có bản sao ngoài Resources) và ảnh không ai dùng"),
+                onlyRuntime, GUILayout.Width(160));
+            if (onlyRuntime)
+                showOnlyNotRunning = EditorGUILayout.ToggleLeft(
+                    new GUIContent("Ẩn dòng đang chạy", "Chỉ hiện dòng KHÔNG chạy (fallback / thừa) để dọn"),
+                    showOnlyNotRunning, GUILayout.Width(170));
+        }
     }
 
     private void DrawHeader()
@@ -220,7 +235,12 @@ public sealed class BulkReskinWindow : EditorWindow
         // 1) danh sách dòng đang hiện (sau khi lọc)
         var visible = new List<int>();
         for (int i = 0; i < entries.Count; i++)
-            if (MatchFilter(entries[i], filter)) visible.Add(i);
+        {
+            if (!MatchFilter(entries[i], filter)) continue;
+            if (showOnlyNotRunning && onlyRuntime &&
+                GetRunState(entries[i].oldPath) == ReskinRuntimeScanner.RunState.Running) continue;
+            visible.Add(i);
+        }
 
         // 2) chiều cao từng dòng: ô preview co theo anh, dong thu nho theo anh
         int n = visible.Count;
@@ -384,7 +404,13 @@ public sealed class BulkReskinWindow : EditorWindow
     private void DrawInfoCell(Entry e, Rect cell)
     {
         var warnRect = new Rect(cell.x, cell.y + 2f, cell.width - 4f, 16f);
-        EditorGUI.LabelField(warnRect, BuildWarn(e), EditorStyles.miniLabel);
+        string warn = BuildWarn(e);
+        string state = BuildState(e);
+        if (!string.IsNullOrEmpty(state))
+        {
+            warn = string.IsNullOrEmpty(warn) ? state : state + "  |  " + warn;
+        }
+        EditorGUI.LabelField(warnRect, warn, EditorStyles.miniLabel);
 
         if (!showUsage || string.IsNullOrEmpty(e.oldPath)) return;
 
@@ -523,6 +549,27 @@ public sealed class BulkReskinWindow : EditorWindow
         return list;
     }
 
+    private ReskinRuntimeScanner.RunState GetRunState(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath)) return ReskinRuntimeScanner.RunState.Unused;
+        return runStates.TryGetValue(assetPath, out var s)
+            ? s
+            : ReskinRuntimeScanner.RunState.Unused;
+    }
+
+    /// <summary>Nhãn trạng thái "chạy thật" của ảnh (rỗng nếu không có dữ liệu).</summary>
+    private string BuildState(Entry e)
+    {
+        if (!onlyRuntime || runStates.Count == 0) return "";
+        switch (GetRunState(e.oldPath))
+        {
+            case ReskinRuntimeScanner.RunState.Running: return "● Chạy";
+            case ReskinRuntimeScanner.RunState.HiddenAtLoad: return "◐ Ẩn lúc load (bật khi có event)";
+            case ReskinRuntimeScanner.RunState.Fallback: return "○ Fallback (có bản sao ngoài Resources)";
+            default: return "✕ Thừa — không ai dùng";
+        }
+    }
+
     private Vector2Int GetSize(string path)
     {
         if (sizeCache.TryGetValue(path, out var v)) return v;
@@ -583,6 +630,35 @@ public sealed class BulkReskinWindow : EditorWindow
                 if (!dep.StartsWith("Assets/", StringComparison.Ordinal)) continue;
                 if (!ImageExts.Contains(Path.GetExtension(dep).ToLower())) continue;
                 found.Add(dep);
+            }
+        }
+
+        // phan loai "chay that / an luc load / fallback / thua"
+        runStates.Clear();
+        if (onlyRuntime)
+        {
+            try
+            {
+                var scan = ReskinRuntimeScanner.Scan(roots);
+                foreach (var kv in scan.States) runStates[kv.Key] = kv.Value;
+
+                // loai anh fallback + thua khoi danh sach (chi khi scanner phan loai duoc)
+                if (scan.Running > 0)
+                {
+                    found.RemoveWhere(p =>
+                    {
+                        var st = runStates.TryGetValue(p, out var s2) ? s2 : ReskinRuntimeScanner.RunState.Unused;
+                        return st == ReskinRuntimeScanner.RunState.Fallback || st == ReskinRuntimeScanner.RunState.Unused;
+                    });
+                }
+                lastScanSummary = string.Format("Chạy {0} · Ẩn lúc load {1} · Fallback {2} · Thừa {3}",
+                    scan.Running, scan.Hidden, scan.Fallback, scan.Unused);
+                if (scan.Running == 0)
+                    lastScanSummary += "  (scanner không đọc được scene → không lọc)";
+            }
+            catch (Exception ex)
+            {
+                lastScanSummary = "Không phân loại được: " + ex.Message;
             }
         }
 
@@ -777,7 +853,8 @@ public sealed class BulkReskinWindow : EditorWindow
             {
                 scanning = false;
                 EditorApplication.update -= OnScanTick;
-                report = "Đã quét " + entries.Count + " ảnh dùng trong game.";
+                report = "Đã quét " + entries.Count + " ảnh dùng trong game."
+                         + (string.IsNullOrEmpty(lastScanSummary) ? "" : "\n" + lastScanSummary);
             }
         }
 
