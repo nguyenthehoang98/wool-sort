@@ -787,6 +787,67 @@ Bảng đầy đủ: `docs/asset-inventory-images.md`.
 - Ảnh 9-slice phải giữ nguyên `spriteBorder` khi đổi PNG.
 - Sửa ảnh ở `_Game/BoosterUI_Picked/` thì phải **copy đè** sang `_Game/Resources/BoosterUI/` (bản runtime fallback).
 
+## Vòng 16 — Tool reskin hàng loạt (2026-10-21)
+
+Yêu cầu: "có cách nào reskin hàng loạt ko nhỉ" → chọn phương án **tool ghi đè PNG bằng Python**.
+
+### Khảo sát trước khi làm
+
+| Texture | Dùng ở | Kết luận |
+|---|---|---|
+| `Textures/Pattern/Pattern_basecolor.png` | 21 material `ThreadMat_*` | đổi 1 file = đổi cả bộ len |
+| `Textures/Pattern/Pattern_normal.png` | 21 material | |
+| `Textures/Fabric_Pattern/Fabric_Pattern_basecolor.png` | 21 material `StringMat_*` | đổi 1 file = đổi cả bộ sợi |
+| `Textures/Fabric_Pattern/Fabric_Pattern_normal.png` | 21 material | |
+| `Textures/MasterColor.png` | 3 material spool (`_Texture1`) | đổi 1 file = đổi màu cuộn |
+| `Textures/RainbowTexture.png` | `_TextureSample0` | màu cầu vồng |
+
+→ Đã có sẵn "tầng reskin 1 file" không cần code.
+
+**Phát hiện thêm — texture đã bị xoá nhưng material vẫn trỏ tới:**
+
+| Property | Số material | Shader sample thật? |
+|---|---|---|
+| `_MainTex` | 54 | không (rác) |
+| `_BumpMap` | 54 | không (rác) |
+| `_Height` | 66 | không (rác) |
+| `_noise` | 65 | không (rác) |
+| `_DissolveNoise` | 23 | **có** → thiếu texture thật |
+| `_TextureSample0` | 18 | **có** → thiếu texture thật |
+
+`YarnDissolve.shader` và `ToonyColors_ThreadScrew.shader` thực sự sample `_Texture`,
+`_NormalMap`, `_AO`, `_RoughnessMap`, `_DissolveNoise`; `ToonyColors_ThreadScrew_Basket.shader`
+và `ToonyColors_SpoolBase.shader` chỉ sample `_TextureSample0`. → một số material đang
+thiếu texture thật, cần bổ sung trước khi reskin.
+
+### Tool: `tools/reskin.py`
+
+Ghi đè **nội dung** file PNG, không xoá rồi tạo lại → `.meta` giữ nguyên → GUID không đổi →
+prefab/scene/material vẫn trỏ đúng, `spriteBorder` (9-slice) và PPU không mất.
+
+- `--src <folder>` — folder ảnh mới; `--apply` mới thực thi (mặc định chỉ xem kế hoạch).
+- Khớp file theo thứ tự: **đường dẫn tương đối** → **CSV map** (`--map`) → **tên file**.
+- Trùng tên nhiều nơi → ưu tiên bản **không nằm trong `Resources/`** (bản editable) và in ra
+  các bản trùng còn lại; `--all-matches` để thay hết.
+- Cảnh báo **9-slice** khi kích thước PNG mới khác cũ (border tính theo pixel cũ).
+- `--mirror-booster` copy thêm sang `_Game/Resources/BoosterUI/` (bản runtime fallback).
+- Backup bản gốc vào `.reskin_backup/<timestamp>/` (đã thêm vào `.gitignore`), tắt bằng `--no-backup`.
+
+### Verify (chạy trên bản sao tạm, không đụng project thật)
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Dry-run: khớp chính xác theo đường dẫn | `_Game/Textures/UIV2/Frame_Tooltips.png` ✓ |
+| Dry-run: trùng tên → chọn bản editable | `Button_Green.png` → `_Game/BoosterUI_Picked/` ✓ (in ra 2 bản trùng còn lại) |
+| Dry-run: cảnh báo 9-slice đổi kích thước | `Button_Green` 356x168 → 400x200 ✓ |
+| Dry-run: ảnh không tồn tại | `Icon_Moi_Minh.png` → báo "không tìm thấy" ✓ |
+| `--apply`: `.meta` **không đổi** (md5) | cả 2 file ✓ |
+| `--apply`: nội dung PNG mới | ✓ |
+| `--apply --mirror-booster`: copy sang `Resources/BoosterUI/` | ✓ |
+| `--apply`: backup bản gốc | ✓ (đã xoá thư mục test) |
+
+Tài liệu: `docs/reskin.md`.
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
