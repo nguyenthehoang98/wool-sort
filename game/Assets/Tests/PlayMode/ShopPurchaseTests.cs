@@ -120,8 +120,14 @@ public class ShopPurchaseTests
         var popupType = Type.GetType("_Game.Scripts.Meta.PurchaseSuccessPopup, Assembly-CSharp");
         Assert.IsNotNull(popupType, "Thiếu type PurchaseSuccessPopup.");
 
-        var popup = UnityEngine.Object.FindFirstObjectByType(popupType);
+        // GameObject gốc của popup có thể để TẮT trong scene (để Scene View gọn)
+        // → phải tìm cả object inactive, và bật lên để Awake tự ẩn card.
+        var popup = UnityEngine.Object.FindFirstObjectByType(popupType, FindObjectsInactive.Include);
         Assert.IsNotNull(popup, "Không thấy PurchaseSuccessPopup trong scene Home.");
+
+        var popupGo = (popup as Component).gameObject;
+        if (!popupGo.activeSelf) popupGo.SetActive(true);
+        yield return null;
 
         var card = GetPrivate(popup, "card") as GameObject;
         Assert.IsNotNull(card, "Popup không có field card.");

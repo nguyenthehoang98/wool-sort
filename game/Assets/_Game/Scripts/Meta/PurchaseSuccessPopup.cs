@@ -40,10 +40,39 @@ namespace _Game.Scripts.Meta
             if (Instance == this) Instance = null;
         }
 
+        /// <summary>
+        /// Lấy popup nhận thưởng và bật lên nếu đang tắt.
+        ///
+        /// GameObject gốc được để TẮT trong scene (để Scene View gọn và không
+        /// chặn input) — nên Awake chưa chạy, Instance còn null, và phải tìm cả
+        /// object inactive mới thấy. Đây là lý do popup không hiện nếu chỉ dùng
+        /// PurchaseSuccessPopup.Instance.
+        /// </summary>
+        public static PurchaseSuccessPopup Acquire()
+        {
+            if (Instance == null)
+            {
+                Instance = FindFirstObjectByType<PurchaseSuccessPopup>(FindObjectsInactive.Include);
+            }
+
+            if (Instance == null) return null;
+
+            if (!Instance.gameObject.activeSelf)
+            {
+                // Awake chạy khi bật -> Instance chính thức + tự ẩn card đi
+                Instance.gameObject.SetActive(true);
+            }
+
+            return Instance;
+        }
+
         /// <summary>Hiện màn nhận thưởng cho gói vừa mua.</summary>
         public void Show(ShopItem item)
         {
             if (item == null) return;
+
+            // GameObject gốc có thể đang tắt (đặt vậy trong scene) -> bật lên.
+            if (!gameObject.activeSelf) gameObject.SetActive(true);
 
             if (icon != null) icon.sprite = item.icon;
             if (txtTitle != null) txtTitle.text = "Nhận thưởng!";

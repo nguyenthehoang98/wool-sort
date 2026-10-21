@@ -71,8 +71,11 @@ namespace _Game.Scripts.Meta
             {
                 Notify($"Mua thành công {_item.displayName}", onNotify);
                 // Màn hình nhận thưởng sau khi mua.
-                var popup = PurchaseSuccessPopup.Instance;
+                // Dùng Acquire() vì GameObject gốc của popup để TẮT trong scene
+                // -> Instance còn null nếu chỉ gọi PurchaseSuccessPopup.Instance.
+                var popup = PurchaseSuccessPopup.Acquire();
                 if (popup != null) popup.Show(_item);
+                else Debug.LogWarning("[ShopItemView] Không tìm thấy PurchaseSuccessPopup trong scene.");
             }
             else
             {

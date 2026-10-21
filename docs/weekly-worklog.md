@@ -996,6 +996,51 @@ Chi tiết + checklist test tay: `docs/evidence/lose-race-condition.md`.
 | Compile 3 assembly | PASS — 0 error (warning đều có sẵn từ file cũ) |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 20 — Fix popup nhận thưởng không hiện khi mua (2026-10-21)
+
+Báo cáo: *"hiện tại khi mua thì ko show popup nhận thưởng"*.
+
+### Chẩn đoán
+
+Instance `PurchaseSuccessPopup` trong `Home.unity` có:
+
+```yaml
+propertyPath: m_IsActive
+value: 0
+```
+
+→ **GameObject gốc của popup đang TẮT** → `Awake()` không chạy → `Instance` vẫn `null`
+→ `ShopItemView.OnBuy` gọi `PurchaseSuccessPopup.Instance` → null → **không hiện popup**
+(mua vẫn thành công, chỉ thiếu popup).
+
+Vì sao lại tắt? Ở **edit mode** `Awake` không chạy nên `SetVisible(false)` không có tác dụng
+→ card hiện lên trong Scene View → dễ bị tắt nhầm để scene gọn. Nhưng để gốc tắt thì
+`Instance` không bao giờ được set.
+
+### Đã sửa
+
+- **`PurchaseSuccessPopup.Acquire()`** (mới, static): tìm popup kể cả object **inactive**
+  (`FindFirstObjectByType<T>(FindObjectsInactive.Include)`) và **bật lên** nếu đang tắt
+  (bật thì `Awake` chạy → set `Instance` + tự ẩn card).
+- **`PurchaseSuccessPopup.Show()`**: tự bật `gameObject` nếu đang tắt.
+- **`ShopItemView.OnBuy`**: dùng `Acquire()` thay vì `Instance`, và log cảnh báo nếu
+  không tìm thấy popup.
+- **Test `ShopPurchaseTests.Buy_ShowsRewardPopup`**: tìm popup kèm `FindObjectsInactive.Include`
+  và bật lên trước khi assert (trước đó dùng `FindFirstObjectByType` không có Include →
+  không thấy popup đang tắt).
+
+Giữ nguyên thiết kế "gốc để tắt trong scene" (Scene View gọn, không chặn input) — giờ
+code tự bật được nên không còn phụ thuộc trạng thái active trong scene.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Prefab `PurchaseSuccessPopup.prefab` — field `icon/txtTitle/txtName/txtAmount/btnOk/btnClose/shade/card/cardRect` | đều còn trỏ đúng ✓ |
+| Layout prefab (Card 640×? canh giữa, scale 1) | OK ✓ |
+| Compile 3 assembly | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
