@@ -6,62 +6,64 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Reskin hàng loạt: ghi đè ảnh mới vào đúng asset cũ, GIU NGUYEN .meta
-/// nên GUID không đổi (prefab/scene/material vẫn trỏ đúng) và spriteBorder
-/// (9-slice) + PPU không bị mất.
+/// Reskin hàng loạt theo BẢNG: mỗi dòng là 1 cặp "ảnh cũ -> ảnh mới".
+/// Ghi đè nội dung ảnh mới vào asset cũ, GIU NGUYEN .meta nên GUID không đổi
+/// (prefab/scene/material vẫn trỏ đúng) và spriteBorder (9-slice) + PPU không mất.
 ///
-/// Khớp file theo thứ tự:
-///   1. đường dẫn tương đối (folder ảnh mới cấu trúc y hệt project)
-///   2. tên file — nếu trùng nhiều nơi thì chọn bản không nằm trong Resources/
-///      (bản editable) và có thể chọn tay bằng dropdown
+/// Cách dùng:
+///   1. "Quét ảnh trong project" hoặc "Nạp từ folder..." để lấy danh sách dòng
+///   2. Mỗi dòng: chọn ảnh MỚI (kéo file từ Explorer, hoặc bấm "..." để browse,
+///      hoặc kéo 1 Texture2D trong project vào ô bên phải)
+///   3. Cột "Lưu vào" là đường path sẽ ghi ảnh (mặc định = path của ảnh cũ)
+///   4. "Áp dụng" — backup bản gốc rồi ghi đè
+///
+/// Bảng được lưu ở Assets/_Game/Configs/ReskinMap.json nên lưu lại được.
 ///
 /// Mở: Tools / Reskin / Reskin hàng loạt
 /// </summary>
 public sealed class BulkReskinWindow : EditorWindow
 {
     private const string MenuPath = "Tools/Reskin/Reskin hàng loạt";
+    private const string MapPath = "Assets/_Game/Configs/ReskinMap.json";
+
     private static readonly string[] ImageExts = { ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".tif", ".tiff", ".webp" };
 
-    private string sourceFolder;
-    private Vector2 scroll;
-    private bool replaceAllSameName;
-    private bool mirrorBooster;
-    private string report = "";
-    private bool showOnlyProblems;
+    [Serializable]
+    private sealed class Entry
+    {
+        public string oldPath;   // asset cũ trong project ("Assets/...") — rỗng nếu chỉ định đích
+        public string newPath;   // ảnh mới: đường dẫn tuyệt đối ngoài project, hoặc "Assets/..." nếu đã import
+        public string destPath;  // nơi sẽ ghi ("Assets/...")
+        public bool enabled = true;
+    }
 
-    private readonly List<Row> rows = new List<Row>();
+    [Serializable]
+    private sealed class MapFile
+    {
+        public List<Entry> entries = new List<Entry>();
+    }
+
+    private readonly List<Entry> entries = new List<Entry>();
+    private Vector2 scroll;
+    private string filter = "";
+    private string report = "";
+    private bool mirrorBooster = true;
+    private bool showDestColumn = true;
+
     private readonly Dictionary<string, Texture2D> previewCache = new Dictionary<string, Texture2D>();
     private readonly Dictionary<string, Texture2D> oldPreviewCache = new Dictionary<string, Texture2D>();
-
-    private sealed class Row
-    {
-        public string newFull;      // đường dẫn tuyệt đối của ảnh mới
-        public string newRel;       // đường dẫn tương đối so với folder nguồn
-        public string[] candidates; // các asset trong project trùng tên
-        public int targetIndex;
-        public bool selected = true;
-        public string status = "";
-        public string warn = "";
-        public Vector2Int newSize;
-        public Vector2Int oldSize;
-        public bool hasBorder;
-        public Vector4 border;
-
-        public string Target => candidates != null && targetIndex >= 0 && targetIndex < candidates.Length
-            ? candidates[targetIndex] : null;
-    }
+    private readonly Dictionary<string, string> usageCache = new Dictionary<string, string>();
 
     [MenuItem(MenuPath, false, 40)]
     private static void Open()
     {
         var w = GetWindow<BulkReskinWindow>("Reskin hàng loạt");
-        w.minSize = new Vector2(900, 480);
+        w.minSize = new Vector2(1040, 520);
     }
 
     private void OnEnable()
     {
-        if (string.IsNullOrEmpty(sourceFolder))
-            sourceFolder = string.Empty;
+        LoadMap();
     }
 
     private void OnDisable()
@@ -76,37 +78,15 @@ public sealed class BulkReskinWindow : EditorWindow
     private void OnGUI()
     {
         EditorGUILayout.Space(4);
-        EditorGUILayout.LabelField("Reskin hàng loạt — ghi đè ảnh, giữ nguyên .meta (GUID / 9-slice / PPU)",
+        EditorGUILayout.LabelField("Reskin hàng loạt — bảng ảnh cũ → ảnh mới",
             EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Ghi đè nội dung ảnh, giữ nguyên .meta (GUID / 9-slice / PPU). " +
+                                    "Đường path đích hiện ở cột \"Lưu vào\".",
+            EditorStyles.miniLabel);
 
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            EditorGUILayout.PrefixLabel("Folder ảnh mới");
-            EditorGUILayout.SelectableLabel(sourceFolder, EditorStyles.textField, GUILayout.Height(18));
-            if (GUILayout.Button("Chọn…", GUILayout.Width(70)))
-            {
-                var picked = EditorUtility.OpenFolderPanel("Chọn folder chứa ảnh mới", string.IsNullOrEmpty(sourceFolder) ? "" : sourceFolder, "");
-                if (!string.IsNullOrEmpty(picked))
-                {
-                    sourceFolder = picked;
-                    Scan();
-                }
-            }
-            if (GUILayout.Button("Quét lại", GUILayout.Width(80))) Scan();
-        }
-
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            replaceAllSameName = EditorGUILayout.ToggleLeft(
-                "Thay cả các bản trùng tên (mặc định: chỉ bản editable)", replaceAllSameName);
-            mirrorBooster = EditorGUILayout.ToggleLeft(
-                "Copy thêm sang Resources/BoosterUI (bản runtime fallback)", mirrorBooster);
-            showOnlyProblems = EditorGUILayout.ToggleLeft("Chỉ hiện dòng có vấn đề", showOnlyProblems, GUILayout.Width(170));
-        }
-
-        EditorGUILayout.Space(2);
         DrawToolbar();
         EditorGUILayout.Space(2);
+        DrawHeader();
         DrawRows();
 
         EditorGUILayout.Space(6);
@@ -114,292 +94,422 @@ public sealed class BulkReskinWindow : EditorWindow
             EditorGUILayout.HelpBox(report, MessageType.Info);
 
         EditorGUILayout.Space(4);
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            int selected = rows.Count(r => r.selected && r.Target != null);
-            GUI.enabled = selected > 0;
-            if (GUILayout.Button("Áp dụng (" + selected + ")", GUILayout.Height(28)))
-                Apply();
-            GUI.enabled = true;
-
-            if (GUILayout.Button("Hoàn tác từ backup", GUILayout.Width(150), GUILayout.Height(28)))
-                Restore();
-        }
+        DrawFooter();
     }
 
     private void DrawToolbar()
     {
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            if (GUILayout.Button("Chọn tất cả", EditorStyles.toolbarButton, GUILayout.Width(80)))
-                foreach (var r in rows) r.selected = true;
-            if (GUILayout.Button("Bỏ chọn tất cả", EditorStyles.toolbarButton, GUILayout.Width(95)))
-                foreach (var r in rows) r.selected = false;
+            if (GUILayout.Button("Quét ảnh trong project", EditorStyles.toolbarButton, GUILayout.Width(150)))
+                ScanProjectImages();
+            if (GUILayout.Button("Nạp từ folder…", EditorStyles.toolbarButton, GUILayout.Width(110)))
+                LoadFromFolder();
+            if (GUILayout.Button("Thêm dòng", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            {
+                entries.Add(new Entry());
+                return;
+            }
+            if (GUILayout.Button("Lưu bảng", EditorStyles.toolbarButton, GUILayout.Width(70))) SaveMap();
+            if (GUILayout.Button("Nạp bảng", EditorStyles.toolbarButton, GUILayout.Width(70))) LoadMap();
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(rows.Count + " ảnh", EditorStyles.miniLabel);
+            mirrorBooster = GUILayout.Toggle(mirrorBooster, "Mirror BoosterUI", EditorStyles.toolbarButton, GUILayout.Width(110));
+            showDestColumn = GUILayout.Toggle(showDestColumn, "Cột đường path", EditorStyles.toolbarButton, GUILayout.Width(100));
+            GUILayout.Label(entries.Count + " dòng", EditorStyles.miniLabel);
+        }
+    }
+
+    private void DrawHeader()
+    {
+        using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+        {
+            GUILayout.Label(" ", GUILayout.Width(20));
+            GUILayout.Label("ẢNH CŨ (asset trong project)", GUILayout.Width(230));
+            GUILayout.Label("ẢNH MỚI (kéo file / bấm …)", GUILayout.Width(230));
+            if (showDestColumn) GUILayout.Label("LƯU VÀO (đường path đích)", GUILayout.Width(300));
+            GUILayout.Label("CẢNH BÁO / DÙNG Ở", GUILayout.ExpandWidth(true));
+        }
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            GUILayout.Label(" ", GUILayout.Width(20));
+            filter = GUILayout.TextField(filter, GUILayout.Width(230));
+            GUILayout.Space(232);
+            if (showDestColumn) GUILayout.Space(302);
         }
     }
 
     private void DrawRows()
     {
-        if (rows.Count == 0)
-        {
-            EditorGUILayout.HelpBox("Chọn folder chứa ảnh mới rồi bấm \"Quét lại\".", MessageType.Info);
-            return;
-        }
-
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
-        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        GUILayout.Label(" ", GUILayout.Width(22));
-        GUILayout.Label("Ảnh mới", GUILayout.Width(190));
-        GUILayout.Label("Cũ", GUILayout.Width(52));
-        GUILayout.Label("Ảnh trong project", GUILayout.Width(320));
-        GUILayout.Label("Cảnh báo", GUILayout.ExpandWidth(true));
-        EditorGUILayout.EndHorizontal();
-
-        for (int i = 0; i < rows.Count; i++)
+        for (int i = 0; i < entries.Count; i++)
         {
-            var r = rows[i];
-            if (showOnlyProblems && string.IsNullOrEmpty(r.warn) && r.Target != null) continue;
+            var e = entries[i];
+            if (!string.IsNullOrEmpty(filter) &&
+                !MatchFilter(e, filter)) continue;
 
-            EditorGUILayout.BeginHorizontal();
-            r.selected = EditorGUILayout.Toggle(r.selected, GUILayout.Width(20));
-
-            // preview ảnh mới
-            var tex = GetPreview(r.newFull);
-            if (tex != null)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                var rect = GUILayoutUtility.GetRect(46, 46, GUILayout.Width(46));
-                GUI.DrawTexture(rect, tex, ScaleMode.ScaleToFit);
-            }
-            else GUILayout.Space(46);
+                e.enabled = EditorGUILayout.Toggle(e.enabled, GUILayout.Width(18));
 
-            EditorGUILayout.LabelField(r.newRel, GUILayout.Width(190));
+                // ---- ảnh cũ: ObjectField + preview
+                DrawOldCell(e);
 
-            // preview ảnh cũ
-            var oldTex = r.Target != null ? GetOldPreview(r.Target) : null;
-            if (oldTex != null)
-            {
-                var rect = GUILayoutUtility.GetRect(46, 46, GUILayout.Width(46));
-                GUI.DrawTexture(rect, oldTex, ScaleMode.ScaleToFit);
-            }
-            else GUILayout.Space(46);
+                // ---- ảnh mới: ObjectField + browse + preview
+                DrawNewCell(e);
 
-            // chọn đích
-            if (r.candidates != null && r.candidates.Length > 0)
-            {
-                var names = r.candidates.Select(c => c.Replace("Assets/", "")).ToArray();
-                int newIdx = EditorGUILayout.Popup(r.targetIndex, names, GUILayout.Width(320));
-                if (newIdx != r.targetIndex)
+                // ---- đường path đích
+                if (showDestColumn)
                 {
-                    r.targetIndex = newIdx;
-                    r.warn = RecalcWarn(r);
+                    string dest = e.destPath ?? "";
+                    string newDest = EditorGUILayout.TextField(dest, GUILayout.Width(300));
+                    if (newDest != dest) e.destPath = newDest;
                 }
-            }
-            else
-            {
-                EditorGUILayout.LabelField(r.status, GUILayout.Width(320));
-            }
 
-            EditorGUILayout.LabelField(r.warn, EditorStyles.miniLabel);
-            EditorGUILayout.EndHorizontal();
+                // ---- cảnh báo + nơi dùng
+                EditorGUILayout.LabelField(BuildInfo(e), EditorStyles.miniLabel);
+            }
         }
 
         EditorGUILayout.EndScrollView();
     }
 
-    // ------------------------------------------------------------------ scan
-    private void Scan()
+    private void DrawOldCell(Entry e)
     {
-        rows.Clear();
-        report = "";
-        if (string.IsNullOrEmpty(sourceFolder) || !Directory.Exists(sourceFolder))
+        using (new EditorGUILayout.VerticalScope(GUILayout.Width(230)))
         {
-            report = "Chưa chọn folder ảnh mới.";
-            return;
-        }
-
-        // index mọi ảnh trong project
-        var allImages = new List<string>();
-        foreach (var p in AssetDatabase.GetAllAssetPaths())
-        {
-            if (p.StartsWith("Assets/", StringComparison.Ordinal) && ImageExts.Contains(Path.GetExtension(p).ToLower()))
-                allImages.Add(p);
-        }
-        var byName = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var p in allImages)
-        {
-            string n = Path.GetFileName(p);
-            if (!byName.TryGetValue(n, out var list)) byName[n] = list = new List<string>();
-            list.Add(p);
-        }
-
-        foreach (var file in Directory.GetFiles(sourceFolder, "*.*", SearchOption.AllDirectories)
-                                    .OrderBy(f => f))
-        {
-            if (!ImageExts.Contains(Path.GetExtension(file).ToLower())) continue;
-            if (file.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) continue;
-
-            var rel = file.Substring(sourceFolder.Length).TrimStart('\\', '/').Replace('\\', '/');
-            var row = new Row { newFull = file, newRel = rel };
-            row.newSize = ReadPngSize(file);
-
-            // 1) khớp đường dẫn tương đối
-            string exact = "Assets/" + rel;
-            if (allImages.Contains(exact))
+            var tex = e.oldPath != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.oldPath) : null;
+            var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false, GUILayout.Width(210));
+            var pickedPath = picked != null ? AssetDatabase.GetAssetPath(picked) : null;
+            if (pickedPath != e.oldPath)
             {
-                row.candidates = new[] { exact };
-                row.targetIndex = 0;
+                e.oldPath = pickedPath;
+                if (string.IsNullOrEmpty(e.destPath)) e.destPath = pickedPath;
+                usageCache.Remove(e.oldPath);
             }
-            // 2) khớp tên file
+            if (tex != null)
+            {
+                var rect = GUILayoutUtility.GetRect(40, 40, GUILayout.Width(40));
+                GUI.DrawTexture(rect, GetOldPreview(e.oldPath), ScaleMode.ScaleToFit);
+            }
+            if (!string.IsNullOrEmpty(e.oldPath))
+                EditorGUILayout.LabelField(e.oldPath, EditorStyles.miniLabel);
+        }
+    }
+
+    private void DrawNewCell(Entry e)
+    {
+        using (new EditorGUILayout.VerticalScope(GUILayout.Width(230)))
+        {
+            // 1) kéo Texture2D trong project vào ô này
+            var rectObj = GUILayoutUtility.GetRect(210, 16, GUILayout.Width(210));
+            HandleDragDrop(e, rectObj);
+
+            var tex = e.newPath != null && e.newPath.StartsWith("Assets/")
+                ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.newPath)
+                : null;
+            var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false, GUILayout.Width(165));
+            if (picked != null)
+            {
+                string p = AssetDatabase.GetAssetPath(picked);
+                if (p != e.newPath) e.newPath = p;
+            }
+            else if (e.newPath != null && e.newPath.StartsWith("Assets/"))
+            {
+                e.newPath = null;
+            }
+
+            if (GUILayout.Button("…", GUILayout.Width(24)))
+            {
+                var file = EditorUtility.OpenFilePanel("Chọn ảnh mới", string.Empty, "");
+                if (!string.IsNullOrEmpty(file)) e.newPath = file;
+            }
+
+            if (!string.IsNullOrEmpty(e.newPath))
+            {
+                var rect = GUILayoutUtility.GetRect(40, 40, GUILayout.Width(40));
+                var preview = GetPreview(e.newPath);
+                if (preview != null) GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
+                EditorGUILayout.LabelField(ShortName(e.newPath), EditorStyles.miniLabel);
+            }
+        }
+    }
+
+    private void HandleDragDrop(Entry e, Rect rect)
+    {
+        var evt = Event.current;
+        if (!rect.Contains(evt.mousePosition)) return;
+
+        if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
+        {
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            if (evt.type == EventType.DragPerform)
+            {
+                DragAndDrop.AcceptDrag();
+                // ưu tiên file ngoài project; nếu kéo Texture2D trong project thì lấy asset path
+                if (DragAndDrop.paths != null && DragAndDrop.paths.Length > 0)
+                    e.newPath = DragAndDrop.paths[0];
+                else if (DragAndDrop.objectReferences != null && DragAndDrop.objectReferences.Length > 0)
+                    e.newPath = AssetDatabase.GetAssetPath(DragAndDrop.objectReferences[0]);
+                evt.Use();
+            }
+            evt.Use();
+        }
+    }
+
+    private void DrawFooter()
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            int ready = entries.Count(e => e.enabled && !string.IsNullOrEmpty(e.newPath) && !string.IsNullOrEmpty(e.destPath));
+            GUI.enabled = ready > 0;
+            if (GUILayout.Button("Áp dụng (" + ready + ")", GUILayout.Height(28))) Apply();
+            GUI.enabled = true;
+
+            if (GUILayout.Button("Hoàn tác từ backup", GUILayout.Width(150), GUILayout.Height(28))) Restore();
+            if (GUILayout.Button("Lưu bảng", GUILayout.Width(90), GUILayout.Height(28))) SaveMap();
+        }
+    }
+
+    // ------------------------------------------------------------------ helpers
+    private bool MatchFilter(Entry e, string f)
+    {
+        f = f.ToLowerInvariant();
+        return (e.oldPath ?? "").ToLowerInvariant().Contains(f)
+            || (e.newPath ?? "").ToLowerInvariant().Contains(f)
+            || (e.destPath ?? "").ToLowerInvariant().Contains(f);
+    }
+
+    private static string ShortName(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return "";
+        return Path.GetFileName(path);
+    }
+
+    private string BuildInfo(Entry e)
+    {
+        var parts = new List<string>();
+
+        // nơi ảnh cũ đang dùng
+        if (!string.IsNullOrEmpty(e.oldPath))
+        {
+            string usage;
+            if (!usageCache.TryGetValue(e.oldPath, out usage))
+            {
+                var deps = AssetDatabase.GetDependencies(e.oldPath, true)
+                    .Where(d => d != e.oldPath && !d.EndsWith(".cs"))
+                    .Take(3).ToArray();
+                usage = deps.Length == 0 ? "(khong asset nao dung)" : string.Join(", ", deps);
+                usageCache[e.oldPath] = usage;
+            }
+            parts.Add("Dung o: " + usage);
+        }
+
+        // cảnh báo
+        if (!string.IsNullOrEmpty(e.newPath) && !string.IsNullOrEmpty(e.destPath))
+        {
+            string destExt = Path.GetExtension(e.destPath).ToLower();
+            string newExt = Path.GetExtension(e.newPath).ToLower();
+            if (destExt != newExt)
+                parts.Add("KHAC DINH DANG " + destExt + " vs " + newExt + " -> se bo qua");
             else
             {
-                var cands = byName.TryGetValue(Path.GetFileName(file), out var l) ? l : null;
-                if (cands == null || cands.Count == 0)
+                var newSize = ReadPngSize(e.newPath);
+                var oldTex = !string.IsNullOrEmpty(e.oldPath) ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.oldPath) : null;
+                if (newSize.x > 0 && oldTex != null && newSize != new Vector2Int(oldTex.width, oldTex.height))
                 {
-                    row.status = "Không có ảnh nào trùng tên trong project";
-                    row.selected = false;
-                }
-                else
-                {
-                    var editable = cands.Where(c => !c.Contains("/Resources/")).ToList();
-                    var ordered = (editable.Count > 0 ? editable : cands)
-                        .OrderBy(c => c, StringComparer.Ordinal).ToList();
-                    if (replaceAllSameName) ordered = cands.OrderBy(c => c, StringComparer.Ordinal).ToList();
-                    row.candidates = ordered.ToArray();
-                    row.targetIndex = 0;
-                    if (ordered.Count > 1) row.status = ordered.Count + " bản trùng tên — chọn ở dropdown";
+                    var b = ReadBorder(e.destPath);
+                    if (b != Vector4.zero)
+                        parts.Add("9-slice " + b + " nhung kich thuoc " +
+                                 new Vector2Int(oldTex.width, oldTex.height) + " -> " + newSize);
+                    else
+                        parts.Add("Kich thuoc " + new Vector2Int(oldTex.width, oldTex.height) + " -> " + newSize);
                 }
             }
-
-            row.warn = RecalcWarn(row);
-            rows.Add(row);
         }
 
-        report = "Quét xong: " + rows.Count + " ảnh.";
+        if (string.IsNullOrEmpty(e.newPath)) parts.Add("(chua gan anh moi)");
+        return string.Join("  |  ", parts);
     }
 
-    private string RecalcWarn(Row r)
+    // ------------------------------------------------------------------ load
+    private void ScanProjectImages()
     {
-        if (r.Target == null) return r.status;
-
-        var oldTex = AssetDatabase.LoadAssetAtPath<Texture2D>(r.Target);
-        r.oldSize = oldTex != null ? new Vector2Int(oldTex.width, oldTex.height) : Vector2Int.zero;
-
-        r.border = ReadBorder(r.Target);
-        r.hasBorder = r.border != Vector4.zero;
-
-        string targetExt = Path.GetExtension(r.Target).ToLower();
-        string newExt = Path.GetExtension(r.newFull).ToLower();
-        if (targetExt != newExt)
-            return "KHAC DINH DANG: " + targetExt + " -> " + newExt + " — se bi bo qua, hay doi file cho giong";
-
-        if (r.newSize.x > 0 && r.oldSize.x > 0 && r.newSize != r.oldSize)
+        var list = new List<string>();
+        foreach (var p in AssetDatabase.GetAllAssetPaths())
         {
-            if (r.hasBorder)
-                return "9-slice " + r.border + " nhung kich thuoc " + r.oldSize + " -> " + r.newSize +
-                       " (spriteBorder theo pixel cu)";
-            return "Kich thuoc " + r.oldSize + " -> " + r.newSize;
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+            if (!ImageExts.Contains(Path.GetExtension(p).ToLower())) continue;
+            list.Add(p);
         }
-        return "";
+        list.Sort(StringComparer.OrdinalIgnoreCase);
+
+        int added = 0;
+        foreach (var p in list)
+        {
+            if (entries.Any(e => e.oldPath == p)) continue;
+            entries.Add(new Entry { oldPath = p, destPath = p });
+            added++;
+        }
+        report = "Da them " + added + " anh vao bang (" + list.Count + " anh trong project).";
     }
+
+    private void LoadFromFolder()
+    {
+        var folder = EditorUtility.OpenFolderPanel("Folder chua anh moi", string.Empty, "");
+        if (string.IsNullOrEmpty(folder)) return;
+
+        // index ảnh trong project theo tên
+        var byName = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in AssetDatabase.GetAllAssetPaths())
+        {
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+            if (!ImageExts.Contains(Path.GetExtension(p).ToLower())) continue;
+            string n = Path.GetFileName(p);
+            if (!byName.TryGetValue(n, out var l)) byName[n] = l = new List<string>();
+            l.Add(p);
+        }
+
+        int added = 0, miss = 0;
+        foreach (var file in Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories).OrderBy(f => f))
+        {
+            if (!ImageExts.Contains(Path.GetExtension(file).ToLower())) continue;
+            var cands = byName.TryGetValue(Path.GetFileName(file), out var l) ? l : null;
+            if (cands == null || cands.Count == 0) { miss++; continue; }
+            var editable = cands.Where(c => !c.Contains("/Resources/")).ToList();
+            var target = (editable.Count > 0 ? editable : cands).OrderBy(c => c, StringComparer.Ordinal).First();
+            if (entries.Any(e => e.newPath == file)) continue;
+            entries.Add(new Entry { oldPath = target, newPath = file, destPath = target });
+            added++;
+        }
+        report = "Da them " + added + " dong tu folder" + (miss > 0 ? ", " + miss + " anh khong khop ten" : "") + ".";
+    }
+
+    private void SaveMap()
+    {
+        var map = new MapFile { entries = entries };
+        string json = JsonUtility.ToJson(map, true);
+        var dir = Path.GetDirectoryName(MapPath);
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(ProjectRoot, MapPath.Replace('/', Path.DirectorySeparatorChar)), json);
+        AssetDatabase.ImportAsset(MapPath, ImportAssetOptions.ForceUpdate);
+        report = "Da luu bang: " + MapPath;
+    }
+
+    private void LoadMap()
+    {
+        string full = Path.Combine(ProjectRoot, MapPath.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(full)) { entries.Clear(); return; }
+        try
+        {
+            var map = new MapFile();
+            JsonUtility.FromJsonOverwrite(File.ReadAllText(full), map);
+            entries.Clear();
+            if (map.entries != null) entries.AddRange(map.entries);
+            report = "Da nap bang: " + entries.Count + " dong.";
+        }
+        catch (Exception e)
+        {
+            report = "Loi doc bang: " + e.Message;
+        }
+    }
+
+    private static string ProjectRoot =>
+        Directory.GetParent(Application.dataPath).FullName;
 
     // ------------------------------------------------------------------ apply
     private void Apply()
     {
         int done = 0, skip = 0;
         var problems = new List<string>();
+        string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        string backupRoot = Path.Combine(ProjectRoot, ".reskin_backup", stamp);
 
-        foreach (var r in rows)
+        foreach (var e in entries)
         {
-            if (!r.selected || r.Target == null) continue;
+            if (!e.enabled) continue;
+            if (string.IsNullOrEmpty(e.newPath) || string.IsNullOrEmpty(e.destPath)) { skip++; continue; }
 
-            string targetExt = Path.GetExtension(r.Target).ToLower();
-            string newExt = Path.GetExtension(r.newFull).ToLower();
-            if (targetExt != newExt)
+            string destExt = Path.GetExtension(e.destPath).ToLower();
+            string newExt = Path.GetExtension(e.newPath).ToLower();
+            if (destExt != newExt)
             {
                 skip++;
-                problems.Add(r.newRel + ": khac dinh dang (" + targetExt + " vs " + newExt + ")");
+                problems.Add((e.newPath ?? "") + ": khac dinh dang (" + destExt + " vs " + newExt + ")");
                 continue;
             }
 
-            string full = Path.Combine(Directory.GetParent(Application.dataPath).FullName,
-                                       r.Target.Replace('/', Path.DirectorySeparatorChar));
+            string destFull = Path.Combine(ProjectRoot, e.destPath.Replace('/', Path.DirectorySeparatorChar));
+            string newFull = e.newPath.StartsWith("Assets/")
+                ? Path.Combine(ProjectRoot, e.newPath.Replace('/', Path.DirectorySeparatorChar))
+                : e.newPath;
+
             try
             {
                 // backup ban goc
-                var root = Directory.GetParent(Application.dataPath).FullName;
-                var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-                var bakDir = Path.Combine(root, ".reskin_backup", stamp);
-                var bakFile = Path.Combine(bakDir, r.Target.Replace('/', Path.DirectorySeparatorChar));
-                Directory.CreateDirectory(Path.GetDirectoryName(bakFile));
-                File.Copy(full, bakFile, true);
+                if (File.Exists(destFull))
+                {
+                    string bak = Path.Combine(backupRoot, e.destPath.Replace('/', Path.DirectorySeparatorChar));
+                    Directory.CreateDirectory(Path.GetDirectoryName(bak));
+                    File.Copy(destFull, bak, true);
+                }
 
-                // ghi de noi dung — GIU NGUYEN .meta
-                File.WriteAllBytes(full, File.ReadAllBytes(r.newFull));
-                AssetDatabase.ImportAsset(r.Target, ImportAssetOptions.ForceUpdate);
+                Directory.CreateDirectory(Path.GetDirectoryName(destFull));
+                File.WriteAllBytes(destFull, File.ReadAllBytes(newFull));
+
+                // neu viet ra file moi (dest khac old) va co .meta cu -> giu lai .meta
+                if (!string.IsNullOrEmpty(e.oldPath) && e.oldPath != e.destPath)
+                {
+                    string oldMeta = Path.Combine(ProjectRoot, e.oldPath.Replace('/', Path.DirectorySeparatorChar)) + ".meta";
+                    string newMeta = destFull + ".meta";
+                    if (File.Exists(oldMeta) && !File.Exists(newMeta))
+                        File.Copy(oldMeta, newMeta, true);
+                }
+
+                if (e.destPath.StartsWith("Assets/"))
+                    AssetDatabase.ImportAsset(e.destPath, ImportAssetOptions.ForceUpdate);
 
                 // mirror sang Resources/BoosterUI
-                if (mirrorBooster && r.Target.StartsWith("Assets/_Game/BoosterUI_Picked/", StringComparison.Ordinal))
+                if (mirrorBooster && e.destPath.StartsWith("Assets/_Game/BoosterUI_Picked/", StringComparison.Ordinal))
                 {
-                    string name = Path.GetFileName(r.Target);
+                    string name = Path.GetFileName(e.destPath);
                     string mirror = "Assets/_Game/Resources/BoosterUI/" + name;
-                    if (File.Exists(mirror))
+                    string mirrorFull = Path.Combine(ProjectRoot, mirror.Replace('/', Path.DirectorySeparatorChar));
+                    if (File.Exists(mirrorFull))
                     {
-                        string mirrorFull = Path.Combine(root, mirror.Replace('/', Path.DirectorySeparatorChar));
-                        File.WriteAllBytes(mirrorFull, File.ReadAllBytes(r.newFull));
+                        File.WriteAllBytes(mirrorFull, File.ReadAllBytes(newFull));
                         AssetDatabase.ImportAsset(mirror, ImportAssetOptions.ForceUpdate);
                     }
                 }
 
                 done++;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 skip++;
-                problems.Add(r.newRel + ": " + e.Message);
+                problems.Add((e.newPath ?? "") + ": " + ex.Message);
             }
         }
 
-        // doc lai border + size sau khi ghi de
-        foreach (var r in rows)
-        {
-            if (r.Target == null) continue;
-            r.hasBorder = false;
-            r.border = Vector4.zero;
-            r.warn = RecalcWarn(r);
-        }
-
         AssetDatabase.Refresh();
-        report = "Da thay " + done + " anh, bo qua " + skip + ".";
+        report = "Da ghi " + done + " anh, bo qua " + skip + ".";
         if (problems.Count > 0) report += "\n" + string.Join("\n", problems);
     }
 
     private void Restore()
     {
-        var root = Directory.GetParent(Application.dataPath).FullName;
-        var backupRoot = Path.Combine(root, ".reskin_backup");
-        if (!Directory.Exists(backupRoot))
-        {
-            report = "Chua co thu muc backup (.reskin_backup).";
-            return;
-        }
-        var latest = new DirectoryInfo(backupRoot).GetDirectories()
-                            .OrderByDescending(d => d.Name).FirstOrDefault();
-        if (latest == null)
-        {
-            report = "Chua co ban backup nao.";
-            return;
-        }
+        string backupRoot = Path.Combine(ProjectRoot, ".reskin_backup");
+        if (!Directory.Exists(backupRoot)) { report = "Chua co thu muc backup."; return; }
+        var latest = new DirectoryInfo(backupRoot).GetDirectories().OrderByDescending(d => d.Name).FirstOrDefault();
+        if (latest == null) { report = "Chua co ban backup nao."; return; }
 
         int n = 0;
         foreach (var f in latest.GetFiles("*.*", SearchOption.AllDirectories))
         {
             if (!ImageExts.Contains(f.Extension.ToLower())) continue;
             string rel = f.FullName.Substring(latest.FullName.Length).TrimStart('\\', '/').Replace('\\', '/');
-            string dest = Path.Combine(root, rel.Replace('/', Path.DirectorySeparatorChar));
+            string dest = Path.Combine(ProjectRoot, rel.Replace('/', Path.DirectorySeparatorChar));
             if (!File.Exists(dest)) continue;
             File.Copy(f.FullName, dest, true);
             n++;
@@ -415,7 +525,10 @@ public sealed class BulkReskinWindow : EditorWindow
         Texture2D tex = null;
         try
         {
-            var bytes = File.ReadAllBytes(path);
+            string full = path.StartsWith("Assets/")
+                ? Path.Combine(ProjectRoot, path.Replace('/', Path.DirectorySeparatorChar)) : path;
+            if (!File.Exists(full)) { previewCache[path] = null; return null; }
+            var bytes = File.ReadAllBytes(full);
             tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
             if (ImageConversion.LoadImage(tex, bytes)) tex = Scale(tex);
             else { DestroyImmediate(tex); tex = null; }
@@ -435,7 +548,7 @@ public sealed class BulkReskinWindow : EditorWindow
 
     private static Texture2D Scale(Texture2D src)
     {
-        const int max = 64;
+        const int max = 40;
         if (src.width <= max && src.height <= max) return src;
         float k = max / (float)Math.Max(src.width, src.height);
         var dst = new Texture2D(Math.Max(1, (int)(src.width * k)), Math.Max(1, (int)(src.height * k)),
@@ -461,7 +574,9 @@ public sealed class BulkReskinWindow : EditorWindow
     {
         try
         {
-            using (var fs = File.OpenRead(path))
+            string full = path.StartsWith("Assets/")
+                ? Path.Combine(ProjectRoot, path.Replace('/', Path.DirectorySeparatorChar)) : path;
+            using (var fs = File.OpenRead(full))
             {
                 var head = new byte[26];
                 if (fs.Read(head, 0, 26) < 26) return Vector2Int.zero;
@@ -476,22 +591,21 @@ public sealed class BulkReskinWindow : EditorWindow
 
     private static Vector4 ReadBorder(string assetPath)
     {
-        string meta = assetPath + ".meta";
+        string meta = Path.Combine(ProjectRoot, assetPath.Replace('/', Path.DirectorySeparatorChar)) + ".meta";
         if (!File.Exists(meta)) return Vector4.zero;
         try
         {
-            var lines = File.ReadAllLines(meta);
-            for (int i = 0; i < lines.Length; i++)
+            foreach (var line in File.ReadAllLines(meta))
             {
-                if (!lines[i].Contains("spriteBorder:")) continue;
-                var s = lines[i].Substring(lines[i].IndexOf("spriteBorder:") + 13);
-                s = s.Replace("{", "").Replace("}", "").Replace("x:", "").Replace("y:", "")
-                     .Replace("z:", "").Replace("w:", "").Replace(" ", "");
+                if (!line.Contains("spriteBorder:")) continue;
+                var s = line.Substring(line.IndexOf("spriteBorder:") + 13)
+                    .Replace("{", "").Replace("}", "")
+                    .Replace("x:", "").Replace("y:", "").Replace("z:", "").Replace("w:", "")
+                    .Replace(" ", "");
                 var parts = s.Split(',');
                 if (parts.Length != 4) return Vector4.zero;
-                return new Vector4(
-                    float.Parse(parts[0]), float.Parse(parts[1]),
-                    float.Parse(parts[2]), float.Parse(parts[3]));
+                return new Vector4(float.Parse(parts[0]), float.Parse(parts[1]),
+                                  float.Parse(parts[2]), float.Parse(parts[3]));
             }
         }
         catch { }

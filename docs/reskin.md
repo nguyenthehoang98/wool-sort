@@ -11,38 +11,45 @@ vẫn đúng, và `spriteBorder` (9-slice) + `spritePixelsToUnits` (PPU) không 
 
 ## 1. Trong Unity — `Tools / Reskin / Reskin hàng loạt`
 
-File: `game/Assets/Editor/BulkReskinWindow.cs`
+File: `game/Assets/Editor/BulkReskinWindow.cs` — giao diện là **bảng**, mỗi dòng là 1 cặp
+**ảnh cũ → ảnh mới**:
+
+```
+☐  ẢNH CŨ (asset trong project)   ẢNH MỚI (kéo file / bấm …)   LƯU VÀO (đường path đích)      CẢNH BÁO / DÙNG Ở
+☐  [preview] Icon_Slot_3.png       [preview] new_icon.png          Assets/_Game/BoosterUI_Picked/…  Dùng ở: Gameplay.unity, …
+```
 
 **Cách dùng:**
 
 1. Mở Unity → menu **`Tools / Reskin / Reskin hàng loạt`**.
-2. Bấm **"Chọn…"** → trỏ tới folder chứa ảnh mới (ở bất kỳ đâu trên máy).
-   Tool tự quét và lập bảng khớp.
-3. Xem bảng: mỗi dòng có **preview ảnh mới** | **preview ảnh cũ** | **ảnh trong project**
-   (dropdown chọn đích nếu trùng tên) | **cảnh báo**.
-4. Tích chọn dòng nào muốn thay → bấm **"Áp dụng"**.
-   Tool backup bản gốc vào `game/.reskin_backup/<timestamp>/` rồi ghi đè, và
+2. Lấy danh sách dòng (1 trong 3):
+   - **"Quét ảnh trong project"** → thêm mọi ảnh trong `Assets` vào bảng, cột *Ảnh cũ* đã điền.
+   - **"Nạp từ folder…"** → chọn folder ảnh mới, tool tự khớp theo tên file và điền cả 2 cột.
+   - **"Thêm dòng"** → dòng trống, tự điền tay.
+3. Chọn **ảnh mới** cho mỗi dòng:
+   - **kéo file từ Explorer** vào ô *ẢNH MỚI* (kéo thẳng từ File Explorer, không cần import),
+   - hoặc bấm **"…"** để browse file,
+   - hoặc kéo 1 `Texture2D` **đã có trong project** vào ô đó.
+4. Cột **"Lưu vào"** = đường path sẽ ghi ảnh. Mặc định = path của ảnh cũ. Sửa được nếu muốn
+   ghi ra path khác (khi đó `.meta` của ảnh cũ được copy sang để giữ GUID/9-slice/PPU).
+5. **"Áp dụng"** → backup bản gốc vào `game/.reskin_backup/<timestamp>/`, ghi đè, rồi
    `AssetDatabase.ImportAsset` để Unity reimport ngay.
 
-**Tuỳ chọn:**
+**Bảng được lưu lại:** nút **"Lưu bảng"** → `Assets/_Game/Configs/ReskinMap.json`.
+Mở lại tool (hoặc "Nạp bảng") là có nguyên bảng cũ → tiếp tục làm tiếp.
 
-| Checkbox | Tác dụng |
-|---|---|
-| *Thay cả các bản trùng tên* | Mặc định chỉ thay bản **không nằm trong `Resources/`** (bản editable). Bật lên thì thay hết các bản trùng tên. |
-| *Copy thêm sang Resources/BoosterUI* | Sửa ở `_Game/BoosterUI_Picked/` thì copy đè sang `_Game/Resources/BoosterUI/` (bản runtime fallback mà `BoosterBarUI.ResolveSprites()` load). |
-| *Chỉ hiện dòng có vấn đề* | Lọc ra dòng có cảnh báo / không khớp. |
+**Cột "Cảnh báo / Dùng ở":**
+- *Dùng ở:* các asset/scene đang trỏ tới ảnh cũ → giúp biết ảnh này ảnh hưởng chỗ nào.
+- Cảnh báo: khác định dạng file (`.png` vs `.jpg` → bỏ qua) · đổi kích thước ·
+  **9-slice đổi kích thước** (spriteBorder tính theo pixel cũ).
 
-**Cảnh báo hiển thị:** khác định dạng file (`.png` vs `.jpg` → bỏ qua) · đổi kích thước ·
-**9-slice đổi kích thước** (spriteBorder tính theo pixel cũ).
+**Tuỳ chọn trên toolbar:**
+- *Mirror BoosterUI* — sửa ở `_Game/BoosterUI_Picked/` thì copy đè sang `_Game/Resources/BoosterUI/`
+  (bản runtime fallback mà `BoosterBarUI.ResolveSprites()` load).
+- *Cột đường path* — ẩn/hiện cột "Lưu vào" nếu không dùng.
+- Ô tìm kiếm — lọc theo tên/path.
 
 **Hoàn tác:** nút **"Hoàn tác từ backup"** → khôi phục từ thư mục backup mới nhất.
-
-**Cách khớp file:**
-
-| Ưu tiên | Quy tắc |
-|---|---|
-| 1 | Khớp **đường dẫn tương đối** trong `game/Assets` — nếu đặt ảnh mới trong thư mục cấu trúc y hệt (`_Game/Textures/UIV2/Frame_Tooltips.png`) thì khớp tuyệt đối |
-| 2 | Khớp theo **tên file**. Trùng nhiều nơi → chọn bản **không nằm trong `Resources/`**, có thể đổi đích bằng dropdown |
 
 ---
 
