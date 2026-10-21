@@ -1605,6 +1605,39 @@ PrefabInstance:
       propertyPath: m_Name
       value: PurchaseSuccessPopup
       objectReference: {fileID: 0}
+    - target: {fileID: 750000012, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000014, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000014, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000016, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000016, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000020, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_text
+      value: "Nh\u1EADn th\u01B0\u1EDFng"
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000043, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -38.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 750000045, guid: bde353a25e757cb023c21781a82cacbe, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: cbb1e767e6c064f40b2c11a0fa7a224c,
+        type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
