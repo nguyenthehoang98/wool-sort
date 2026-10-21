@@ -1370,6 +1370,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Meta.ShopUI
   itemContainer: {fileID: 100000049}
   itemPrefab: {fileID: 740000001, guid: 81fd9d44911c789b371589e3822d0a3d, type: 3}
+  icons:
+  - id: coin_pack_small
+    sprite: {fileID: 0}
+  - id: coin_pack_big
+    sprite: {fileID: 0}
+  - id: booster_addslot
+    sprite: {fileID: 0}
+  - id: booster_clean
+    sprite: {fileID: 0}
+  - id: booster_magicbox
+    sprite: {fileID: 0}
   txtNotify: {fileID: 100000054}
   notifyDuration: 2
 

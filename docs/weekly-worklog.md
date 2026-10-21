@@ -653,6 +653,43 @@ Target **đã có sẵn** mirror `Assets/_Game/Resources/BoosterUI/` (19 PNG) n�
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | 5 đường dẫn `iconResPath` trong `ShopService` | đều tồn tại trong `Resources/` |
 
+## Vòng 13 — Icon shop gán bằng ref trong Inspector (2026-10-21)
+
+Yêu cầu: bỏ load icon theo đường dẫn `Resources`; tạo chỗ giữ ref ảnh để kéo trực tiếp trong Inspector.
+
+### Object nào sinh ra item?
+
+`ShopUI` (component `164dc1da…` trên GameObject `ShopPage` của `Home.unity`) là object sinh item:
+
+```
+ShopUI.Refresh()  →  Instantiate(itemPrefab, itemContainer)  →  ShopItemView.Bind(item, shop, ShowNotify)
+```
+
+`ShopService` là object **runtime-created** (do `HomeUI.Awake` tạo khi thiếu) nên không thể gán sprite trong Inspector → ref ảnh phải nằm ở `ShopUI` (object có sẵn trong scene).
+
+### Đã làm
+
+- **`ShopUI.cs`**: thêm class `ShopIconRef { string id; Sprite sprite; }` + field `List<ShopIconRef> icons` (header "Icon từng gói"). `Refresh()` gọi `ResolveIcon(item.id)`; nếu có sprite thì gán `item.icon` trước khi `Bind` (để màn nhận thưởng cũng dùng được), nếu thiếu thì `Debug.LogWarning` báo đúng id.
+- **`ShopService.cs`**: bỏ field `ShopItem.iconResPath` và hàm `LoadIcons()` (không còn `Resources.Load<Sprite>` nào).
+- **`Home.unity`**: component `ShopUI` có sẵn mảng `icons` gồm 5 phần tử, `id` đã điền sẵn, `sprite` để trống cho user kéo vào:
+
+  | id | Sprite cần kéo |
+  |---|---|
+  | `coin_pack_small` | `Resources/Shop/coinShopPack1.png` |
+  | `coin_pack_big` | `Resources/Shop/coinShopPack2.png` |
+  | `booster_addslot` | `BoosterUI_Picked/Icon_Slot_3.png` |
+  | `booster_clean` | `BoosterUI_Picked/Icon_Broom_2.png` |
+  | `booster_magicbox` | `BoosterUI_Picked/Icon_Spool_2.png` |
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` + `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Grep `iconResPath` / `LoadIcons` trong code | 0 kết quả (chỉ còn trong docs lịch sử) |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

@@ -1,10 +1,19 @@
 namespace _Game.Scripts.Meta
 {
+    using System;
     using System.Collections.Generic;
     using _Game.Scripts.Core;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
+
+    /// <summary>Ref ảnh cho một gói trong shop: khớp `ShopItem.id`.</summary>
+    [Serializable]
+    public sealed class ShopIconRef
+    {
+        public string id;
+        public Sprite sprite;
+    }
 
     // Shop local: chỉ gói mua bằng coin (gói coin + booster).
     // Không IAP, không IAA (không xem ads để nhận thưởng).
@@ -14,6 +23,9 @@ namespace _Game.Scripts.Meta
         [Header("Container item (content của scroll view)")]
         [SerializeField] private Transform itemContainer;
         [SerializeField] private GameObject itemPrefab; // ShopItem.prefab
+
+        [Header("Icon từng gói (kéo sprite vào đây, khớp id)")]
+        [SerializeField] private List<ShopIconRef> icons = new List<ShopIconRef>();
 
         [Header("Thông báo mua")]
         [SerializeField] private TMP_Text txtNotify;
@@ -74,6 +86,16 @@ namespace _Game.Scripts.Meta
 
             foreach (var item in shop.GetItems())
             {
+                var sprite = ResolveIcon(item.id);
+                if (sprite != null)
+                {
+                    item.icon = sprite;
+                }
+                else
+                {
+                    Debug.LogWarning($"[ShopUI] Chưa gán icon cho gói '{item.id}' — kéo sprite vào Inspector (ShopUI > Icons).");
+                }
+
                 var go = Instantiate(itemPrefab, itemContainer);
 
                 var view = go.GetComponent<ShopItemView>();
@@ -87,6 +109,17 @@ namespace _Game.Scripts.Meta
                 view.Bind(item, shop, ShowNotify);
                 _items.Add(view);
             }
+        }
+
+        private Sprite ResolveIcon(string id)
+        {
+            if (icons == null) return null;
+            for (int i = 0; i < icons.Count; i++)
+            {
+                var entry = icons[i];
+                if (entry != null && entry.id == id) return entry.sprite;
+            }
+            return null;
         }
 
         private void ClearItems()
