@@ -119,8 +119,9 @@ namespace _Game.Scripts.UI
 
         private void UpdateCoinText(int newBalance)
         {
+            // Chi hien so luong coin (icon coin ben canh lo).
             if (coinText != null)
-                coinText.text = $"Coins: {newBalance}";
+                coinText.text = newBalance.ToString();
         }
     }
 }
