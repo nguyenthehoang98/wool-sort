@@ -15,6 +15,13 @@ namespace _Game.Scripts.Core
         public BoosterType boosterType; // None nếu là gói coin
         public int boosterAmount; // số lượng booster nếu mua booster
         public int coinAmount; // số lượng coin nếu mua gói coin
+
+        /// <summary>
+        /// Gói này có cho booster không. Dùng cờ này thay vì so sánh trực tiếp với
+        /// BoosterType.None: mặc định của enum là AddSlot (0) nên gói coin phải khai
+        /// báo tường minh BoosterType.None.
+        /// </summary>
+        public bool IsBooster => boosterType != BoosterType.None && boosterAmount > 0;
     }
 
     public sealed class ShopService : MonoBehaviour
@@ -27,8 +34,8 @@ namespace _Game.Scripts.Core
         [Header("Gói có sẵn trong shop (mua bằng coin)")]
         [SerializeField] private List<ShopItem> items = new List<ShopItem>
         {
-            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 0, coinAmount = 500 },
-            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 0, coinAmount = 1400 },
+            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 0, coinAmount = 500, boosterType = BoosterType.None },
+            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 0, coinAmount = 1400, boosterType = BoosterType.None },
             new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1 },
             new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1 },
             new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1 },
@@ -99,7 +106,7 @@ namespace _Game.Scripts.Core
                 return false;
             }
 
-            if (item.boosterType != BoosterType.None && item.boosterAmount > 0)
+            if (item.IsBooster)
                 _economy.AddBooster(item.boosterType, item.boosterAmount, "shop_purchase", itemId);
             else if (item.coinAmount > 0)
                 _economy.AddCoins(item.coinAmount, "shop_purchase", itemId);

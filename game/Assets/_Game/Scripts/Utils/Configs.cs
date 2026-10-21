@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _Game.Scripts.Gameplay;
 using UnityEngine;
 
 public static class Configs
@@ -15,10 +16,25 @@ public static class Configs
     public const int REFILL_HEART_COST = 190;
 
     //More Booster Popup
+    // Index 0 = AddSlot, 1 = Clean, 2 = MagicBox — khớp (int)BoosterType.
     public static List<int> LIST_BOOSTER_COST = new List<int>() { 80, 120, 60 };
     // Mặc định unlock tất cả booster từ level 1 (yêu cầu 2026-10-13).
     // Giá trị gốc: { 2, 8, 4 } (AddSlot lv2, Clean lv8, MagicBox lv4).
     public static List<int> LIST_BOOSTER_UNLOCK = new List<int>() { 1, 1, 1 };
+
+    /// <summary>Giá mua booster theo loại (0 = AddSlot, 1 = Clean, 2 = MagicBox).</summary>
+    public static int GetBoosterCost(BoosterType type)
+    {
+        int i = (int)type;
+        return i >= 0 && i < LIST_BOOSTER_COST.Count ? LIST_BOOSTER_COST[i] : 0;
+    }
+
+    /// <summary>Level mở khoá booster theo loại (0 = AddSlot, 1 = Clean, 2 = MagicBox).</summary>
+    public static int GetBoosterUnlockLevel(BoosterType type)
+    {
+        int i = (int)type;
+        return i >= 0 && i < LIST_BOOSTER_UNLOCK.Count ? LIST_BOOSTER_UNLOCK[i] : 1;
+    }
 
     //Win Popup
     public const int WIN_REWARD = 10;

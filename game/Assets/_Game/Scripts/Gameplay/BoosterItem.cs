@@ -87,7 +87,7 @@ namespace _Game.Scripts.Gameplay
             objNoti.SetActive(false);
             objPlus.SetActive(false);
 
-            var unlockLevel = Configs.LIST_BOOSTER_UNLOCK[(int)type];
+            var unlockLevel = Configs.GetBoosterUnlockLevel(type);
             isUnlocked = true;
 
             // với booster clean thì ở level tut phải hiện tut mới show
@@ -153,7 +153,7 @@ namespace _Game.Scripts.Gameplay
 
             if (_btnBoosterState == ButtonBoosterState.Lock)
             {
-                var unlockLevel = Configs.LIST_BOOSTER_UNLOCK[(int)type];
+                var unlockLevel = Configs.GetBoosterUnlockLevel(type);
                 ShowTooltip($"Unlock at level {unlockLevel}");
                 return;
             }

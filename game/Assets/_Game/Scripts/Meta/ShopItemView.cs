@@ -59,7 +59,7 @@ namespace _Game.Scripts.Meta
         private static string BuildAmount(ShopItem item)
         {
             if (item == null) return string.Empty;
-            if (item.boosterType != BoosterType.None) return $"x{item.boosterAmount} {item.boosterType}";
+            if (item.IsBooster) return $"x{item.boosterAmount} {item.boosterType}";
             return item.coinAmount > 0 ? $"+{item.coinAmount} coin" : string.Empty;
         }
 

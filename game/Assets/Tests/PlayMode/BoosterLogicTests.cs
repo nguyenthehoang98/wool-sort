@@ -78,7 +78,47 @@ public class BoosterLogicTests
         Assert.AreEqual(3, costs.Count);
         Assert.AreEqual(3, unlocks.Count);
         foreach (int lv in unlocks) Assert.Greater(lv, 0);
-        var names = Enum.GetNames(T("_Game.Scripts.Gameplay.BoosterType"));
-        Assert.AreEqual(3, names.Length);
+    }
+
+    /// <summary>
+    /// Regression: enum BoosterType phai map 1-1 voi index cua list cau hinh
+    /// (AddSlot=0, Clean=1, MagicBox=2) — scene Gameplay.unity, mang
+    /// Titles/Descs/contentIcons trong MoreBoosterPopupUI va
+    /// LIST_BOOSTER_COST/LIST_BOOSTER_UNLOCK deu index theo thu tu nay.
+    /// Lệch 1 la nut bam ra sai booster.
+    /// </summary>
+    [Test]
+    public void BoosterType_ValuesMatchConfigListOrder()
+    {
+        var type = T("_Game.Scripts.Gameplay.BoosterType");
+        Assert.AreEqual(0, (int)Enum.Parse(type, "AddSlot"));
+        Assert.AreEqual(1, (int)Enum.Parse(type, "Clean"));
+        Assert.AreEqual(2, (int)Enum.Parse(type, "MagicBox"));
+        // None la sentinel, khong phai index
+        Assert.Less((int)Enum.Parse(type, "None"), 0);
+    }
+
+    [Test]
+    public void Configs_GetBoosterCost_MapsCorrectType()
+    {
+        var cfg = T("Configs");
+        var getCost = cfg.GetMethod("GetBoosterCost");
+        var type = T("_Game.Scripts.Gameplay.BoosterType");
+
+        Assert.AreEqual(80, (int)getCost.Invoke(null, new object[] { Enum.Parse(type, "AddSlot") }));
+        Assert.AreEqual(120, (int)getCost.Invoke(null, new object[] { Enum.Parse(type, "Clean") }));
+        Assert.AreEqual(60, (int)getCost.Invoke(null, new object[] { Enum.Parse(type, "MagicBox") }));
+    }
+
+    [Test]
+    public void Configs_GetBoosterUnlockLevel_MapsCorrectType()
+    {
+        var cfg = T("Configs");
+        var get = cfg.GetMethod("GetBoosterUnlockLevel");
+        var type = T("_Game.Scripts.Gameplay.BoosterType");
+
+        Assert.AreEqual(1, (int)get.Invoke(null, new object[] { Enum.Parse(type, "AddSlot") }));
+        Assert.AreEqual(1, (int)get.Invoke(null, new object[] { Enum.Parse(type, "Clean") }));
+        Assert.AreEqual(1, (int)get.Invoke(null, new object[] { Enum.Parse(type, "MagicBox") }));
     }
 }

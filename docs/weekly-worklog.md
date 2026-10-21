@@ -894,6 +894,67 @@ vì tuỳ chọn *"Mirror BoosterUI"* sẽ copy đè sang đó khi áp dụng.
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Số ảnh reachable từ 3 scene (script độc lập) | 70 |
 
+## Vòng 18 — Fix nhầm logic giữa các booster (2026-10-21)
+
+Báo cáo: "bug xảy ra khi sử dụng booster, nó bị nhầm logic giữa các booster".
+
+### Nguyên nhân gốc: enum `BoosterType` lệch 1 bậc
+
+| | Dự án gốc | Target (trước khi sửa) |
+|---|---|---|
+| AddSlot | 0 | 1 |
+| Clean | 1 | 2 |
+| MagicBox | 2 | 3 |
+| None | — | 0 |
+
+Target thêm `None = 0` ở đầu → **mọi thứ index theo `(int)BoosterType` bị lệch 1**, trong khi scene
+`Gameplay.unity`, mảng `Titles`/`Descs`/`contentIcons` của `MoreBoosterPopupUI` và
+`Configs.LIST_BOOSTER_COST`/`LIST_BOOSTER_UNLOCK` đều theo thứ tự gốc.
+
+**Hậu quả cụ thể:**
+
+| Nơi | Trước | Sau |
+|---|---|---|
+| `BoosterBtn_1` (type 0) | `None` → không vào nhánh nào | **AddSlot** ✓ |
+| `BoosterBtn_2` (type 1) | chạy **AddSlot** | **Clean** ✓ |
+| `BoosterBtn_3` (type 2) | chạy **Clean** | **MagicBox** ✓ |
+| `MoreBoosterPopupUI.RefreshUI()` | `Titles[(int)type]` → lệch 1 ô | đúng ô |
+| `MoreBoosterPopupUI` với MagicBox | `Titles[3]` → **IndexOutOfRange** | không lỗi |
+| `Configs.LIST_BOOSTER_COST[(int)type]` | AddSlot ra giá của Clean; MagicBox → **IndexOutOfRange** | đúng giá |
+| `BoosterItem` unlock level | đọc sai ô | đúng ô |
+| `BoosterBarUI.CreateButton` | tên nút `BoosterBtn_2` cho AddSlot | `BoosterBtn_1` ✓ khớp scene |
+
+### Đã sửa
+
+- **`BoosterType.cs`**: `AddSlot = 0, Clean = 1, MagicBox = 2, None = -1`.
+  `None` là sentinel, đặt `-1` để lỡ dùng nhầm cũng không trỏ vào ô nào trong list.
+- **`Configs.cs`**: thêm `GetBoosterCost(BoosterType)` + `GetBoosterUnlockLevel(BoosterType)` có
+  kiểm tra biên → không còn index thẳng vào list ở bất kỳ đâu.
+- **`BoosterItem.cs`** (2 chỗ) → dùng `Configs.GetBoosterUnlockLevel(type)`.
+- **`MoreBoosterPopupUI.cs`**: `RefreshUI()` clamp index; 2 chỗ giá → `Configs.GetBoosterCost(...)`.
+- **`ShopItem`**: thêm cờ `IsBooster` (vì mặc định enum giờ là `AddSlot`, gói coin phải khai
+  báo tường minh `BoosterType.None`); `ShopService` khai báo `None` cho 2 gói coin;
+  `ShopService.Buy` + `ShopItemView` + `PurchaseSuccessPopup` dùng `IsBooster`.
+- `PlayerData` / `GameData` lưu booster theo **tên** (switch / Dictionary) → không ảnh hưởng.
+
+### Test
+
+- `BoosterLogicTests.BoosterConfig_HasThreeEntries`: bỏ assert "enum có đúng 3 tên" (giờ có
+  thêm `None`) → thay bằng 3 test regression:
+  - `BoosterType_ValuesMatchConfigListOrder` — AddSlot=0, Clean=1, MagicBox=2, None<0
+  - `Configs_GetBoosterCost_MapsCorrectType` — 80 / 120 / 60
+  - `Configs_GetBoosterUnlockLevel_MapsCorrectType` — 1 / 1 / 1
+
+### Verify (script độc lập đọc source + scene)
+
+| Kiểm tra | Kết quả |
+|---|---|
+| enum vs scene `BoosterBtn_1/2/3` | 0→AddSlot, 1→Clean, 2→MagicBox ✓ |
+| enum vs `Titles`/`Descs`/`contentIcons` | ADD SLOT / CLEAN / MAGIC SPOOL ✓ |
+| enum vs `LIST_BOOSTER_COST` | 80 / 120 / 60 ✓ |
+| Compile 3 assembly | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

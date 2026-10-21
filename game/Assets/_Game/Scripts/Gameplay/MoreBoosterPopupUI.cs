@@ -244,7 +244,8 @@ namespace _Game.Scripts.Gameplay
 
         private void RefreshUI()
         {
-            int i = (int)_currentType;
+            // index 0 = AddSlot, 1 = Clean, 2 = MagicBox — clamp để không lỗi index
+            int i = Mathf.Clamp((int)_currentType, 0, Titles.Length - 1);
 
             // Card background
             if (cardRect != null)
@@ -275,7 +276,7 @@ namespace _Game.Scripts.Gameplay
             }
 
             // Cost
-            int cost = Configs.LIST_BOOSTER_COST[i];
+            int cost = Configs.GetBoosterCost(_currentType);
 
             // Button sprites
             if (btnCoin != null)
@@ -324,7 +325,7 @@ namespace _Game.Scripts.Gameplay
             if (_clicked) return;
             _clicked = true;
 
-            int cost = Configs.LIST_BOOSTER_COST[(int)_currentType];
+            int cost = Configs.GetBoosterCost(_currentType);
             if (!CoinManager.Instance.ConsumeCoins(cost))
             {
                 Debug.LogWarning($"[MoreBoosterPopupUI] Not enough coins to buy {_currentType}. Required {cost}, have {CoinManager.Instance.GetBalance()}");
