@@ -744,6 +744,49 @@ Nguyên nhân: 3 prefab instance (`MenuBar`, `CoinHUD`, `PurchaseSuccessPopup`) 
 | Stripped transform trong scene | cả 3 đều `cls=224 RectTransform` ✓ |
 | Hierarchy `Home.unity` | `ShopPage → ShopUI` ✓ |
 
+## Vòng 15 — Bảng inventory ảnh để reskin (2026-10-21)
+
+Yêu cầu: thiết kế bảng liệt kê asset **đang dùng** (path) và asset **không dùng** — chỉ ảnh, để reskin.
+
+### Công cụ
+
+`tools/inventory_images.py` (chạy lại bằng `python tools/inventory_images.py`):
+
+1. Index mọi asset trong `game/Assets` → GUID (đọc `.meta`).
+2. Dựng đồ thị reference: quét `.unity / .prefab / .asset / .mat / .controller / .anim / …` + `.cs / .shader` tìm `guid:`.
+3. Gốc (root) = **mọi scene** + **mọi asset trong `Resources/`** (load runtime theo path) + **mọi file code**.
+4. BFS từ các gốc → ảnh **reachable = đang dùng**, còn lại = **không dùng**.
+5. Bổ sung metadata từ `.meta`: kích thước (PNG + JPEG), PPU, `textureType`, `spriteBorder` (9-slice), mipmap.
+
+### Kết quả
+
+| Nhóm | Tổng | Đang dùng | Không dùng |
+|---|---|---|---|
+| Ảnh game (`_Game/`, TMP sprites) | 94 | 87 | 7 |
+| Ảnh plugin/editor (DOTween, DemiLib, Dreamteck) | 191 | 4 | 187 |
+
+**Ảnh game KHÔNG dùng (7):**
+
+| Path | Kích thước | Lý do |
+|---|---|---|
+| `_Game/BoosterUI_Picked/Button_Gray.png` | 356x168 | Không asset nào trỏ tới |
+| `_Game/Textures/Home/background.png` | 1082x2160 | Không asset nào trỏ tới (BG đã đổi sang `Frame_Bar_1.png`) |
+| `_Game/Textures/UIV2/Frame_Popup_3.png` | 278x68 | Không asset nào trỏ tới (popup nhận thưởng dùng `Frame_Popup_4`) |
+| `_Game/Textures/text_diffuse.jpg` | 512x512 | Chỉ bởi `WoodMat_*.mat` — 3 material đó cũng không ai dùng |
+| `_Game/Textures/text_normal.png` | 256x256 | Như trên |
+| `_Game/Textures/text_roughness_1.jpg` | 512x512 | Như trên |
+| `_Game/Textures/text_roughness_2.jpg` | 512x512 | Như trên |
+
+→ Cả bộ texture gỗ + 3 material `WoodMat_Gray/White/Yellow.mat` đều chết (đã verify không asset nào trỏ tới 3 material đó).
+
+Bảng đầy đủ: `docs/asset-inventory-images.md`.
+
+### Ghi chú reskin (đã ghi trong file bảng)
+
+- PPU = 100 cho toàn bộ ảnh UI → đổi PNG mà giữ PPU sẽ làm UI phình/nhỏ.
+- Ảnh 9-slice phải giữ nguyên `spriteBorder` khi đổi PNG.
+- Sửa ảnh ở `_Game/BoosterUI_Picked/` thì phải **copy đè** sang `_Game/Resources/BoosterUI/` (bản runtime fallback).
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
