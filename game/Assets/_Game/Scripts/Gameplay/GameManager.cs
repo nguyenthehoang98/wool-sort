@@ -506,10 +506,23 @@ namespace _Game.Scripts.Gameplay
 
             var slot = e.Slot;
 
-            // (A) Lose: nếu vừa fill vào Waiting và tất cả waiting slots đã full, 
+            // (A) Lose: nếu vừa fill vào Waiting và tất cả waiting slots đã full,
             //     nhưng vẫn còn piece trên Shape -> LoseLevel.
             if (slot.Area == Slot.AreaType.Waiting && WaitingAreaManager.Instance.IsAllWaitingSlotsFilled())
             {
+                // Slot chờ vừa nhận sợi nhưng animation (ring appear) CHƯA xong.
+                // Sợi đó còn có thể được đẩy vào hộp: WaitingAreaManager.TryRefillSlot()
+                // chạy SAU khi animation kết thúc. Kết luận thua ở đây là quá sớm —
+                // sẽ báo thua trước khi sợi kịp vào hộp (đúng triệu chứng: bấm đúng
+                // màu trên thanh hộp nhưng vẫn bị báo thua). Trì hoãn lại, sau khi
+                // animation xong và đã thử refill sẽ check lại (RecheckLoseAfterWaitingAnimation).
+                if (!slot.IsAnimationFilled)
+                {
+                    Debug.Log("[GameManager] Vùng chờ đầy nhưng slot vừa nhận sợi còn đang animation → trì hoãn check thua.");
+                    isCheckingLose = true;
+                    return;
+                }
+
                 Debug.Log("Box process = " + BoxManager.Instance.ProcessingBoxCount);
                 // nếu không có box nào đang xử lý → lose ngay
                 if (!BoxManager.Instance.IsProcessingBox)
@@ -530,6 +543,34 @@ namespace _Game.Scripts.Gameplay
             {
                 WinLevel();
             }
+        }
+
+        /// <summary>
+        /// Check lại thua sau khi animation của ô chờ vừa xong VÀ đã thử đẩy sợi vào hộp.
+        /// Gọi từ WaitingAreaManager.TryRefillSlot — đây là lúc duy nhất biết chắc sợi
+        /// đó còn vào được hộp hay không.
+        /// </summary>
+        public void RecheckLoseAfterWaitingAnimation(Slot slot)
+        {
+            if (isGameOver) return;
+
+            if (!WaitingAreaManager.Instance.IsAllWaitingSlotsFilled())
+            {
+                // Đã có chỗ trống (sợi vào hộp rồi) → không thua.
+                isCheckingLose = false;
+                return;
+            }
+
+            // Vùng chờ vẫn đầy. Nếu đang có hộp xử lý thì đợi hộp xong
+            // (HandleAllBoxProcessed sẽ check lại) — không kết luận thua vội.
+            if (BoxManager.Instance.IsProcessingBox)
+            {
+                isCheckingLose = true;
+                return;
+            }
+
+            Debug.Log("[GameManager] Vùng chờ đầy và không hộp nào nhận được sợi → thua.");
+            LoseLevel(slot);
         }
 
         private void HandleAllBoxProcessed()

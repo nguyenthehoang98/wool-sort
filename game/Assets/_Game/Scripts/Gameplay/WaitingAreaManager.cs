@@ -125,7 +125,14 @@ namespace _Game.Scripts.Gameplay
                 {
                     // animate ghost jump và fill
                     AutoRefillCoroutine(checkSlot, boxSlot, yc);
+                    return;
                 }
+
+                // Không có hộp nào nhận được sợi này → sợi nằm lại vùng chờ.
+                // Animation đã xong và đã thử refill xong thì mới biết chắc vùng chờ
+                // có đầy không → check lại thua (trước đây lúc đánh dấu "filled" thì
+                // animation còn chưa xong nên check thua bị quá sớm).
+                GameManager.Instance.RecheckLoseAfterWaitingAnimation(checkSlot);
             }
         }
 
@@ -143,6 +150,8 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogWarning($"[WaitingAreaManager] Refill waiting→box thất bại (màu {color}) — " +
                                  "trả slot hộp về SlotManager để không mất slot.", this);
                 SlotManager.Instance.ReleaseSlot(boxSlot);
+                // Sợi vẫn nằm ở vùng chờ và không vào được hộp nào → check lại thua.
+                GameManager.Instance.RecheckLoseAfterWaitingAnimation(waitSlot);
                 return;
             }
 

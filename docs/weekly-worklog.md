@@ -955,6 +955,47 @@ Target thêm `None = 0` ở đầu → **mọi thứ index theo `(int)BoosterTyp
 | Compile 3 assembly | PASS — 0 error |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 19 — Fix báo thua trước khi sợi len kịp vào hộp (2026-10-21)
+
+Báo cáo: *"khi trên thanh ngang có màu, tôi pick đúng sợi len đó nhưng tốc độ nhanh nó
+chưa kịp load xong đã bắn thông báo thua rồi"*.
+
+### Nguyên nhân (race condition)
+
+`Slot.Fill()` đánh dấu ô chờ **đầy ngay** (`IsFilled = true`) và bắn `SlotFilledEvent`
+ngay, nhưng chuyển sợi len sang hộp lại chạy **sau khi animation ring-appear xong**
+(`WaitAndTriggerBoxBounce` → `OnAnimationFilled` → `TryRefillSlot`).
+
+→ `GameManager.React(SlotFilledEvent)` thấy "vùng chờ đầy" + "chưa có hộp nào đang xử lý"
+→ `LoseLevel()` **trước khi sợi kịp vào hộp**. Chơi càng nhanh càng dễ trúng.
+
+Logic này **có sẵn ở dự án gốc** (đã diff `React(SlotFilledEvent)` và
+`IsAllWaitingSlotsFilled()` giữa 2 bên → giống hệt), không phải lỗi do port.
+
+### Đã sửa
+
+- **`GameManager.React`**: ô chờ vừa nhận sợi còn đang animation → **không kết luận thua**,
+  đặt `isCheckingLose = true` và trì hoãn.
+- **`GameManager.RecheckLoseAfterWaitingAnimation(Slot)`** (mới): check lại thua *sau khi*
+  animation xong và đã thử đẩy sợi vào hộp — vùng chờ còn trống → không thua; đang có hộp
+  xử lý → đợi; vẫn đầy + không hộp nào nhận được → thua.
+- **`WaitingAreaManager.TryRefillSlot`**: nhánh không có hộp nào nhận được sợi → gọi check
+  lại (trước đây im lặng → thua bị bỏ sót).
+- **`WaitingAreaManager.AutoRefillCoroutine`**: nhánh refill thất bại → cũng check lại.
+
+Đặt check lại ở `WaitingAreaManager` chứ không phải `OnAnimationFilled` vì thứ tự gọi là
+`OnAnimationFilled` **trước** `TryRefillSlot` — check ở đó vẫn quá sớm.
+
+Chi tiết + checklist test tay: `docs/evidence/lose-race-condition.md`.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Diff luồng thua với bản gốc | giống hệt → xác nhận lỗi có sẵn ở gốc |
+| Compile 3 assembly | PASS — 0 error (warning đều có sẵn từ file cũ) |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
