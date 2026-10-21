@@ -120,8 +120,13 @@ namespace _Game.Scripts.Gameplay
             // thủ công để dev test một level cụ thể.
             if (currentLevel <= 1 && EconomyService.Instance != null)
             {
+                // Level được CHỌN từ danh sách chọn màn (ưu tiên cao nhất)
+                var picked = EconomyService.Instance.GetPlayLevel();
+                EconomyService.Instance.ClearPlayLevel();
+                if (picked > 1) currentLevel = picked;
+
                 var savedLevel = EconomyService.Instance.GetLevel();
-                if (savedLevel > 1) currentLevel = savedLevel;
+                if (currentLevel <= 1 && savedLevel > 1) currentLevel = savedLevel;
             }
             InitEmptyScreen();
 

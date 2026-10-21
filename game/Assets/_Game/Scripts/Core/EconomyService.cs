@@ -190,8 +190,17 @@ namespace _Game.Scripts.Core
         #region Level
 
         public int GetLevel() => _data.currentLevel;
-        public void SetLevel(int level)
-        {
+
+        // Level được CHỌN để chơi (khác với currentLevel = level sẽ chơi tiếp).
+        // Dùng khi bấm 1 ô trong danh sách chọn màn; GameManager đọc rồi xoá để
+        // lần load sau quay về level sẽ chơi tiếp.
+        private int _playLevel;
+
+        public void PlayLevel(int level) => _playLevel = Mathf.Max(1, level);
+        public int GetPlayLevel() => _playLevel > 0 ? _playLevel : GetLevel();
+        public void ClearPlayLevel() => _playLevel = 0;
+
+        public void SetLevel(int level)        {
             if (level < 1) level = 1;
             _data.currentLevel = level;
             if (_data.lastPlayedLevel < level) _data.lastPlayedLevel = level;
