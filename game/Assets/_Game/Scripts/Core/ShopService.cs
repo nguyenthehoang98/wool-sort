@@ -30,9 +30,9 @@ namespace _Game.Scripts.Core
         {
             new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 0, coinAmount = 500, iconResPath = "Shop/coinShopPack1" },
             new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 0, coinAmount = 1400, iconResPath = "Shop/coinShopPack2" },
-            new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1, iconResPath = "Shop/power1_120x120" },
-            new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1, iconResPath = "Shop/power2_120x120" },
-            new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1, iconResPath = "Shop/power3_120x120" },
+            new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1, iconResPath = "BoosterUI/Icon_Slot_3" },
+            new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1, iconResPath = "BoosterUI/Icon_Broom_2" },
+            new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1, iconResPath = "BoosterUI/Icon_Spool_2" },
         };
 
         /// <summary>Lý do mua thất bại gần nhất (để UI hiện tooltip đúng nội dung).</summary>

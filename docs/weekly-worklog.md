@@ -627,6 +627,32 @@ Các ô IAP (No Ads / InfiHeart / Basket) không dùng cho shop local nên bỏ 
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Hierarchy `Home.unity` | Canvas → BG / SafeArea / **PurchaseSuccessPopup** |
 
+## Vòng 12 — Đổi icon booster trong shop sang icon của Gameplay (2026-10-20)
+
+Yêu cầu: icon booster trong shop dùng đúng icon của Gameplay; gỡ icon shop cũ.
+
+Mapping lấy từ `Assets/_Game/BoosterUI_Picked/README.md` (bảng "nguồn gốc" của chính dự án) — icon thường, không phải icon khi khoá:
+
+| Booster | Icon Gameplay | Đường dẫn Resources |
+|---|---|---|
+| Add Slot | `Icon_Slot_3.png` | `BoosterUI/Icon_Slot_3` |
+| Clean | `Icon_Broom_2.png` | `BoosterUI/Icon_Broom_2` |
+| Magic Box | `Icon_Spool_2.png` | `BoosterUI/Icon_Spool_2` |
+
+Target **đã có sẵn** mirror `Assets/_Game/Resources/BoosterUI/` (19 PNG) nên không cần copy thêm asset.
+
+Đã đổi `ShopService.items` (`iconResPath`) cho 3 gói booster sang `BoosterUI/...`, và **xoá** 3 icon booster cũ của shop: `Resources/Shop/power1_120x120.png`, `power2_120x120.png`, `power3_120x120.png` (+ `.meta`) — trước khi xoá đã verify không còn tham chiếu nào (chỉ chính `.meta` của chúng).
+
+2 icon gói coin (`Shop/coinShopPack1/2.png`) **giữ lại** — không phải icon booster.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| 5 đường dẫn `iconResPath` trong `ShopService` | đều tồn tại trong `Resources/` |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
