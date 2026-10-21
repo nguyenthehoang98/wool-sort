@@ -63,6 +63,9 @@ public sealed class BulkReskinWindow : EditorWindow
     private bool mirrorBooster = true;
     private bool showDestColumn = true;
     private bool showUsage = true;
+    private bool includeResources = false;
+    private string rootsText =
+        "Assets/Scenes/EntryScene.unity;Assets/Scenes/Home.unity;Assets/Scenes/Gameplay.unity";
 
     // ---- quét (chunked, không đơ)
     private bool scanning;
@@ -116,6 +119,7 @@ public sealed class BulkReskinWindow : EditorWindow
             EditorStyles.miniLabel);
 
         DrawToolbar();
+        DrawRootOptions();
         EditorGUILayout.Space(2);
         DrawHeader();
         DrawProgress();
@@ -134,7 +138,7 @@ public sealed class BulkReskinWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
             GUI.enabled = !scanning;
-            if (GUILayout.Button("Quét ảnh trong project", EditorStyles.toolbarButton, GUILayout.Width(150)))
+            if (GUILayout.Button("Quét ảnh dùng trong game", EditorStyles.toolbarButton, GUILayout.Width(160)))
                 StartScanProject();
             if (GUILayout.Button("Nạp từ folder…", EditorStyles.toolbarButton, GUILayout.Width(110)))
                 StartScanFolder();
@@ -156,6 +160,16 @@ public sealed class BulkReskinWindow : EditorWindow
             if (newIdx != thumbIndex) { thumbIndex = newIdx; Repaint(); }
 
             GUILayout.Label(entries.Count + " dòng", EditorStyles.miniLabel);
+        }
+    }
+
+    private void DrawRootOptions()
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.LabelField("Scene gốc", GUILayout.Width(70));
+            rootsText = EditorGUILayout.TextField(rootsText);
+            includeResources = EditorGUILayout.ToggleLeft("Kèm ảnh trong Resources/", includeResources, GUILayout.Width(160));
         }
     }
 
@@ -498,13 +512,41 @@ public sealed class BulkReskinWindow : EditorWindow
     // ================================================================== quét
     private void StartScanProject()
     {
-        var list = new List<string>();
-        foreach (var p in AssetDatabase.GetAllAssetPaths())
+        var roots = ParseRoots();
+        if (roots.Count == 0)
         {
-            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
-            if (!ImageExts.Contains(Path.GetExtension(p).ToLower())) continue;
-            list.Add(p);
+            report = "Chưa có scene gốc nào hợp lệ.";
+            return;
         }
+
+        // chỉ lấy asset reachable từ các scene gốc (Entry / Home / Gameplay)
+        var found = new HashSet<string>();
+        int badRoots = 0;
+        foreach (var root in roots)
+        {
+            string full = Path.Combine(ProjectRoot, root.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(full)) { badRoots++; continue; }
+            foreach (var dep in AssetDatabase.GetDependencies(root, true))
+            {
+                if (!dep.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+                if (!ImageExts.Contains(Path.GetExtension(dep).ToLower())) continue;
+                found.Add(dep);
+            }
+        }
+
+        // tuỳ chọn: kèm ảnh trong Resources/ (load runtime theo path, không ai trỏ tới)
+        if (includeResources)
+        {
+            foreach (var p in AssetDatabase.GetAllAssetPaths())
+            {
+                if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+                if (!p.Contains("/Resources/")) continue;
+                if (!ImageExts.Contains(Path.GetExtension(p).ToLower())) continue;
+                found.Add(p);
+            }
+        }
+
+        var list = found.ToList();
         list.Sort(StringComparer.OrdinalIgnoreCase);
 
         scanQueue.Clear();
@@ -513,10 +555,26 @@ public sealed class BulkReskinWindow : EditorWindow
         scanIsFolderScan = false;
         SeedKnownPaths();
         scanProgress = 0f;
-        scanLabel = "Đang quét ảnh trong project…";
+        scanLabel = "Đang quét " + list.Count + " ảnh dùng trong game…";
         scanning = true;
         EditorApplication.update -= OnScanTick;
         EditorApplication.update += OnScanTick;
+
+        if (badRoots > 0) report = "Bỏ qua " + badRoots + " scene gốc không tồn tại.";
+    }
+
+    private List<string> ParseRoots()
+    {
+        var result = new List<string>();
+        foreach (var part in rootsText.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string p = part.Trim().Replace('\\', '/');
+            if (p.Length == 0) continue;
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) p = "Assets/" + p;
+            if (!p.EndsWith(".unity", StringComparison.OrdinalIgnoreCase)) p += ".unity";
+            result.Add(p);
+        }
+        return result;
     }
 
     private void StartScanFolder()

@@ -848,6 +848,52 @@ prefab/scene/material vẫn trỏ đúng, `spriteBorder` (9-slice) và PPU khôn
 
 Tài liệu: `docs/reskin.md`.
 
+## Vòng 17 — Reskin: ô co theo ảnh, scroll nhanh, chỉ quét asset dùng trong game (2026-10-21)
+
+### 1. Ô preview co theo ảnh + chiều cao dòng
+
+- `DrawThumb`: `k = min(1, min(boxW/w, boxH/h))` → ảnh **nhỏ giữ nguyên kích thước**
+  (không phóng to), ảnh **lớn thu vừa ô**, tỉ lệ không đổi.
+- `RowHeight = clamp(max(cao 2 ảnh), 64, ThumbSize) + 40` → ảnh nhỏ thì dòng ngắn.
+- Ảnh cũ dùng **texture gốc** (`LoadAssetAtPath`) thay vì `AssetPreview` (cắt viền /
+  theo sprite rect nên không thấy trọn ảnh).
+
+### 2. Scroll nhanh
+
+- Bảng vẽ bằng **rect thủ công** (`EditorGUI.*`) thay vì `EditorGUILayout` từng ô →
+  kiểm soát chính xác vị trí, hết chồng nhau.
+- **Chỉ vẽ dòng trong vùng nhìn thấy**; dòng ngoài vùng chỉ để lại chỗ bằng
+  `GUILayout.Space` → không xử lý mục của cả ~300 dòng mỗi frame.
+- Cache texture của asset (trước đó gọi `AssetDatabase.LoadAssetAtPath` mỗi dòng
+  mỗi frame) + `ClearCaches()` sau khi Apply vì texture bị reimport.
+
+### 3. Chỉ quét asset dùng trong game
+
+- Nút **"Quét ảnh dùng trong game"** → lấy `AssetDatabase.GetDependencies(scene, true)`
+  của 3 scene gốc `EntryScene` / `Home` / `Gameplay`, giao nhau → chỉ ảnh thật sự
+  dùng trong game.
+- Scene gốc sửa được ở ô *"Scene gốc"* (phân tách `;` hoặc `,`).
+- Tuỳ chọn *"Kèm ảnh trong Resources/"* cho ảnh chỉ load runtime theo path.
+
+**Số lượng (verify bằng script độc lập):**
+
+| Phạm vi | Số ảnh |
+|---|---|
+| Toàn project | 285 |
+| **Reachable từ Entry + Home + Gameplay** | **70** |
+| Bị loại | 215 (ảnh plugin DOTween/DemiLib/Dreamteck, ảnh editor, ảnh không ai dùng, bản mirror `Resources/BoosterUI/`) |
+
+Bản mirror `Resources/BoosterUI/` không được quét (không ai trỏ tới) — đúng mục đích,
+vì tuỳ chọn *"Mirror BoosterUI"* sẽ copy đè sang đó khi áp dụng.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error, 0 warning từ file mới |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Số ảnh reachable từ 3 scene (script độc lập) | 70 |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

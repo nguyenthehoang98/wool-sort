@@ -23,7 +23,13 @@ File: `game/Assets/Editor/BulkReskinWindow.cs` — giao diện là **bảng**, m
 
 1. Mở Unity → menu **`Tools / Reskin / Reskin hàng loạt`**.
 2. Lấy danh sách dòng (1 trong 3):
-   - **"Quét ảnh trong project"** → thêm mọi ảnh trong `Assets` vào bảng, cột *Ảnh cũ* đã điền.
+   - **"Quét ảnh dùng trong game"** → chỉ lấy ảnh **reachable từ 3 scene gốc**
+     (`EntryScene` / `Home` / `Gameplay`) qua `AssetDatabase.GetDependencies(recursive)`,
+     nên bỏ hết ảnh plugin, ảnh editor, ảnh không ai dùng. Hiện tại ra **70 ảnh**
+     (so với 285 ảnh nếu quét toàn project).
+     - Scene gốc sửa được ở ô *"Scene gốc"* (phân tách bằng `;` hoặc `,`).
+     - Tick *"Kèm ảnh trong Resources/"* nếu cần thêm ảnh chỉ được load runtime
+       theo path (vd bản mirror `Resources/BoosterUI/`).
    - **"Nạp từ folder…"** → chọn folder ảnh mới, tool tự khớp theo tên file và điền cả 2 cột.
    - **"Thêm dòng"** → dòng trống, tự điền tay.
 3. Chọn **ảnh mới** cho mỗi dòng:
