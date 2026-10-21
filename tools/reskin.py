@@ -399,7 +399,8 @@ def main():
     backup_dir = None
     if not args.no_backup:
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        backup_dir = os.path.join(REPO, ".reskin_backup", stamp)
+        # cung thu muc voi EditorWindow (BulkReskinWindow) de undo dung cho
+        backup_dir = os.path.join(REPO, "game", ".reskin_backup", stamp)
 
     replaced, skipped, failed = apply_plan(plan, args.assets, backup_dir, args.mirror_booster)
 

@@ -1,12 +1,54 @@
 # Reskin hàng loạt
 
-Tool: `tools/reskin.py` (Python, chạy ngoài Unity — không cần mở Editor).
+Có 2 cách. **Trong Unity là cách dễ dùng nhất** (mục 1); tool Python (mục 2) để chạy
+batch/script hoặc khi không muốn mở Editor.
 
-Nguyên tắc: **ghi đè nội dung file PNG**, không xoá rồi tạo lại. Nhờ vậy `.meta`
+Nguyên tắc chung: **ghi đè nội dung file PNG**, không xoá rồi tạo lại. Nhờ vậy `.meta`
 giữ nguyên → **GUID không đổi** → mọi prefab / scene / material trỏ tới ảnh đó
 vẫn đúng, và `spriteBorder` (9-slice) + `spritePixelsToUnits` (PPU) không bị mất.
 
-## Dùng
+---
+
+## 1. Trong Unity — `Tools / Reskin / Reskin hàng loạt`
+
+File: `game/Assets/Editor/BulkReskinWindow.cs`
+
+**Cách dùng:**
+
+1. Mở Unity → menu **`Tools / Reskin / Reskin hàng loạt`**.
+2. Bấm **"Chọn…"** → trỏ tới folder chứa ảnh mới (ở bất kỳ đâu trên máy).
+   Tool tự quét và lập bảng khớp.
+3. Xem bảng: mỗi dòng có **preview ảnh mới** | **preview ảnh cũ** | **ảnh trong project**
+   (dropdown chọn đích nếu trùng tên) | **cảnh báo**.
+4. Tích chọn dòng nào muốn thay → bấm **"Áp dụng"**.
+   Tool backup bản gốc vào `game/.reskin_backup/<timestamp>/` rồi ghi đè, và
+   `AssetDatabase.ImportAsset` để Unity reimport ngay.
+
+**Tuỳ chọn:**
+
+| Checkbox | Tác dụng |
+|---|---|
+| *Thay cả các bản trùng tên* | Mặc định chỉ thay bản **không nằm trong `Resources/`** (bản editable). Bật lên thì thay hết các bản trùng tên. |
+| *Copy thêm sang Resources/BoosterUI* | Sửa ở `_Game/BoosterUI_Picked/` thì copy đè sang `_Game/Resources/BoosterUI/` (bản runtime fallback mà `BoosterBarUI.ResolveSprites()` load). |
+| *Chỉ hiện dòng có vấn đề* | Lọc ra dòng có cảnh báo / không khớp. |
+
+**Cảnh báo hiển thị:** khác định dạng file (`.png` vs `.jpg` → bỏ qua) · đổi kích thước ·
+**9-slice đổi kích thước** (spriteBorder tính theo pixel cũ).
+
+**Hoàn tác:** nút **"Hoàn tác từ backup"** → khôi phục từ thư mục backup mới nhất.
+
+**Cách khớp file:**
+
+| Ưu tiên | Quy tắc |
+|---|---|
+| 1 | Khớp **đường dẫn tương đối** trong `game/Assets` — nếu đặt ảnh mới trong thư mục cấu trúc y hệt (`_Game/Textures/UIV2/Frame_Tooltips.png`) thì khớp tuyệt đối |
+| 2 | Khớp theo **tên file**. Trùng nhiều nơi → chọn bản **không nằm trong `Resources/`**, có thể đổi đích bằng dropdown |
+
+---
+
+## 2. Tool Python — `tools/reskin.py`
+
+Chạy ngoài Unity, hợp khi batch/script hoặc không muốn mở Editor.
 
 ```bash
 # 1. xem kế hoạch (dry-run, KHÔNG thay gì)
@@ -22,32 +64,24 @@ python tools/reskin.py --src D:/new_skin --apply --mirror-booster
 python tools/reskin.py --src D:/new_skin --map map.csv --apply
 ```
 
+Trên Windows: mở PowerShell tại thư mục repo rồi chạy lệnh trên (dùng `py -3` nếu
+`python` không có trong PATH).
+
 `map.csv` — mỗi dòng: `đường_dẫn_ảnh_cũ,file_ảnh_mới`
 ```
 _Game/BoosterUI_Picked/Icon_Slot_3.png,my_new_slot_icon.png
 ```
 
-## Cách khớp file
+Cờ khác: `--all-matches` (thay cả các bản trùng tên) · `--no-backup`.
+Backup ghi vào **cùng thư mục** `game/.reskin_backup/<timestamp>/` với EditorWindow.
 
-| Ưu tiên | Quy tắc |
-|---|---|
-| 1 | Khớp **đường dẫn tương đối** trong `game/Assets` — nếu bạn đặt ảnh mới trong thư mục cấu trúc y hệt (`_Game/Textures/UIV2/Frame_Tooltips.png`) thì khớp tuyệt đối |
-| 2 | Khớp theo **CSV map** |
-| 3 | Khớp theo **tên file**. Nếu trùng nhiều nơi → chọn bản **không nằm trong `Resources/`** (bản editable), và in ra các bản trùng còn lại. Muốn thay hết thì thêm `--all-matches` |
+---
 
-## Cờnh báo
+## Cảnh báo chung
 
-- **9-slice**: nếu ảnh có `spriteBorder` khác 0 mà kích thước PNG mới khác cũ → cảnh báo, vì `spriteBorder` đang tính theo pixel cũ.
-- **Kích thước khác**: in ra `cũ → mới`.
-- **Không tìm thấy ảnh cũ**: file mới sẽ không được đưa vào project (tool không tự tạo asset mới) — tự thêm vào Unity nếu cần.
-- **Backup**: mặc định lưu bản gốc vào `.reskin_backup/<timestamp>/` (đã gitignore). Tắt bằng `--no-backup`.
-
-## Lưu ý khi reskin
-
-1. **PPU = 100** cho toàn bộ ảnh UI. Đổi PNG mà giữ PPU thì UI giữ nguyên kích thước trên màn hình; muốn đổi kích thước hiển thị thì sửa PPU trong Inspector.
-2. **Ảnh 9-slice** (`Frame_Bar_1/2/3`, `Frame_Popup_1/2/3/4`, `Button_Green`, `Button_Blue`, `Button_Close`, `slot2`, `btn2Green`) — giữ nguyên `spriteBorder`.
-3. **Booster**: sửa ở `_Game/BoosterUI_Picked/` thì phải copy đè sang `_Game/Resources/BoosterUI/` (tool làm việc này với `--mirror-booster`), vì `BoosterBarUI.ResolveSprites()` load bản trong `Resources/` khi field Inspector còn trống.
-4. **Unity đang mở** sẽ tự reimport file đã đổi. Nếu thấy chưa cập nhật, focus Unity hoặc `Assets → Refresh`.
+- **PPU = 100** cho toàn bộ ảnh UI. Đổi PNG mà giữ PPU thì UI giữ nguyên kích thước trên màn hình; muốn đổi kích thước hiển thị thì sửa PPU trong Inspector.
+- **Ảnh 9-slice** (`Frame_Bar_1/2/3`, `Frame_Popup_1/2/3/4`, `Button_Green`, `Button_Blue`, `Button_Close`, `slot2`, `btn2Green`) — giữ nguyên `spriteBorder`.
+- **Unity đang mở** sẽ tự reimport file đã đổi. Nếu thấy chưa cập nhật, focus Unity hoặc `Assets → Refresh`.
 
 ## Tầng "1 file đổi cả bộ" (không cần tool)
 
