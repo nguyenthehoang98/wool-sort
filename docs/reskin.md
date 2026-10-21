@@ -35,6 +35,15 @@ File: `game/Assets/Editor/BulkReskinWindow.cs` — giao diện là **bảng**, m
 5. **"Áp dụng"** → backup bản gốc vào `game/.reskin_backup/<timestamp>/`, ghi đè, rồi
    `AssetDatabase.ImportAsset` để Unity reimport ngay.
 
+**Quét không đơ:** cả "Quét ảnh trong project" lẫn "Nạp từ folder…" chạy theo lô (60 item/tick)
+qua `EditorApplication.update` → có **thanh tiến trình** trong cửa sổ, Editor vẫn thao tác được.
+Phần "Dùng ở" (`AssetDatabase.GetDependencies`) cũng được tính luôn trong lúc quét nên lúc vẽ
+bảng không còn gọi I/O nào.
+
+**Preview ảnh:** mỗi ô ảnh hiện **ảnh thật** (72×72, `ScaleToFit` → thấy trọn ảnh) trong khung
+viền, bên cạnh là ObjectField để chọn. Ảnh cũ dùng `AssetPreview` của Unity (đúng sprite rect),
+ảnh mới load trực tiếp từ file.
+
 **Bảng được lưu lại:** nút **"Lưu bảng"** → `Assets/_Game/Configs/ReskinMap.json`.
 Mở lại tool (hoặc "Nạp bảng") là có nguyên bảng cũ → tiếp tục làm tiếp.
 
@@ -47,6 +56,7 @@ Mở lại tool (hoặc "Nạp bảng") là có nguyên bảng cũ → tiếp t�
 - *Mirror BoosterUI* — sửa ở `_Game/BoosterUI_Picked/` thì copy đè sang `_Game/Resources/BoosterUI/`
   (bản runtime fallback mà `BoosterBarUI.ResolveSprites()` load).
 - *Cột đường path* — ẩn/hiện cột "Lưu vào" nếu không dùng.
+- *Cột nơi dùng* — ẩn/hiện cột "Dùng ở".
 - Ô tìm kiếm — lọc theo tên/path.
 
 **Hoàn tác:** nút **"Hoàn tác từ backup"** → khôi phục từ thư mục backup mới nhất.
