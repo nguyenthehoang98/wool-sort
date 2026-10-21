@@ -1088,6 +1088,50 @@ Nhưng **thông báo không hiện** vì `KitTooltipManager.Instance` bị null:
 | Compile 3 assembly | PASS — 0 error |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 22 — Nút + tính năng cài đặt ở Home và Gameplay (2026-10-21)
+
+Yêu cầu: *"thêm button và tính năng setting ở home và gameplay"*.
+
+### Bản gốc
+
+`_Game/Resources/SettingHomePopup.prefab` + `SettingInGamePopup.prefab`, `SettingManager` (prefabs
+`_Game/_SettingManager/`), script `SettingHomePopup.cs`. 3 toggle: SFX / BGM / Rung, mỗi nút có 2
+con (trạng thái tắt/bật), cộng nút đóng + nút ngôn ngữ + dòng version + nút "restore purchase"
+(iOS, phụ thuộc IAP).
+
+**Không port thẳng được**: `SettingManager` dùng `AudioSource` riêng + `AudioDefaultSO` +
+`LFramework.Vibration` + `GameData.IsEnableSound` + `FrameBase` + `KitSDK` — tất cả đã prune.
+Target cũng chưa có **file âm thanh nào** (0 wav/mp3/ogg).
+
+### Đã làm (target-native)
+
+| Phần | Nội dung |
+|---|---|
+| **Asset** | Pick 4 icon từ bản gốc (giữ GUID) → `_Game/Resources/Textures/`: `icon_settings.png` (104²), `icon_sound.png` (96×76), `icon_music.png` (86×88), `icon_vibration.png` (98×92) |
+| **`SettingsService`** (`_Game/Scripts/Core/`) | 3 cờ `Sound` / `Music` / `Vibration` lưu trong `PlayerData` (cùng file save với coin/heart/booster) → giữ qua màn chơi. Áp dụng ngay: `KitSound.GlobalSoundsVolume` / `GlobalMusicVolume` = 0/1, tắt thì `StopAllMusic()` / `StopAllSounds()`. Rung dùng `Handheld.Vibrate()`. Tự tạo `EconomyService` nếu thiếu (mở thẳng scene Gameplay) |
+| **`SettingsPopup`** (`_Game/Scripts/Meta/`) | Popup: 3 hàng (icon + tên + nút bật/tắt), nút đóng, dòng version. GameObject gốc để **tắt** trong scene (Scene View gọn, không chặn input) → `Acquire()` tự bật lên khi cần |
+| **`SettingsButton`** (`_Game/Scripts/Meta/`) | Nút bánh răng, tự tìm popup trong scene (kể cả khi đang tắt) nên không cần kéo tham chiếu |
+| **Prefab** | `_Game/Prefab/UI/SettingsPopup.prefab`, `_Game/Prefab/UI/SettingsButton.prefab` |
+| **Scene** | Instance `SettingsButton` (góc trên-phải, `-40,-40`) + `SettingsPopup` (tắt) trong `Home.unity` (Canvas) và `Gameplay.unity` (`Canvas_2 (Overlays)`) |
+
+### Ghi chú
+
+- Bản gốc có nút "restore purchase" (iOS) và nút ngôn ngữ → **bỏ** vì target không làm IAP và
+  không có localization runtime.
+- Target **chưa có file âm thanh** → toggle vẫn lưu/áp dụng đúng, nhưng chưa nghe được gì cho
+  tới khi bổ sung audio.
+- Thông báo của bản gốc bằng tiếng Anh → dịch sang tiếng Việt cho khớp UI còn lại.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `SettingsPopup.prefab` / `SettingsButton.prefab` | PASS cả 2 |
+| Validator `Home.unity` | PASS |
+| Validator `Gameplay.unity` | 10 lỗi **có sẵn** từ đợt đổi tên asset (icon BoosterBtn / MoreBoosterPopup / WinPopup) — không liên quan tới settings (GUID `1460a9d2…` / `f4b7b06b…` không xuất hiện) |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
