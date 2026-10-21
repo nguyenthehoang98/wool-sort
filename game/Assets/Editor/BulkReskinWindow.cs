@@ -200,109 +200,181 @@ public sealed class BulkReskinWindow : EditorWindow
             return;
         }
 
+        // 1) danh sách dòng đang hiện (sau khi lọc)
+        var visible = new List<int>();
+        for (int i = 0; i < entries.Count; i++)
+            if (MatchFilter(entries[i], filter)) visible.Add(i);
+
+        // 2) chiều cao từng dòng: ô preview co theo anh, dong thu nho theo anh
+        int n = visible.Count;
+        var heights = new float[n];
+        float total = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            heights[i] = RowHeight(entries[visible[i]]);
+            total += heights[i];
+        }
+
+        // 3) khoang nhin thay (chi ve dong dang thay) -> scroll nhanh
+        float viewH = Mathf.Max(240f, position.height - 150f);
+        float top = scroll.y - 60f;
+        float bottom = scroll.y + viewH + 60f;
+
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
-        foreach (var e in entries)
+        float y = 0f;
+        int first = n, last = -1;
+        for (int i = 0; i < n; i++)
         {
-            if (!string.IsNullOrEmpty(filter) && !MatchFilter(e, filter)) continue;
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                e.enabled = EditorGUILayout.Toggle(e.enabled, GUILayout.Width(ToggleW), GUILayout.Height(ThumbSize));
-
-                DrawOldCell(e);
-                DrawNewCell(e);
-
-                if (showDestColumn)
-                {
-                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(CellDestW)))
-                    {
-                        string dest = e.destPath ?? "";
-                        string newDest = EditorGUILayout.TextField(dest, GUILayout.Width(CellDestW - 4));
-                        if (newDest != dest) e.destPath = newDest;
-                        EditorGUILayout.LabelField(FileName(e.destPath), EditorStyles.miniLabel);
-                    }
-                }
-
-                using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
-                {
-                    EditorGUILayout.LabelField(BuildWarn(e), EditorStyles.miniLabel, GUILayout.Height(16));
-                    if (showUsage && !string.IsNullOrEmpty(e.oldPath))
-                        EditorGUILayout.LabelField(BuildUsage(e), EditorStyles.miniLabel, GUILayout.Height(16));
-                }
-            }
+            if (first == n && y + heights[i] > top) first = i;
+            if (y < bottom) last = i;
+            y += heights[i];
         }
+        if (last < 0) last = 0;
+
+        // chừa chỗ cho các dòng nằm ngoài vùng nhìn
+        float skipTop = 0f;
+        for (int i = 0; i < first; i++) skipTop += heights[i];
+        if (skipTop > 0f) GUILayout.Space(skipTop);
+
+        for (int i = first; i <= last && i < n; i++)
+            DrawRow(entries[visible[i]], heights[i]);
+
+        float drawn = 0f;
+        for (int i = first; i <= last && i < n; i++) drawn += heights[i];
+        float skipBottom = total - skipTop - drawn;
+        if (skipBottom > 0f) GUILayout.Space(skipBottom);
 
         EditorGUILayout.EndScrollView();
     }
 
-    private void DrawOldCell(Entry e)
+    /// <summary>Chiều cao dòng = chiều cao preview (co theo anh) + field + label.</summary>
+    private float RowHeight(Entry e)
     {
-        using (new EditorGUILayout.VerticalScope(GUILayout.Width(CellOldW)))
+        int h = Mathf.Max(ImgHeight(e.oldPath), ImgHeight(e.newPath));
+        h = Mathf.Clamp(h, 64, ThumbSize);
+        return h + 40f;
+    }
+
+    private int ImgHeight(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return 0;
+        if (path.StartsWith("Assets/"))
         {
-            // preview ảnh cũ (ảnh gốc, hiện trọn + scale theo tỉ lệ)
-            var rect = EditorGUILayout.GetControlRect(false, ThumbSize);
-            DrawThumb(rect, e.oldPath != null ? GetOldTexture(e.oldPath) : null);
+            var t = GetOldTexture(path);
+            return t != null ? t.height : 0;
+        }
+        var s = GetSize(path);
+        return s.y;
+    }
 
-            var tex = e.oldPath != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.oldPath) : null;
-            var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false, GUILayout.Width(CellOldW - 4));
-            var pickedPath = picked != null ? AssetDatabase.GetAssetPath(picked) : null;
-            if (pickedPath != e.oldPath)
-            {
-                e.oldPath = pickedPath;
-                if (string.IsNullOrEmpty(e.destPath)) e.destPath = pickedPath;
-            }
+    private void DrawRow(Entry e, float height)
+    {
+        var rowRect = GUILayoutUtility.GetRect(100, height, GUILayout.ExpandWidth(true));
+        float x = rowRect.x;
 
-            EditorGUILayout.LabelField(e.oldPath != null ? e.oldPath : "(chưa chọn ảnh cũ)",
-                EditorStyles.miniLabel, GUILayout.Width(CellOldW - 4));
+        var toggleRect = new Rect(x, rowRect.y, ToggleW, height);
+        e.enabled = EditorGUI.Toggle(toggleRect, e.enabled);
+        x += ToggleW;
+
+        var oldRect = new Rect(x, rowRect.y, CellOldW, height);
+        DrawOldCell(e, oldRect);
+        x += CellOldW;
+
+        var newRect = new Rect(x, rowRect.y, CellNewW, height);
+        DrawNewCell(e, newRect);
+        x += CellNewW;
+
+        if (showDestColumn)
+        {
+            var destRect = new Rect(x, rowRect.y, CellDestW, height);
+            DrawDestCell(e, destRect);
+            x += CellDestW;
+        }
+
+        var infoRect = new Rect(x, rowRect.y, Mathf.Max(40f, rowRect.xMax - x), height);
+        DrawInfoCell(e, infoRect);
+    }
+
+    private void DrawOldCell(Entry e, Rect cell)
+    {
+        var thumbRect = new Rect(cell.x, cell.y, Mathf.Min(ThumbSize, cell.width), cell.height - 40f);
+        DrawThumb(thumbRect, e.oldPath != null ? GetOldTexture(e.oldPath) : null);
+
+        var fieldRect = new Rect(cell.x, cell.y + cell.height - 38f, cell.width - 26f, 18f);
+        var tex = e.oldPath != null ? GetOldTexture(e.oldPath) : null;
+        var picked = EditorGUI.ObjectField(fieldRect, tex, typeof(Texture2D), false);
+        var pickedPath = picked != null ? AssetDatabase.GetAssetPath(picked) : null;
+        if (pickedPath != e.oldPath)
+        {
+            e.oldPath = pickedPath;
+            if (string.IsNullOrEmpty(e.destPath)) e.destPath = pickedPath;
+        }
+
+        var labelRect = new Rect(cell.x, cell.y + cell.height - 18f, cell.width, 16f);
+        EditorGUI.LabelField(labelRect, e.oldPath != null ? e.oldPath : "(chưa chọn ảnh cũ)", EditorStyles.miniLabel);
+    }
+
+    private void DrawNewCell(Entry e, Rect cell)
+    {
+        var thumbRect = new Rect(cell.x, cell.y, Mathf.Min(ThumbSize, cell.width), cell.height - 40f);
+        HandleDragDrop(e, thumbRect);
+        DrawThumb(thumbRect, e.newPath != null ? GetPreview(e.newPath) : null);
+
+        var fieldRect = new Rect(cell.x, cell.y + cell.height - 38f, cell.width - 26f, 18f);
+        var tex = e.newPath != null && e.newPath.StartsWith("Assets/") ? GetOldTexture(e.newPath) : null;
+        var picked = EditorGUI.ObjectField(fieldRect, tex, typeof(Texture2D), false);
+        if (picked != null)
+        {
+            string p = AssetDatabase.GetAssetPath(picked);
+            if (p != e.newPath) e.newPath = p;
+        }
+        else if (e.newPath != null && e.newPath.StartsWith("Assets/"))
+        {
+            e.newPath = null;
+        }
+
+        var btnRect = new Rect(cell.x + cell.width - 24f, cell.y + cell.height - 38f, 22f, 18f);
+        if (GUI.Button(btnRect, "…"))
+        {
+            var file = EditorUtility.OpenFilePanel("Chọn ảnh mới", string.Empty, "");
+            if (!string.IsNullOrEmpty(file)) e.newPath = file;
+        }
+
+        var labelRect = new Rect(cell.x, cell.y + cell.height - 18f, cell.width, 16f);
+        EditorGUI.LabelField(labelRect, e.newPath != null ? e.newPath : "(chưa gán ảnh mới)", EditorStyles.miniLabel);
+    }
+
+    private void DrawDestCell(Entry e, Rect cell)
+    {
+        var fieldRect = new Rect(cell.x, cell.y + 2f, cell.width - 4f, 18f);
+        string dest = e.destPath ?? "";
+        string newDest = EditorGUI.TextField(fieldRect, dest);
+        if (newDest != dest) e.destPath = newDest;
+
+        var labelRect = new Rect(cell.x, cell.y + 22f, cell.width, 16f);
+        EditorGUI.LabelField(labelRect, FileName(e.destPath), EditorStyles.miniLabel);
+    }
+
+    private void DrawInfoCell(Entry e, Rect cell)
+    {
+        var warnRect = new Rect(cell.x, cell.y + 2f, cell.width - 4f, 16f);
+        EditorGUI.LabelField(warnRect, BuildWarn(e), EditorStyles.miniLabel);
+        if (showUsage && !string.IsNullOrEmpty(e.oldPath))
+        {
+            var usageRect = new Rect(cell.x, cell.y + 20f, cell.width - 4f, 16f);
+            EditorGUI.LabelField(usageRect, BuildUsage(e), EditorStyles.miniLabel);
         }
     }
 
-    private void DrawNewCell(Entry e)
-    {
-        using (new EditorGUILayout.VerticalScope(GUILayout.Width(CellNewW)))
-        {
-            // preview ảnh mới — cũng là vùng thả file từ Explorer
-            var rect = EditorGUILayout.GetControlRect(false, ThumbSize);
-            HandleDragDrop(e, rect);
-            DrawThumb(rect, e.newPath != null ? GetPreview(e.newPath) : null);
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var tex = e.newPath != null && e.newPath.StartsWith("Assets/")
-                    ? AssetDatabase.LoadAssetAtPath<Texture2D>(e.newPath)
-                    : null;
-                var picked = EditorGUILayout.ObjectField(tex, typeof(Texture2D), false,
-                    GUILayout.Width(CellNewW - 30));
-                if (picked != null)
-                {
-                    string p = AssetDatabase.GetAssetPath(picked);
-                    if (p != e.newPath) e.newPath = p;
-                }
-                else if (e.newPath != null && e.newPath.StartsWith("Assets/"))
-                {
-                    e.newPath = null;
-                }
-
-                if (GUILayout.Button("…", GUILayout.Width(22)))
-                {
-                    var file = EditorUtility.OpenFilePanel("Chọn ảnh mới", string.Empty, "");
-                    if (!string.IsNullOrEmpty(file)) e.newPath = file;
-                }
-            }
-
-            EditorGUILayout.LabelField(e.newPath != null ? e.newPath : "(chưa gán ảnh mới)",
-                EditorStyles.miniLabel, GUILayout.Width(CellNewW - 4));
-        }
-    }
-
-    // Vẽ ảnh trong ô: giữ đúng tỉ lệ, PHÓNG TO nếu ảnh nhỏ, luôn thấy trọn ảnh.
+    // Vẽ ảnh trong ô: giữ đúng tỉ lệ, KHÔNG phóng to ảnh nhỏ, ảnh lớn thì fit vào ô.
     private static void DrawThumb(Rect rect, Texture2D tex)
     {
         EditorGUI.DrawRect(rect, new Color(0.14f, 0.14f, 0.14f));
         if (tex != null && tex.width > 0 && tex.height > 0)
         {
-            float k = Mathf.Min(rect.width / tex.width, rect.height / tex.height);
+            // k = 1 => ảnh nhỏ giữ nguyên kích thước; ảnh lớn thì thu vừa ô
+            float k = Mathf.Min(1f, Mathf.Min(rect.width / tex.width, rect.height / tex.height));
             float w = tex.width * k;
             float h = tex.height * k;
             var r = new Rect(rect.x + (rect.width - w) * 0.5f, rect.y + (rect.height - h) * 0.5f, w, h);
@@ -662,8 +734,19 @@ public sealed class BulkReskinWindow : EditorWindow
         }
 
         AssetDatabase.Refresh();
+        ClearCaches();
         report = "Đã ghi " + done + " ảnh, bỏ qua " + skip + ".";
         if (problems.Count > 0) report += "\n" + string.Join("\n", problems);
+    }
+
+    private void ClearCaches()
+    {
+        foreach (var t in previewCache.Values) if (t != null) DestroyImmediate(t);
+        previewCache.Clear();
+        oldPreviewCache.Clear();
+        warnCache.Clear();
+        sizeCache.Clear();
+        borderCache.Clear();
     }
 
     private void Restore()
@@ -709,7 +792,8 @@ public sealed class BulkReskinWindow : EditorWindow
 
     private Texture2D GetOldTexture(string assetPath)
     {
-        if (oldPreviewCache.TryGetValue(assetPath, out var cached)) return cached;
+        // cached != null cũng loại được texture đã bị Unity hủy sau khi reimport
+        if (oldPreviewCache.TryGetValue(assetPath, out var cached) && cached != null) return cached;
         // load texture GOC de hien tron anh (khong dung AssetPreview de khong bi cat vien)
         var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
         oldPreviewCache[assetPath] = tex;
