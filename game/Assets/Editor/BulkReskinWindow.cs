@@ -74,6 +74,9 @@ public sealed class BulkReskinWindow : EditorWindow
     private readonly Queue<string> scanQueue = new Queue<string>();
     private readonly Queue<string> scanFolderFiles = new Queue<string>();
     private bool scanIsFolderScan;
+    private int scanPhase;          // 1 = dung bang nguoc, 2 = them dong
+    private int scanTotalImages;
+    private readonly Queue<string> scanConsumers = new Queue<string>();
     private readonly Dictionary<string, List<string>> usageMap = new Dictionary<string, List<string>>();
     private readonly HashSet<string> knownOldPaths = new HashSet<string>();
     private Dictionary<string, List<string>> folderIndex = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -549,13 +552,25 @@ public sealed class BulkReskinWindow : EditorWindow
         var list = found.ToList();
         list.Sort(StringComparer.OrdinalIgnoreCase);
 
+        // gom danh sach "consumer" (scene/prefab/material/asset) de xay dung bang
+        // nguoc: asset nao TRO TOI anh nay
+        scanConsumers.Clear();
+        foreach (var p in AssetDatabase.GetAllAssetPaths())
+        {
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+            string ext = Path.GetExtension(p).ToLower();
+            if (ext != ".unity" && ext != ".prefab" && ext != ".mat" && ext != ".asset") continue;
+            scanConsumers.Enqueue(p);
+        }
+
         scanQueue.Clear();
         foreach (var p in list) scanQueue.Enqueue(p);
         scanFolderFiles.Clear();
         scanIsFolderScan = false;
+        scanPhase = 1;
         SeedKnownPaths();
         scanProgress = 0f;
-        scanLabel = "Đang quét " + list.Count + " ảnh dùng trong game…";
+        scanLabel = "Đang dựng bảng nơi dùng…";
         scanning = true;
         EditorApplication.update -= OnScanTick;
         EditorApplication.update += OnScanTick;
@@ -601,8 +616,18 @@ public sealed class BulkReskinWindow : EditorWindow
         foreach (var f in files) scanFolderFiles.Enqueue(f);
         scanQueue.Clear();
         scanIsFolderScan = true;
+        scanPhase = 1;
+        // cung dung bang nguoc "asset nao tro toi anh" cho che do nay
+        scanConsumers.Clear();
+        foreach (var p in AssetDatabase.GetAllAssetPaths())
+        {
+            if (!p.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+            string ext = Path.GetExtension(p).ToLower();
+            if (ext != ".unity" && ext != ".prefab" && ext != ".mat" && ext != ".asset") continue;
+            scanConsumers.Enqueue(p);
+        }
         scanProgress = 0f;
-        scanLabel = "Đang nạp ảnh mới từ folder…";
+        scanLabel = "Đang dựng bảng nơi dùng…";
         scanning = true;
         EditorApplication.update -= OnScanTick;
         EditorApplication.update += OnScanTick;
@@ -624,6 +649,38 @@ public sealed class BulkReskinWindow : EditorWindow
         const int budget = 60;
         int done = 0;
 
+        // PHA 1 (chung cho ca 2 che do): dung bang nguoc "asset nao tro toi anh nay".
+        // GetDependencies(X) tra ve asset MA X phu thuoc vao -> phai quet tung
+        // consumer roi dao lai moi biet asset nao tro toi anh.
+        if (scanPhase == 1)
+        {
+            int totalConsumers = scanConsumers.Count;
+            while (done < budget && scanConsumers.Count > 0)
+            {
+                string consumer = scanConsumers.Dequeue();
+                string[] deps;
+                try { deps = AssetDatabase.GetDependencies(consumer, true); }
+                catch { deps = new string[0]; }
+                foreach (var dep in deps)
+                {
+                    if (!usageMap.TryGetValue(dep, out var list))
+                        usageMap[dep] = list = new List<string>();
+                    if (list.Count < 4 && !list.Contains(consumer)) list.Add(consumer);
+                }
+                done++;
+            }
+            scanProgress = 0.6f * (1f - scanConsumers.Count / (float)Math.Max(1, totalConsumers));
+            if (scanConsumers.Count == 0)
+            {
+                scanPhase = 2;
+                scanLabel = scanIsFolderScan ? "Đang nạp ảnh từ folder…" : "Đang thêm dòng…";
+                scanTotalImages = scanIsFolderScan ? scanFolderFiles.Count : scanQueue.Count;
+            }
+            Repaint();
+            return;
+        }
+
+        // PHA 2: them dong
         if (scanIsFolderScan)
         {
             int total = scanFolderFiles.Count;
@@ -641,7 +698,7 @@ public sealed class BulkReskinWindow : EditorWindow
                 }
                 done++;
             }
-            scanProgress = total == 0 ? 1f : 1f - (scanQueue.Count + scanFolderFiles.Count) / (float)Math.Max(1, total);
+            scanProgress = 0.6f + 0.4f * (1f - scanFolderFiles.Count / (float)Math.Max(1, total));
             if (scanFolderFiles.Count == 0)
             {
                 scanning = false;
@@ -657,29 +714,14 @@ public sealed class BulkReskinWindow : EditorWindow
                 string p = scanQueue.Dequeue();
                 if (knownOldPaths.Add(p))
                     entries.Add(new Entry { oldPath = p, destPath = p });
-
-                // resolve "dung o" ngay trong luc quet (chunked) de khi ve khong
-                // phai goi AssetDatabase.GetDependencies moi dong
-                if (!usageMap.ContainsKey(p))
-                {
-                    var deps = new List<string>();
-                    try
-                    {
-                        deps.AddRange(AssetDatabase.GetDependencies(p, true)
-                            .Where(d => d != p && !d.EndsWith(".cs"))
-                            .Take(3));
-                    }
-                    catch { }
-                    usageMap[p] = deps;
-                }
                 done++;
             }
-            scanProgress = total == 0 ? 1f : 1f - scanQueue.Count / (float)Math.Max(1, total);
+            scanProgress = 0.6f + 0.4f * (1f - scanQueue.Count / (float)Math.Max(1, scanTotalImages));
             if (scanQueue.Count == 0)
             {
                 scanning = false;
                 EditorApplication.update -= OnScanTick;
-                report = "Đã quét " + entries.Count + " ảnh trong project.";
+                report = "Đã quét " + entries.Count + " ảnh dùng trong game.";
             }
         }
 
