@@ -690,6 +690,60 @@ ShopUI.Refresh()  →  Instantiate(itemPrefab, itemContainer)  →  ShopItemView
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 | Grep `iconResPath` / `LoadIcons` trong code | 0 kết quả (chỉ còn trong docs lịch sử) |
 
+## Vòng 14 — Làm rõ vị trí component ShopUI + fix prefab mismatch (2026-10-21)
+
+Báo cáo: "mở home.unity ra nhưng không thấy 'Shop UI' nào cả".
+
+### Chẩn đoán
+
+Đã kiểm tra file scene trên đĩa + `Editor.log`:
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Project trong `Editor.log` | `C:\Users\Hoang PC\Documents\wool-sort\game` ✓ |
+| Scene Unity mở | `Assets/Scenes/Home.unity` ✓ (import lúc 10:43, sau khi sửa file) |
+| Lỗi compile trong log | 0 |
+| Component `ShopUI` trong file | có, `m_Enabled: 1` |
+| Component `ShopUI` có trong `m_Component` của GameObject | có ✓ |
+| Component nào trong file mà không GameObject nào trỏ tới | 0 |
+
+→ Component **luôn** nằm trên GameObject `ShopPage` (fileID `100000038`) — dễ bị bỏ qua vì tên GameObject không phải `Shop UI`. Ngoài ra Unity hiển thị header của class `ShopUI` là **"Shop Ui"** (tự tách CamelCase), không phải "Shop UI".
+
+### Phát hiện thêm: Prefab mismatch
+
+`Editor.log` lặp lại nhiều lần:
+
+```
+Prefab mismatch: The instance of type Transform in the scene is referencing
+a corresponding source object of type RectTransform in the Prefab.
+Fixing by replacing Transform with RectTransform. Some references might be lost.
+```
+
+Nguyên nhân: 3 prefab instance (`MenuBar`, `CoinHUD`, `PurchaseSuccessPopup`) được ghi bằng stripped `--- !u!4 &… Transform:` trong khi **root của prefab là `RectTransform`** (class 224). Unity phải tự sửa mỗi lần load và có thể mất reference.
+
+### Đã làm
+
+- Sửa generator: 3 stripped transform đổi `!u!4 Transform` → `!u!224 RectTransform` (khớp root prefab) → hết cảnh báo.
+- Tách component `ShopUI` ra GameObject riêng tên **`ShopUI`** (child của `ShopPage`):
+  ```
+  ShopPage
+  ├── ShopTopBar / ItemContainer / TxtNotify
+  ├── ShopUI        ← component ShopUI nằm ở đây
+  └── CoinHUD
+  ```
+  `HomeUI.shopUI` trỏ tới component mới.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile 3 assembly | PASS — 0 error |
+| Validator `Home.unity` + `EntryScene.unity` | PASS cả 2 |
+| Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
+| Component mồ côi (không GameObject nào trỏ tới) | 0 |
+| Stripped transform trong scene | cả 3 đều `cls=224 RectTransform` ✓ |
+| Hierarchy `Home.unity` | `ShopPage → ShopUI` ✓ |
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |
