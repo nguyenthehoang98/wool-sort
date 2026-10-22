@@ -143,12 +143,9 @@ public static class Configs
     }
 }
 
-public enum LevelModeType
-{
-    Normal,
-    Hard,
-    VeryHard,
-}
+// Enum `LevelModeType` đã chuyển sang assembly `WoolSort.LevelData`
+// (`Assets/_Game/Scripts/LevelData/LevelModeType.cs`) để tool Editor và test
+// EditMode dùng được mà không phụ thuộc Assembly-CSharp.
 
 public enum MenuBarOption
 {

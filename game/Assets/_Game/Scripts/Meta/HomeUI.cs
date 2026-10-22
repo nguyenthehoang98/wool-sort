@@ -46,10 +46,9 @@ namespace _Game.Scripts.Meta
             // Khi mở scene Home trực tiếp để test thì chưa qua Entry -> tự tạo
             // service để shop/coin vẫn hoạt động. Trong luồng thật (Entry -> Home)
             // các service đã tồn tại nên nhánh này không chạy.
-            if (EconomyService.Instance == null)
-                new GameObject("EconomyService").AddComponent<EconomyService>();
-            if (ShopService.Instance == null)
-                new GameObject("ShopService").AddComponent<ShopService>();
+            // `ServiceBootstrap` đã tạo sẵn từ `BeforeSceneLoad`; gọi lại là idempotent.
+            ServiceBootstrap.EnsureEconomy();
+            ServiceBootstrap.EnsureShop();
         }
 
         private void OnDestroy()

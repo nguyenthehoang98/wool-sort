@@ -10,6 +10,9 @@ namespace _Game.Scripts.Meta
     ///
     /// Sprite gốc: Button_Lv_1 = normal (xanh), Button_Lv_2 = màn hiện tại (be),
     /// Button_Lv_3 = hard (tím), Button_Lv_4 = very hard (đỏ).
+    ///
+    /// Màu ô được chọn theo độ khó trong LevelCatalog; màn đang chơi luôn dùng sprite
+    /// "current" bất kể độ khó.
     /// </summary>
     public class LevelButton : MonoBehaviour
     {
@@ -17,13 +20,16 @@ namespace _Game.Scripts.Meta
         [SerializeField] private TMP_Text label;
         [SerializeField] private Button button;
 
-        public void Bind(int level, bool unlocked, bool isCurrent,
-                         Sprite normalSprite, Sprite currentSprite, Action<int> onClick)
+        public void Bind(int level, bool unlocked, bool isCurrent, LevelModeType modeType,
+                         Sprite normalSprite, Sprite currentSprite,
+                         Sprite hardSprite, Sprite veryHardSprite,
+                         Action<int> onClick)
         {
             if (icon != null)
             {
+                var sprite = ResolveSprite(modeType, normalSprite, hardSprite, veryHardSprite);
                 if (isCurrent && currentSprite != null) icon.sprite = currentSprite;
-                else if (normalSprite != null) icon.sprite = normalSprite;
+                else if (sprite != null) icon.sprite = sprite;
                 icon.color = unlocked ? Color.white : new Color(0.42f, 0.42f, 0.42f, 1f);
             }
 
@@ -34,6 +40,18 @@ namespace _Game.Scripts.Meta
                 button.interactable = unlocked;
                 button.onClick.RemoveAllListeners();
                 if (unlocked) button.onClick.AddListener(() => onClick?.Invoke(level));
+            }
+        }
+
+        /// <summary>Sprite theo độ khó; thiếu sprite độ khó thì lùi về sprite Normal.</summary>
+        private static Sprite ResolveSprite(LevelModeType modeType, Sprite normal,
+                                            Sprite hard, Sprite veryHard)
+        {
+            switch (modeType)
+            {
+                case LevelModeType.Hard: return hard != null ? hard : normal;
+                case LevelModeType.VeryHard: return veryHard != null ? veryHard : normal;
+                default: return normal;
             }
         }
     }

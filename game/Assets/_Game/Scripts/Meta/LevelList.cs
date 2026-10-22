@@ -1,6 +1,8 @@
 namespace _Game.Scripts.Meta
 {
+    using System.Collections.Generic;
     using _Game.Scripts.Core;
+    using _Game.Scripts.LevelData;
     using UnityEngine;
     using UnityEngine.SceneManagement;
 
@@ -9,6 +11,10 @@ namespace _Game.Scripts.Meta
     ///
     /// Bấm một ô đã mở → chơi đúng màn đó (EconomyService.PlayLevel rồi load scene Gameplay).
     /// Màn chưa mở thì nút không bấm được.
+    ///
+    /// Danh sách màn lấy từ `LevelCatalog` (Resources/LevelCatalog.asset): số màn và độ khó
+    /// (Normal / Hard / VeryHard → đổi sprite ô) không còn hardcode trong prefab nữa.
+    /// Khi chưa có catalog thì fallback về `maxLevel` gán trong Inspector.
     /// </summary>
     public class LevelList : MonoBehaviour
     {
@@ -25,6 +31,7 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Sprite veryHardSprite;// Button_Lv_4 - đỏ
 
         [Header("Cấu hình")]
+        [Tooltip("Fallback khi CHƯA có LevelCatalog. Có catalog thì số màn lấy từ catalog.")]
         [SerializeField] private int maxLevel = 7;
         [SerializeField] private float spacing = 150f;
 
@@ -49,10 +56,17 @@ namespace _Game.Scripts.Meta
                 Destroy(child.gameObject);
             }
 
+            var catalog = LevelCatalogProvider.Catalog;
             int current = EconomyService.Instance != null ? EconomyService.Instance.GetLevel() : 1;
 
-            for (int lv = 1; lv <= maxLevel; lv++)
+            // Danh sách order hiển thị: lấy từ catalog, bỏ màn chưa có asset.
+            var orders = CollectPlayableOrders(catalog);
+            if (orders.Count == 0) return;
+
+            for (int i = 0; i < orders.Count; i++)
             {
+                int lv = orders[i];
+
                 var go = Instantiate(template.gameObject, content);
                 go.SetActive(true);
 
@@ -61,14 +75,35 @@ namespace _Game.Scripts.Meta
 
                 bool unlocked = lv <= current;
                 bool isCurrent = lv == current;
-                btn.Bind(lv, unlocked, isCurrent, normalSprite, currentSprite, OnPickLevel);
+                var mode = catalog != null ? catalog.GetModeTypeByOrder(lv) : LevelModeType.Normal;
+                btn.Bind(lv, unlocked, isCurrent, mode,
+                         normalSprite, currentSprite, hardSprite, veryHardSprite, OnPickLevel);
 
                 var rt = go.transform as RectTransform;
                 if (rt != null)
                 {
-                    rt.anchoredPosition = new Vector2((lv - (maxLevel + 1) * 0.5f) * spacing, 0f);
+                    rt.anchoredPosition = new Vector2((i - (orders.Count - 1) * 0.5f) * spacing, 0f);
                 }
             }
+        }
+
+        /// <summary>Các order (1-based) được hiển thị: mọi màn trong catalog, bỏ màn chưa có asset.</summary>
+        private List<int> CollectPlayableOrders(LevelCatalog catalog)
+        {
+            var result = new List<int>();
+            if (catalog != null && catalog.TotalLevels > 0)
+            {
+                foreach (var def in catalog.Levels)
+                {
+                    if (def == null || !def.HasAsset) continue;
+                    result.Add(def.orderIndex);
+                }
+                if (result.Count > 0) return result;
+            }
+
+            // Fallback: chưa có catalog -> dùng maxLevel gán trong Inspector.
+            for (int lv = 1; lv <= Mathf.Max(1, maxLevel); lv++) result.Add(lv);
+            return result;
         }
 
         private static void OnPickLevel(int level)

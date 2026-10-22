@@ -1,0 +1,14 @@
+{
+    "name": "WoolSort.LevelData",
+    "rootNamespace": "_Game.Scripts.LevelData",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -30,15 +30,18 @@ namespace _Game.Scripts.Core
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-        }
 
-        private void Start() => Initialize();
+            // Init NGAY trong Awake (không đợi Start): `Instance` đã có mà `_data`
+            // thì chưa → mọi accessor đọc `_data` sẽ NRE nếu scene gọi service
+            // trong Awake của nó (vd LevelList gọi GetLevel()).
+            Initialize();
+        }
 
         public void Initialize()
         {
             if (_initialized) return;
             _data = SaveService.Load() ?? NewPlayerData();
-            ApplyDefaultsIfEmpty();
+            ApplyDefaultsIfMissing();
             _initialized = true;
 
             // Tái đính lịch hồi heart nếu đã tới giờ (dùng UTC ticks nếu có)
@@ -49,6 +52,9 @@ namespace _Game.Scripts.Core
             foreach (BoosterType t in Enum.GetValues(typeof(BoosterType)))
                 OnBoosterChanged?.Invoke(t, GetBoosterCount(t));
         }
+
+        /// <summary>True nếu service đã sẵn sàng đọc (dữ liệu đã nạp).</summary>
+        public bool IsInitialized => _initialized;
 
         public PlayerData Data => _data;
 
@@ -61,11 +67,19 @@ namespace _Game.Scripts.Core
             lastPlayedLevel = 1
         };
 
-        private void ApplyDefaultsIfEmpty()
+        /// <summary>
+        /// Chỉ vá những field KHÔNG có giá trị hợp lệ.
+        ///
+        /// KHÔNG set lại `coin`/`heart` khi bằng 0: 0 là trạng thái hợp lệ
+        /// (hết tiền / hết tim) — set lại mặc định là bug tự cộng 100 coin + 5 tim
+        /// mỗi lần mở game.
+        /// </summary>
+        private void ApplyDefaultsIfMissing()
         {
-            if (_data.coin == 0) _data.coin = defaultCoin;
-            if (_data.maxHeart == 0) _data.maxHeart = defaultMaxHeart;
-            if (_data.heart == 0) _data.heart = defaultHeart;
+            if (_data.maxHeart <= 0) _data.maxHeart = defaultMaxHeart;
+            if (_data.heart < 0) _data.heart = 0;
+            if (_data.heart > _data.maxHeart) _data.heart = _data.maxHeart;
+            if (_data.coin < 0) _data.coin = 0;
         }
 
         private void RefreshHeartFromTime()

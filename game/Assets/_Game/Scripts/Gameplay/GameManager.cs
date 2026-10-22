@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using _Game.Scripts;
 using _Game.Scripts.Core;
+using _Game.Scripts.LevelData;
 using _Game.Scripts.Utils;
 using _KIT.Utils;
 using DG.Tweening;
@@ -144,7 +145,12 @@ namespace _Game.Scripts.Gameplay
             ClearDecorationRoot();
             if (currentLevel < 1)
                 currentLevel = 1;
-            realCurrentLevel = currentLevel;
+
+            // Thứ tự chơi (currentLevel) -> asset id (realCurrentLevel) lấy từ LevelCatalog.
+            // Không có catalog (chưa sinh asset) thì fallback: id = thứ tự, đúng hành vi cũ.
+            var catalog = LevelCatalogProvider.Catalog;
+            var definition = catalog != null ? catalog.GetByOrder(currentLevel) : null;
+            realCurrentLevel = definition != null ? definition.levelId : currentLevel;
             _Game.Scripts.LevelDebugLog.Init($"Level{realCurrentLevel}");
 
             if (currentLevelHolder != null)
@@ -153,7 +159,9 @@ namespace _Game.Scripts.Gameplay
             }
 
             var levelPath = $"Levels/Level{realCurrentLevel}";
-            var levelPrefab = Resources.Load<GameObject>(levelPath);
+            var levelPrefab = definition != null && definition.HasAsset
+                ? definition.prefab
+                : Resources.Load<GameObject>(levelPath);
             if (levelPrefab == null)
             {
                 Debug.LogError($"Missing Resources/{levelPath}.prefab");
@@ -230,7 +238,16 @@ namespace _Game.Scripts.Gameplay
         public void LoadNextLevel()
         {
             var nextLevel = currentLevel + 1;
-            if (Resources.Load<GameObject>($"Levels/Level{nextLevel}") == null)
+            var catalog = LevelCatalogProvider.Catalog;
+            if (catalog != null && catalog.TotalLevels > 0)
+            {
+                // Catalog là nguồn chính: nhảy tới màn kế tiếp CÓ asset chơi được.
+                // Hết màn thì quay vòng về màn đầu tiên.
+                var next = catalog.GetNextPlayableOrder(currentLevel);
+                nextLevel = next > 0 ? next : catalog.GetFirstPlayableOrder();
+                if (nextLevel <= 0) nextLevel = 1;
+            }
+            else if (Resources.Load<GameObject>($"Levels/Level{nextLevel}") == null)
                 nextLevel = 1;
 
             currentLevel = nextLevel;

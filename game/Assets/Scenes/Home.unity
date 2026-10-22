@@ -1827,13 +1827,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 100000023}
     m_Modifications:
-    - target: {fileID: 771000001, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5,
-        type: 3}
+    - target: {fileID: 771000001, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
       propertyPath: m_Name
       value: LevelList
       objectReference: {fileID: 0}
-    - target: {fileID: 771000001, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5,
-        type: 3}
+    - target: {fileID: 771000001, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -320
       objectReference: {fileID: 0}
@@ -1842,13 +1840,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
---- !u!4 &100000621 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 771000001, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5,
+--- !u!224 &100000621 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 771000002, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5,
     type: 3}
   m_PrefabInstance: {fileID: 100000620}
   m_PrefabAsset: {fileID: 0}
-
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

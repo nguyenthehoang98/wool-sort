@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91fa09dda2048c0e5add82dac4adf803, type: 3}
+  m_Name: LevelCatalog
+  m_EditorClassIdentifier: WoolSort.LevelData::_Game.Scripts.LevelData.LevelCatalog
+  levels:
+  - orderIndex: 1
+    levelId: 1
+    referenceOrderIndex: -1
+    modeType: 0
+    prefab: {fileID: 5347283758312743582, guid: 302b6d5bf26c3134591780ac3b547c38,
+      type: 3}
+    seed: 112648
+  - orderIndex: 2
+    levelId: 2
+    referenceOrderIndex: -1
+    modeType: 0
+    prefab: {fileID: 7003091006395564582, guid: ed256c5f7f2b08146a17896ab01a1035,
+      type: 3}
+    seed: 120567
+  - orderIndex: 3
+    levelId: 3
+    referenceOrderIndex: 1
+    modeType: 0
+    prefab: {fileID: 3597990983328759140, guid: 1fe90d8b4ebe8df4797f5ac836483dd2,
+      type: 3}
+    seed: 128486
+  - orderIndex: 4
+    levelId: 4
+    referenceOrderIndex: -1
+    modeType: 0
+    prefab: {fileID: 5155172723695617702, guid: e206b04584ab4b141b2e1b5f72a6a93b,
+      type: 3}
+    seed: 136405
+  - orderIndex: 5
+    levelId: 5
+    referenceOrderIndex: 84
+    modeType: 0
+    prefab: {fileID: 2188510441052870013, guid: c1ba3f4b234df294dac952fc08d7bda8,
+      type: 3}
+    seed: 144324
+  - orderIndex: 6
+    levelId: 6
+    referenceOrderIndex: -1
+    modeType: 0
+    prefab: {fileID: 5975109722982499335, guid: 00d2f15d9a0f221459493775ad4a5dff,
+      type: 3}
+    seed: 152243
+  - orderIndex: 7
+    levelId: 7
+    referenceOrderIndex: -1
+    modeType: 0
+    prefab: {fileID: 7810810419543764461, guid: 0d43150f2e6e04146b13a788d0070795,
+      type: 3}
+    seed: 160162
+  generatedFrom: tools/level_reference.json (reference Assets/Resources/Configs/GeneralConfig.asset)
+  generatedAtUtc: 2026-10-22T06:02:09.8033700Z

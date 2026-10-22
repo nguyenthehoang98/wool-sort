@@ -41,9 +41,36 @@ namespace _Game.Scripts.Gameplay
             initialSlotCount = GameManager.Instance.GameConfig.initialSlotCount;
 
             propBlock = new MaterialPropertyBlock();
-            addWaitingSlotButton = addButton != null ? addButton.GetComponent<AddWaitingSlotButton>() : null;
+            EnsureAddButton();
+        }
+
+        /// <summary>
+        /// Đảm bảo có nút "+ slot" (nút cộng thêm ô chờ).
+        ///
+        /// Trong `Gameplay.unity` field `addButton` đang để trống (nút chưa được dựng
+        /// trong scene) → `Awake` log Error mỗi lần vào màn, và chặn cả test PlayMode
+        /// (LogAssert coi Error là test fail).
+        ///
+        /// Ở đây tự tạo nút lúc runtime — đúng pattern `HomeUI` tự tạo service:
+        /// component `AddWaitingSlotButton` không cần asset nào để chạy, chỉ cần
+        /// `GameManager` + `Camera` là hoạt động.
+        /// </summary>
+        private void EnsureAddButton()
+        {
+            if (addButton == null)
+            {
+                var go = new GameObject("AddWaitingSlotButton");
+                var parent = waitingSlotContainer != null ? waitingSlotContainer : transform;
+                go.transform.SetParent(parent, false);
+                addButton = go.transform;
+            }
+
+            addWaitingSlotButton = addButton.GetComponent<AddWaitingSlotButton>();
             if (addWaitingSlotButton == null)
-                Debug.LogError("[WaitingAreaManager] addButton chưa gán hoặc thiếu AddWaitingSlotButton — nút cộng slot sẽ bị ẩn, game vẫn chạy.", this);
+                addWaitingSlotButton = addButton.gameObject.AddComponent<AddWaitingSlotButton>();
+
+            if (addWaitingSlotButton == null)
+                Debug.LogError("[WaitingAreaManager] Không tạo được nút cộng slot.", this);
         }
 
         public void Initialize()

@@ -182,10 +182,27 @@ public class ShopPurchaseTests
         return fi.GetValue(target);
     }
 
-    private int GetBoosterCount(Component target, string boosterName)
-    {
-        var data = Invoke(target, "Data");
-        var value = data.GetType().GetField("magicBoxCount").GetValue(data);
-        return Convert.ToInt32(value);
-    }
+        private int GetBoosterCount(Component target, string boosterName)
+        {
+            // `EconomyService.Data` là PROPERTY (`public PlayerData Data => _data;`)
+            // nên phải dùng GetProperty — GetMethod/GetField đều trả null.
+            var data = GetPrivateProperty(target, "Data");
+            var field = boosterName switch
+            {
+                "AddSlot" => "addSlotCount",
+                "Clean" => "cleanCount",
+                "MagicBox" => "magicBoxCount",
+                _ => boosterName
+            };
+            var value = data.GetType().GetField(field).GetValue(data);
+            return Convert.ToInt32(value);
+        }
+
+        private object GetPrivateProperty(object target, string name)
+        {
+            var pi = target.GetType().GetProperty(name,
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(pi, "Không tìm thấy property " + name);
+            return pi.GetValue(target);
+        }
 }

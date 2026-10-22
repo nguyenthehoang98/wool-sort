@@ -23,8 +23,12 @@ namespace _Game.Scripts
             if (finger.IsOverGui || finger.StartedOverGui) return;
             if (!GameManager.Instance.CanInteractWithGame()) return;
 
+            // Camera có thể chưa được gán (nút tự tạo lúc runtime) -> lấy camera chính.
+            var cam = targetCamera != null ? targetCamera : Camera.main;
+            if (cam == null) return;
+
             // Raycast từ OrthoCam, chỉ vào layer Box
-            var ray = finger.GetRay(targetCamera);
+            var ray = finger.GetRay(cam);
             if (Physics.Raycast(ray, out var hit, Mathf.Infinity, boxLayerMask) &&
                 hit.collider.gameObject == gameObject)
             {
