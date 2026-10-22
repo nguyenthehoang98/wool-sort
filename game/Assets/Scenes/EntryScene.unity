@@ -170,15 +170,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.7, g: 0.7, b: 0.7, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4036b9c21ac9cf74f91785b8cbb62703, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: b3787e87f715c864890236b21cca625a, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -195,6 +195,146 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 81710323}
   m_CullTransparentMesh: 1
+--- !u!1001 &100000700
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 28077352399086530, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_MatchWidthOrHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 512320102591557360, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1215.646
+      objectReference: {fileID: 0}
+    - target: {fileID: 512320102591557360, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 2160
+      objectReference: {fileID: 0}
+    - target: {fileID: 512320102591557360, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 636241149563838296, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_Name
+      value: CanvasLoading
+      objectReference: {fileID: 0}
+    - target: {fileID: 824041775757007989, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 301.64642
+      objectReference: {fileID: 0}
+    - target: {fileID: 1983178133190725205, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1983178133190725205, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1983178133190725205, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1983178133190725205, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278190080
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081666991307742044, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081666991307742044, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081666991307742044, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081666991307742044, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278190080
+      objectReference: {fileID: 0}
+    - target: {fileID: 5623494562157113330, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5623494562157113330, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5623494562157113330, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5623494562157113330, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278190080
+      objectReference: {fileID: 0}
+    - target: {fileID: 6237284944939273162, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: 2000
+      objectReference: {fileID: 0}
+    - target: {fileID: 6676550085261714971, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 398.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7629005428233033464, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7629005428233033464, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7629005428233033464, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7629005428233033464, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278190080
+      objectReference: {fileID: 0}
+    - target: {fileID: 9119857588413688420, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 9f096a87858c6444e9aa6ca65c534a2e,
+        type: 3}
+    m_RemovedComponents: []
+    m_RemovedGameObjects:
+    - {fileID: 7537724229287509405, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e, type: 3}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e, type: 3}
 --- !u!1 &779680022
 GameObject:
   m_ObjectHideFlags: 0
@@ -256,7 +396,7 @@ MonoBehaviour:
   homeSceneName: Home
   gameplaySceneName: Gameplay
   alwaysGoHome: 1
-  autoLoad: 1
+  autoLoad: 0
   autoLoadDelay: 0.75
 --- !u!1 &1054357103
 GameObject:
@@ -1098,4 +1238,5 @@ SceneRoots:
   - {fileID: 1543632828}
   - {fileID: 1561193937}
   - {fileID: 1770196178}
+  - {fileID: 100000700}
   - {fileID: 2418536258140320703}
