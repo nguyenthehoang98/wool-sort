@@ -17,12 +17,12 @@ namespace _Game.Scripts
         [SerializeField] private Vector3 focusIconPosition;
         [SerializeField] private float focusIconScale = 1f;
         [SerializeField] private float duration = 0.35f;
-        [SerializeField] private GameObject focusBackground;
 
         public Action OnClick;
 
         private Button _button;
         private RectTransform _rectTransform;
+        private Vector3 _originPosition;
 
         private Sequence _focusSequence = null;
         private Sequence _unfocusSequence = null;
@@ -30,6 +30,7 @@ namespace _Game.Scripts
         private void Awake()
         {
             _rectTransform = GetComponent<RectTransform>();
+            _originPosition = _rectTransform.localPosition;
             _button = GetComponent<Button>();
             if (_button != null)
                 _button.onClick.AddListener(() => OnClick?.Invoke());
@@ -41,24 +42,20 @@ namespace _Game.Scripts
 
         public void Focus()
         {
-            if (focusBackground != null) focusBackground.SetActive(true);
-            if (icon == null) return;
-
             _focusSequence?.Kill();
             _focusSequence = DOTween.Sequence();
-            _focusSequence.Join(icon.rectTransform.DOScale(focusIconScale, duration));
-            _focusSequence.Join(icon.rectTransform.DOLocalMove(focusIconPosition, duration));
+            _focusSequence.Join(_rectTransform.DOLocalMove(_originPosition + focusIconPosition, duration));
+            if (icon != null)
+                _focusSequence.Join(icon.rectTransform.DOScale(focusIconScale, duration));
         }
 
         public void Unfocus()
         {
-            if (focusBackground != null) focusBackground.SetActive(false);
-            if (icon == null) return;
-
             _unfocusSequence?.Kill();
             _unfocusSequence = DOTween.Sequence();
-            _unfocusSequence.Join(icon.rectTransform.DOScale(unfocusIconScale, duration));
-            _unfocusSequence.Join(icon.rectTransform.DOLocalMove(unfocusIconPosition, duration));
+            _unfocusSequence.Join(_rectTransform.DOLocalMove(_originPosition + unfocusIconPosition, duration));
+            if (icon != null)
+                _unfocusSequence.Join(icon.rectTransform.DOScale(unfocusIconScale, duration));
         }
 
         public void OnClickButton()
