@@ -66,11 +66,11 @@ namespace _Game.Scripts.Core
 
         public IReadOnlyList<ShopItem> GetItems() => items;
 
-        /// <summary>Nhãn giá hiển thị trên item.</summary>
+        /// <summary>Nhãn giá hiển thị trên item (chỉ giá trị số, icon coin nằm riêng trên UI).</summary>
         public string GetPriceLabel(ShopItem item)
         {
             if (item == null) return string.Empty;
-            return item.coinCost + " coin";
+            return item.coinCost.ToString();
         }
 
         public bool CanBuy(string itemId)
