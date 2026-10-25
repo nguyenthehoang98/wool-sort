@@ -29,6 +29,10 @@ namespace _Game.Scripts.Meta
         [Header("Coin HUD (trên cùng)")]
         [SerializeField] private TMP_Text txtCoin;
 
+        [Header("Nút Settings (ẩn khi ở tab Shop)")]
+        [Tooltip("Để trống sẽ tự tìm SettingsButton trong scene.")]
+        [SerializeField] private SettingsButton settingsButton;
+
         private EconomyService _economy;
         private ShopService _shop;
 
@@ -49,6 +53,9 @@ namespace _Game.Scripts.Meta
             // `ServiceBootstrap` đã tạo sẵn từ `BeforeSceneLoad`; gọi lại là idempotent.
             ServiceBootstrap.EnsureEconomy();
             ServiceBootstrap.EnsureShop();
+
+            if (settingsButton == null)
+                settingsButton = FindObjectOfType<SettingsButton>(true);
         }
 
         private void OnDestroy()
@@ -105,6 +112,8 @@ namespace _Game.Scripts.Meta
             if (homePage != null) homePage.SetActive(tab == HomeTab.Home);
             if (shopPage != null) shopPage.SetActive(tab == HomeTab.Shop);
             if (comingSoonPage != null) comingSoonPage.SetActive(tab == HomeTab.ComingSoon);
+            // Ẩn nút Settings khi ở tab Shop, các tab còn lại bật lại.
+            if (settingsButton != null) settingsButton.gameObject.SetActive(tab != HomeTab.Shop);
             // ShopUI tự Refresh() trong OnEnable khi ShopPage được bật -> không
             // cần gọi thêm ở đây (gọi thêm sẽ dựng lại item lần nữa).
         }

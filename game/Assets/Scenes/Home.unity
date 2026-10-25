@@ -1378,6 +1378,7 @@ MonoBehaviour:
   shopUI: {fileID: 100000057}
   comingSoonPage: {fileID: 100000058}
   txtCoin: {fileID: 0}
+  settingsButton: {fileID: 584905207}
 --- !u!1001 &100000200
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2176,6 +2177,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 454234501}
   m_CullTransparentMesh: 1
+--- !u!114 &584905207 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 761000006, guid: f4b7b06ba785ab4817bb84a18c30348f,
+    type: 3}
+  m_PrefabInstance: {fileID: 100000610}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7a4505aa23ebd0f1cd262b6368ccb40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Game.Scripts.Meta.SettingsButton
 --- !u!1 &919369486
 GameObject:
   m_ObjectHideFlags: 0
