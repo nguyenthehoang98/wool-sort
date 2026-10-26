@@ -1109,6 +1109,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 100000020}
     m_Modifications:
+    - target: {fileID: 1290101995437429295, guid: 905d715ab21f53a46bc10290cb7bc8f4,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1290101995437429295, guid: 905d715ab21f53a46bc10290cb7bc8f4,
+        type: 3}
+      propertyPath: m_Color.b
+      value: 0.4784314
+      objectReference: {fileID: 0}
+    - target: {fileID: 1290101995437429295, guid: 905d715ab21f53a46bc10290cb7bc8f4,
+        type: 3}
+      propertyPath: m_Color.g
+      value: 0.54509807
+      objectReference: {fileID: 0}
+    - target: {fileID: 1290101995437429295, guid: 905d715ab21f53a46bc10290cb7bc8f4,
+        type: 3}
+      propertyPath: m_Color.r
+      value: 0.76470596
+      objectReference: {fileID: 0}
     - target: {fileID: 2002047471054838826, guid: 905d715ab21f53a46bc10290cb7bc8f4,
         type: 3}
       propertyPath: m_Name
@@ -1494,6 +1514,11 @@ PrefabInstance:
       propertyPath: m_RaycastTarget
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4440251758200155484, guid: b659f97418d9ed841b50c63803a3d44d,
+        type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1738,6 +1763,70 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 100000023}
     m_Modifications:
+    - target: {fileID: 66473920, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473920, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473920, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473920, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473921, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473921, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473921, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473921, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473923, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473923, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473923, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473923, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473926, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473926, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473926, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 66473926, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 66473935, guid: 0c4bf4adb65355ecfdebe58d9c4c61d5, type: 3}
       propertyPath: m_fontAsset
       value: 

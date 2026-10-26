@@ -5,7 +5,6 @@ namespace _Game.Scripts.Meta
     using _Game.Scripts.Core;
     using TMPro;
     using UnityEngine;
-    using UnityEngine.UI;
 
     /// <summary>Ref ảnh cho một gói trong shop: khớp `ShopItem.id`.</summary>
     [Serializable]
@@ -33,24 +32,10 @@ namespace _Game.Scripts.Meta
 
         private readonly List<ShopItemView> _items = new List<ShopItemView>();
         private float _notifyTimer;
-        private EconomyService _economy;
-
-        private void Awake()
-        {
-            _economy = EconomyService.Instance;
-        }
 
         private void OnEnable()
         {
-            if (_economy == null) _economy = EconomyService.Instance;
-            if (_economy != null) _economy.OnCoinChanged += OnCoinChanged;
-
             Refresh();
-        }
-
-        private void OnDisable()
-        {
-            if (_economy != null) _economy.OnCoinChanged -= OnCoinChanged;
         }
 
         private void Update()
@@ -62,8 +47,6 @@ namespace _Game.Scripts.Meta
                     txtNotify.text = string.Empty;
             }
         }
-
-        private void OnCoinChanged(int amount) => RefreshAffordability();
 
         public void Refresh()
         {
@@ -129,16 +112,6 @@ namespace _Game.Scripts.Meta
                 if (view != null) Destroy(view.gameObject);
             }
             _items.Clear();
-        }
-
-        private void RefreshAffordability()
-        {
-            var shop = ShopService.Instance;
-            if (shop == null) return;
-            foreach (var view in _items)
-            {
-                if (view != null) view.RefreshAffordable();
-            }
         }
 
         private void ShowNotify(string message)

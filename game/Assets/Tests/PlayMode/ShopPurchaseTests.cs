@@ -91,8 +91,8 @@ public class ShopPurchaseTests
         var views = new System.Collections.Generic.List<Component>();
         foreach (var o in found) views.Add((Component)o);
 
-        Component target = FindByTitle(views, "Gói coin nhỏ");
-        Assert.IsNotNull(target, "Không thấy gói 'Gói coin nhỏ' trong shop.");
+        Component target = FindByTitle(views, "Small Coin Pack");
+        Assert.IsNotNull(target, "Không thấy gói 'Small Coin Pack' trong shop.");
 
         var btn = GetPrivate(target, "btnBuy") as Button;
         Assert.IsNotNull(btn, "Gói coin không có nút BUY.");
@@ -141,8 +141,8 @@ public class ShopPurchaseTests
         var views = new System.Collections.Generic.List<Component>();
         foreach (var o in found) views.Add((Component)o);
 
-        Component target = FindByTitle(views, "Gói coin nhỏ");
-        Assert.IsNotNull(target, "Không thấy gói 'Gói coin nhỏ' trong shop.");
+        Component target = FindByTitle(views, "Small Coin Pack");
+        Assert.IsNotNull(target, "Không thấy gói 'Small Coin Pack' trong shop.");
 
         var btn = GetPrivate(target, "btnBuy") as Button;
         Assert.IsNotNull(btn, "Gói coin không có nút BUY.");

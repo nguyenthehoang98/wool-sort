@@ -241,7 +241,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Goi 1
+  m_text: Item
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b360c4530538b544daa80a8c5c06f688, type: 2}
   m_sharedMaterial: {fileID: -2506454472327734636, guid: b360c4530538b544daa80a8c5c06f688,
@@ -379,7 +379,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: +4000 coin
+  m_text: +4000 coins
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b360c4530538b544daa80a8c5c06f688, type: 2}
   m_sharedMaterial: {fileID: -2506454472327734636, guid: b360c4530538b544daa80a8c5c06f688,

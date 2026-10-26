@@ -19,10 +19,6 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Button btnBuy;
         [SerializeField] private TMP_Text btnLabel;
 
-        [Header("Màu khi không đủ coin")]
-        [SerializeField] private Color affordableColor = new Color(1f, 1f, 1f, 1f);
-        [SerializeField] private Color notAffordableColor = new Color(1f, 0.35f, 0.35f, 1f);
-
         private ShopService _shop;
         private ShopItem _item;
 
@@ -39,28 +35,19 @@ namespace _Game.Scripts.Meta
 
             if (btnBuy != null)
             {
-                // Nút luôn bấm được: nếu không đủ coin thì báo "Không đủ coin để mua"
+                // Nút luôn bấm được: nếu không đủ coin thì báo "Not enough coins"
                 // thay vì khoá nút (người chơi không hiểu vì sao bấm không được).
                 btnBuy.interactable = true;
                 btnBuy.onClick.RemoveAllListeners();
                 btnBuy.onClick.AddListener(() => OnBuy(onNotify));
             }
-            RefreshAffordable();
-        }
-
-        /// <summary>Cập nhật trạng thái đủ coin (màu giá) sau khi coin thay đổi.</summary>
-        public void RefreshAffordable()
-        {
-            if (cost == null || _item == null || _shop == null) return;
-            bool enough = _shop.CanBuy(_item.id);
-            cost.color = enough ? affordableColor : notAffordableColor;
         }
 
         private static string BuildAmount(ShopItem item)
         {
             if (item == null) return string.Empty;
             if (item.IsBooster) return $"x{item.boosterAmount} {item.boosterType}";
-            return item.coinAmount > 0 ? $"+{item.coinAmount} coin" : string.Empty;
+            return item.coinAmount > 0 ? $"+{item.coinAmount} coins" : string.Empty;
         }
 
         private void OnBuy(Action<string> onNotify)
@@ -69,7 +56,7 @@ namespace _Game.Scripts.Meta
 
             if (_shop.Buy(_item.id))
             {
-                Notify($"Mua thành công {_item.displayName}", onNotify);
+                Notify($"Purchased {_item.displayName}", onNotify);
                 // Màn hình nhận thưởng sau khi mua.
                 // Dùng Acquire() vì GameObject gốc của popup để TẮT trong scene
                 // -> Instance còn null nếu chỉ gọi PurchaseSuccessPopup.Instance.
@@ -81,15 +68,14 @@ namespace _Game.Scripts.Meta
             {
                 Notify(ReasonToMessage(_shop.LastError), onNotify);
             }
-            RefreshAffordable();
         }
 
         private static string ReasonToMessage(string reason) => reason switch
         {
-            "not_enough_coin" => "Không đủ coin để mua",
-            "item_not_found" => "Không tìm thấy gói này",
-            "economy_missing" => "Chưa sẵn sàng, thử lại sau",
-            _ => "Không mua được",
+            "not_enough_coin" => "Not enough coins",
+            "item_not_found" => "Item not found",
+            "economy_missing" => "Not ready, please try again",
+            _ => "Purchase failed",
         };
 
         /// <summary>Báo kết quả bằng tooltip (giống phần báo của dự án gốc).</summary>

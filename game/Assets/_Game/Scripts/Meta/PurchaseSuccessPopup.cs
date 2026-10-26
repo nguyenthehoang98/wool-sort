@@ -75,7 +75,7 @@ namespace _Game.Scripts.Meta
             if (!gameObject.activeSelf) gameObject.SetActive(true);
 
             if (icon != null) icon.sprite = item.icon;
-            if (txtTitle != null) txtTitle.text = "Nhận thưởng!";
+            if (txtTitle != null) txtTitle.text = "Purchase Complete!";
             if (txtName != null) txtName.text = item.displayName;
             if (txtAmount != null) txtAmount.text = BuildAmount(item);
 
@@ -103,7 +103,7 @@ namespace _Game.Scripts.Meta
         private static string BuildAmount(ShopItem item)
         {
             if (item.IsBooster) return $"x{item.boosterAmount} {item.boosterType}";
-            return item.coinAmount > 0 ? $"+{item.coinAmount} coin" : string.Empty;
+            return item.coinAmount > 0 ? $"+{item.coinAmount} coins" : string.Empty;
         }
     }
 }

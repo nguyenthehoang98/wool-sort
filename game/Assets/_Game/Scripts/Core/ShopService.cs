@@ -34,8 +34,8 @@ namespace _Game.Scripts.Core
         [Header("Gói có sẵn trong shop (mua bằng coin)")]
         [SerializeField] private List<ShopItem> items = new List<ShopItem>
         {
-            new ShopItem { id = "coin_pack_small", displayName = "Gói coin nhỏ", coinCost = 0, coinAmount = 500, boosterType = BoosterType.None },
-            new ShopItem { id = "coin_pack_big", displayName = "Gói coin lớn", coinCost = 0, coinAmount = 1400, boosterType = BoosterType.None },
+            new ShopItem { id = "coin_pack_small", displayName = "Small Coin Pack", coinCost = 0, coinAmount = 500, boosterType = BoosterType.None },
+            new ShopItem { id = "coin_pack_big", displayName = "Large Coin Pack", coinCost = 0, coinAmount = 1400, boosterType = BoosterType.None },
             new ShopItem { id = "booster_addslot", displayName = "Add Slot", coinCost = 80, boosterType = BoosterType.AddSlot, boosterAmount = 1 },
             new ShopItem { id = "booster_clean", displayName = "Clean", coinCost = 120, boosterType = BoosterType.Clean, boosterAmount = 1 },
             new ShopItem { id = "booster_magicbox", displayName = "Magic Box", coinCost = 60, boosterType = BoosterType.MagicBox, boosterAmount = 1 },
