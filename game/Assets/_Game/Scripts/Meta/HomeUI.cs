@@ -83,7 +83,8 @@ namespace _Game.Scripts.Meta
             WireStart();
 
             ShowTab(HomeTab.Home);
-            if (menuBar != null) menuBar.Focus(MenuBarOption.Home);
+            // Không gọi menuBar.Focus() ở đây: MenuBarManager.Init() đã đặt tab
+            // Home ngay khi Start. Gọi lại sẽ restart tween focus -> icon nháy 1 lần.
             RefreshCoin();
             RefreshLevel();
 

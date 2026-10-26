@@ -65,9 +65,16 @@ namespace _Game.Scripts
         {
         }
 
-        public void Focus()
+        public void Focus(bool instant = false)
         {
             KillSequences();
+
+            if (instant)
+            {
+                ApplyState(true);
+                return;
+            }
+
             _focusSequence = DOTween.Sequence();
 
             if (_frameRect != null)
@@ -83,9 +90,16 @@ namespace _Game.Scripts
             }
         }
 
-        public void Unfocus()
+        public void Unfocus(bool instant = false)
         {
             KillSequences();
+
+            if (instant)
+            {
+                ApplyState(false);
+                return;
+            }
+
             _unfocusSequence = DOTween.Sequence();
 
             if (_frameRect != null)
@@ -98,6 +112,24 @@ namespace _Game.Scripts
                     .DOAnchorPos(_iconOriginAnchoredPosition + (Vector2)unfocusIconPosition, duration));
                 _unfocusSequence.Join(icon.rectTransform
                     .DOScale(_iconOriginScale * unfocusIconScale, duration));
+            }
+        }
+
+        /// <summary>Đặt ngay trạng thái focus/unfocus, không chạy tween.</summary>
+        private void ApplyState(bool focused)
+        {
+            if (_frameRect != null)
+            {
+                _frameRect.anchoredPosition = _frameOriginAnchoredPosition +
+                    (Vector2)(focused ? focusFramePosition : unfocusFramePosition);
+            }
+
+            if (icon != null)
+            {
+                icon.rectTransform.anchoredPosition = _iconOriginAnchoredPosition +
+                    (Vector2)(focused ? focusIconPosition : unfocusIconPosition);
+                icon.rectTransform.localScale = _iconOriginScale *
+                    (focused ? focusIconScale : unfocusIconScale);
             }
         }
 

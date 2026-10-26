@@ -228,6 +228,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: CanvasLoading
       objectReference: {fileID: 0}
+    - target: {fileID: 646741785273623268, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 824041775757007989, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
         type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -415,6 +420,11 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100081386274384042, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9119857588413688420, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
         type: 3}

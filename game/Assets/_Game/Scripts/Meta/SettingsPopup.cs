@@ -1,8 +1,10 @@
 namespace _Game.Scripts.Meta
 {
     using _Game.Scripts.Core;
+    using _Game.Scripts.Gameplay;
     using TMPro;
     using UnityEngine;
+    using UnityEngine.SceneManagement;
     using UnityEngine.UI;
 
     /// <summary>
@@ -30,6 +32,17 @@ namespace _Game.Scripts.Meta
         [SerializeField] private GameObject shade;
         [SerializeField] private GameObject card;
 
+        [Header("Chỉ dùng trong Gameplay")]
+        [Tooltip("Nhóm nút Replay / Exit Home. Bật/tắt theo showGameplayActions.")]
+        [SerializeField] private GameObject gameplayActions;
+        [Tooltip("Bật ở instance SettingsPopup trong scene Gameplay, tắt ở Home.")]
+        [SerializeField] private bool showGameplayActions;
+        [SerializeField] private Button btnReplay;
+        [SerializeField] private Button btnExitHome;
+        [Tooltip("Nhãn phiên bản, dời xuống thấp hơn khi có 2 nút hành động.")]
+        [SerializeField] private RectTransform versionRect;
+        [SerializeField] private Vector2 versionPosWithActions = new Vector2(0f, -395f);
+
         [Header("Sprite nút bật/tắt")]
         [SerializeField] private Sprite toggleOn;
         [SerializeField] private Sprite toggleOff;
@@ -42,6 +55,16 @@ namespace _Game.Scripts.Meta
             if (btnMusic != null) btnMusic.onClick.AddListener(OnToggleMusic);
             if (btnVibration != null) btnVibration.onClick.AddListener(OnToggleVibration);
             if (btnClose != null) btnClose.onClick.AddListener(Hide);
+
+            if (btnReplay != null) btnReplay.onClick.AddListener(OnReplay);
+            if (btnExitHome != null) btnExitHome.onClick.AddListener(OnExitHome);
+
+            if (gameplayActions != null) gameplayActions.SetActive(showGameplayActions);
+
+            // Chỉ dời nhãn phiên bản khi popup có thêm 2 nút hành động (Gameplay),
+            // để layout popup ở Home giữ nguyên.
+            if (showGameplayActions && versionRect != null)
+                versionRect.anchoredPosition = versionPosWithActions;
 
             SetVisible(false);
         }
@@ -110,6 +133,37 @@ namespace _Game.Scripts.Meta
         {
             SettingsService.ToggleVibration();
             Refresh();
+        }
+
+        /// <summary>Replay: đóng popup và nạp lại màn đang chơi (giống nút Retry của LosePopup).</summary>
+        private void OnReplay()
+        {
+            Hide();
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoadLevel();
+            }
+            else
+            {
+                Debug.LogWarning("[SettingsPopup] Không tìm thấy GameManager để Replay.");
+            }
+        }
+
+        /// <summary>Exit Home: đóng popup và quay về scene Home.</summary>
+        private void OnExitHome()
+        {
+            Hide();
+
+            if (EntryFlow.Instance != null)
+            {
+                EntryFlow.Instance.GoHome();
+            }
+            else
+            {
+                // Chơi trực tiếp scene Gameplay (không qua Entry) thì chưa có EntryFlow.
+                SceneManager.LoadScene("Home");
+            }
         }
 
         private void Refresh()

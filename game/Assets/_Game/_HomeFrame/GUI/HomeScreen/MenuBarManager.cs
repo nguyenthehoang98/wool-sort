@@ -51,7 +51,9 @@ namespace _Game.Scripts
             buttonHome?.Init();
             buttonRanking?.Init();
 
-            Focus(_optionMenu);
+            // Vào scene lần đầu: đặt đúng tab ngay, không chạy animation
+            // (tránh icon nháy/nhảy 1 lần khi mở Home).
+            Focus(_optionMenu, true);
         }
 
         public void OpenShop()
@@ -72,24 +74,26 @@ namespace _Game.Scripts
             Focus(MenuBarOption.Ranking);
         }
 
-        public void Focus(MenuBarOption option)
+        public void Focus(MenuBarOption option) => Focus(option, false);
+
+        private void Focus(MenuBarOption option, bool instant)
         {
             _optionMenu = option;
 
-            buttonShop?.Unfocus();
-            buttonHome?.Unfocus();
-            buttonRanking?.Unfocus();
+            buttonShop?.Unfocus(instant);
+            buttonHome?.Unfocus(instant);
+            buttonRanking?.Unfocus(instant);
 
             switch (option)
             {
                 case MenuBarOption.Shop:
-                    buttonShop?.Focus();
+                    buttonShop?.Focus(instant);
                     break;
                 case MenuBarOption.Home:
-                    buttonHome?.Focus();
+                    buttonHome?.Focus(instant);
                     break;
                 case MenuBarOption.Ranking:
-                    buttonRanking?.Focus();
+                    buttonRanking?.Focus(instant);
                     break;
             }
         }
