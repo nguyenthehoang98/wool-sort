@@ -32,16 +32,10 @@ namespace _Game.Scripts.Meta
         [SerializeField] private GameObject shade;
         [SerializeField] private GameObject card;
 
+        // Chỉ prefab SettingPopupGamePlay (Gameplay) mới gán 2 nút này.
         [Header("Chỉ dùng trong Gameplay")]
-        [Tooltip("Nhóm nút Replay / Exit Home. Bật/tắt theo showGameplayActions.")]
-        [SerializeField] private GameObject gameplayActions;
-        [Tooltip("Bật ở instance SettingsPopup trong scene Gameplay, tắt ở Home.")]
-        [SerializeField] private bool showGameplayActions;
         [SerializeField] private Button btnReplay;
         [SerializeField] private Button btnExitHome;
-        [Tooltip("Nhãn phiên bản, dời xuống thấp hơn khi có 2 nút hành động.")]
-        [SerializeField] private RectTransform versionRect;
-        [SerializeField] private Vector2 versionPosWithActions = new Vector2(0f, -395f);
 
         [Header("Sprite nút bật/tắt")]
         [SerializeField] private Sprite toggleOn;
@@ -58,13 +52,6 @@ namespace _Game.Scripts.Meta
 
             if (btnReplay != null) btnReplay.onClick.AddListener(OnReplay);
             if (btnExitHome != null) btnExitHome.onClick.AddListener(OnExitHome);
-
-            if (gameplayActions != null) gameplayActions.SetActive(showGameplayActions);
-
-            // Chỉ dời nhãn phiên bản khi popup có thêm 2 nút hành động (Gameplay),
-            // để layout popup ở Home giữ nguyên.
-            if (showGameplayActions && versionRect != null)
-                versionRect.anchoredPosition = versionPosWithActions;
 
             SetVisible(false);
         }

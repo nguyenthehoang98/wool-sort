@@ -8808,38 +8808,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2031883441}
     m_Modifications:
-    - target: {fileID: 760000001, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+    - target: {fileID: 760000001, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
       propertyPath: m_Name
-      value: SettingsPopup
+      value: SettingPopupGamePlay
       objectReference: {fileID: 0}
-    - target: {fileID: 760000001, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+    - target: {fileID: 760000001, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 760000002, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+    - target: {fileID: 760000002, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 760000002, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+    - target: {fileID: 760000002, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 760000002, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+    - target: {fileID: 760000002, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 760000083, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
-      propertyPath: showGameplayActions
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 1460a9d264190ce7a5de911153291afc, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28, type: 3}
 --- !u!224 &950000002 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 760000002, guid: 1460a9d264190ce7a5de911153291afc,
+  m_CorrespondingSourceObject: {fileID: 760000002, guid: 7f3c9a1e5b2d46c8a4e0f7b93d1c6e28,
     type: 3}
   m_PrefabInstance: {fileID: 950000001}
   m_PrefabAsset: {fileID: 0}
