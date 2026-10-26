@@ -14,6 +14,7 @@ namespace _Game.Scripts.Meta
     ///
     /// Số ô hiển thị = <see cref="maxVisibleItems"/> (mặc định 4). Cửa sổ trượt theo màn
     /// hiện tại: 1 màn trước + màn hiện tại + 2 màn sau, tự kẹp ở đầu/cuối danh sách.
+    /// Thứ tự HIỂN THỊ ngược với thứ tự màn: màn cao hơn nằm ở ô trên.
     ///
     /// Danh sách chỉ để HIỂN THỊ tiến độ / độ khó — không bấm được. Vào màn chơi bằng
     /// nút Start trên Home.
@@ -81,7 +82,7 @@ namespace _Game.Scripts.Meta
                 return;
             }
 
-            // Cửa sổ trượt: màn hiện tại nằm ở ô thứ 2 (1 màn trước + current + 2 màn sau),
+            // Cửa sổ trượt: 1 màn trước + màn hiện tại + 2 màn sau (theo thứ tự tăng dần),
             // kẹp lại để luôn đủ `count` ô khi ở đầu/cuối danh sách.
             int currentIndex = orders.IndexOf(current);
             int start = Mathf.Clamp(currentIndex - 1, 0, orders.Count - count);
@@ -95,12 +96,13 @@ namespace _Game.Scripts.Meta
                 btn.gameObject.SetActive(visible);
                 if (!visible) continue;
 
-                int lv = orders[start + i];
-                bool unlocked = lv <= current;
+                // Danh sách xếp NGƯỢC: ô trên cùng là màn cao nhất trong cửa sổ,
+                // màn hiện tại nằm phía dưới và tiến dần lên khi chơi.
+                int lv = orders[start + (count - 1 - i)];
                 bool isCurrent = lv == current;
                 var mode = catalog != null ? catalog.GetModeTypeByOrder(lv) : LevelModeType.Normal;
 
-                btn.Bind(lv, unlocked, isCurrent, mode,
+                btn.Bind(lv, isCurrent, mode,
                          normalSprite, currentSprite, hardSprite, veryHardSprite,
                          hardIconSprite, veryHardIconSprite);
             }

@@ -6,8 +6,10 @@ namespace _Game.Scripts.Meta
 
     /// <summary>
     /// Một ô HIỂN THỊ màn trong danh sách chọn màn — chỉ để xem, KHÔNG phải nút bấm:
-    /// cho người chơi biết đang ở màn nào, màn nào đã mở và độ khó của màn đó.
+    /// cho người chơi biết đang ở màn nào và độ khó của màn đó.
     /// (Vào màn chơi bằng nút Start trên Home.)
+    ///
+    /// Màu của ô KHÔNG bị đổi lúc chạy — chỉ đổi sprite nền theo độ khó / màn hiện tại.
     ///
     /// Sprite gốc: Button_Lv_1 = normal (xanh), Button_Lv_2 = màn hiện tại (be),
     /// Button_Lv_3 = hard (tím), Button_Lv_4 = very hard (đỏ).
@@ -23,7 +25,7 @@ namespace _Game.Scripts.Meta
         [SerializeField] private TMP_Text label;
         [SerializeField] private Image badge;
 
-        public void Bind(int level, bool unlocked, bool isCurrent, LevelModeType modeType,
+        public void Bind(int level, bool isCurrent, LevelModeType modeType,
                          Sprite normalSprite, Sprite currentSprite,
                          Sprite hardSprite, Sprite veryHardSprite,
                          Sprite hardIconSprite, Sprite veryHardIconSprite)
@@ -34,7 +36,6 @@ namespace _Game.Scripts.Meta
                                                  normalSprite, currentSprite,
                                                  hardSprite, veryHardSprite);
                 if (sprite != null) icon.sprite = sprite;
-                icon.color = unlocked ? Color.white : new Color(0.42f, 0.42f, 0.42f, 1f);
             }
 
             if (label != null) label.text = level.ToString();
