@@ -54,6 +54,15 @@ namespace _Game.Scripts.Meta
             ServiceBootstrap.EnsureEconomy();
             ServiceBootstrap.EnsureShop();
 
+            // Chạy trực tiếp scene Home (không qua Entry) thì chưa có EntryFlow ->
+            // nút PLAY sẽ không làm gì. Tạo tại chỗ nhưng tắt autoLoad để nó không
+            // tự chuyển scene trong Start().
+            if (EntryFlow.Instance == null)
+            {
+                var go = new GameObject("EntryFlow");
+                go.AddComponent<EntryFlow>().SetAutoLoad(false);
+            }
+
             if (settingsButton == null)
                 settingsButton = FindObjectOfType<SettingsButton>(true);
         }
@@ -100,10 +109,21 @@ namespace _Game.Scripts.Meta
 
         private void WireStart()
         {
-            if (btnStart != null) btnStart.onClick.AddListener(() =>
+            if (btnStart == null)
             {
-                var flow = _Game.Scripts.Core.EntryFlow.Instance;
-                flow?.StartCurrentLevel();
+                Debug.LogError("[HomeUI] btnStart chưa được gán - nút PLAY sẽ không hoạt động.");
+                return;
+            }
+
+            btnStart.onClick.AddListener(() =>
+            {
+                var flow = EntryFlow.Instance;
+                if (flow == null)
+                {
+                    Debug.LogError("[HomeUI] Không có EntryFlow - không vào được Gameplay.");
+                    return;
+                }
+                flow.StartCurrentLevel();
             });
         }
 

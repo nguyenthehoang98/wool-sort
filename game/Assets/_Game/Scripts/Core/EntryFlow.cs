@@ -69,7 +69,8 @@ namespace _Game.Scripts.Core
         public void StartCurrentLevel()
         {
             var level = _economy != null ? _economy.GetLevel() : 1;
-            _economy.SetLevel(level);
+            _economy?.SetLevel(level);
+            Debug.Log($"[EntryFlow] Start level {level} -> {gameplaySceneName}");
             SceneManager.LoadScene(gameplaySceneName);
         }
 
@@ -79,5 +80,11 @@ namespace _Game.Scripts.Core
         }
 
         public int GetCurrentLevel() => _economy != null ? _economy.GetLevel() : 1;
+
+        /// <summary>
+        /// Bật/tắt tự chuyển scene trong Start(). Dùng khi tạo EntryFlow từ scene Home
+        /// (chạy trực tiếp, không qua Entry) để tránh nó tự load lại Home.
+        /// </summary>
+        public void SetAutoLoad(bool value) => autoLoad = value;
     }
 }
