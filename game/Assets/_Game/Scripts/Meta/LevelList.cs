@@ -4,13 +4,22 @@ namespace _Game.Scripts.Meta
     using _Game.Scripts.Core;
     using _Game.Scripts.LevelData;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
 
     /// <summary>
-    /// Cột nút chọn màn xếp DỌC trên trang chủ (port từ LevelHome/ItemLevelHome của dự án gốc).
+    /// Cột ô hiển thị màn xếp DỌC trên trang chủ (port từ LevelHome/ItemLevelHome của dự án gốc).
     ///
-    /// Bấm một ô đã mở → chơi đúng màn đó (EconomyService.PlayLevel rồi load scene Gameplay).
-    /// Màn chưa mở thì nút không bấm được.
+    /// Các ô màn (<see cref="LevelButton"/>) được ĐẶT SẴN trong prefab/scene để chỉnh
+    /// tay bằng Inspector. Script KHÔNG Instantiate/Destroy gì lúc chạy: nó chỉ đẩy dữ
+    /// liệu (số màn, khoá/mở, sprite nền, badge) vào các ô có sẵn và ẩn các ô dư.
+    ///
+    /// Số ô hiển thị = <see cref="maxVisibleItems"/> (mặc định 4). Cửa sổ trượt theo màn
+    /// hiện tại: 1 màn trước + màn hiện tại + 2 màn sau, tự kẹp ở đầu/cuối danh sách.
+    ///
+    /// Danh sách chỉ để HIỂN THỊ tiến độ / độ khó — không bấm được. Vào màn chơi bằng
+    /// nút Start trên Home.
+    ///
+    /// Danh sách CỐ ĐỊNH: không có ScrollRect / mask / viewport nên không kéo hay scroll
+    /// được; các ô do `VerticalLayoutGroup` trên Holder xếp sẵn.
     ///
     /// Danh sách màn lấy từ `LevelCatalog` (Resources/LevelCatalog.asset): số màn và độ khó
     /// (Normal / Hard / VeryHard → đổi sprite ô + badge) không còn hardcode trong prefab nữa.
@@ -18,8 +27,9 @@ namespace _Game.Scripts.Meta
     /// </summary>
     public class LevelList : MonoBehaviour
     {
-        [Header("Nút màn (template để instantiate)")]
-        [SerializeField] private LevelButton template;
+        [Header("Các ô màn đặt sẵn (theo thứ tự hiển thị)")]
+        [Tooltip("Để trống = tự lấy các LevelButton con của Content theo thứ tự trong Hierarchy.")]
+        [SerializeField] private LevelButton[] items;
 
         [Header("Chỗ chứa các nút")]
         [SerializeField] private RectTransform content;
@@ -35,30 +45,27 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Sprite veryHardIconSprite;// icon_veryhard
 
         [Header("Cấu hình")]
+        [Tooltip("Số ô hiển thị tối đa. Ô dư trong danh sách sẽ bị ẩn.")]
+        [SerializeField] private int maxVisibleItems = 4;
         [Tooltip("Fallback khi CHƯA có LevelCatalog. Có catalog thì số màn lấy từ catalog.")]
         [SerializeField] private int maxLevel = 7;
-        // Khoảng cách / cách xếp ô do `VerticalLayoutGroup` trên Holder quyết định
-        // (đúng như bản gốc: LevelHome chỉ instantiate, layout group tự dàn).
+        // Khoảng cách / cách xếp ô do `VerticalLayoutGroup` trên Holder quyết định.
+
+        private readonly List<LevelButton> _items = new List<LevelButton>();
 
         private void Awake()
         {
-            Build();
+            Bind();
         }
 
-        private void Build()
+        /// <summary>Đẩy dữ liệu màn vào các ô đặt sẵn. Gọi lại được khi màn hiện tại đổi.</summary>
+        public void Bind()
         {
-            if (template == null || content == null)
+            CollectItems();
+            if (_items.Count == 0)
             {
-                Debug.LogError("[LevelList] Thiếu template/content — không sinh được danh sách màn.");
+                Debug.LogError("[LevelList] Chưa có LevelButton nào được đặt sẵn — không hiển thị được danh sách màn.");
                 return;
-            }
-
-            // dọn nút cũ nếu build lại
-            for (int i = content.childCount - 1; i >= 0; i--)
-            {
-                var child = content.GetChild(i);
-                if (child.gameObject == template.gameObject) continue;
-                Destroy(child.gameObject);
             }
 
             var catalog = LevelCatalogProvider.Catalog;
@@ -66,24 +73,66 @@ namespace _Game.Scripts.Meta
 
             // Danh sách order hiển thị: lấy từ catalog, bỏ màn chưa có asset.
             var orders = CollectPlayableOrders(catalog);
-            if (orders.Count == 0) return;
+            int count = Mathf.Min(Mathf.Min(Mathf.Max(1, maxVisibleItems), _items.Count), orders.Count);
 
-            for (int i = 0; i < orders.Count; i++)
+            if (count <= 0)
             {
-                int lv = orders[i];
+                SetAllVisible(false);
+                return;
+            }
 
-                var go = Instantiate(template.gameObject, content);
-                go.SetActive(true);
+            // Cửa sổ trượt: màn hiện tại nằm ở ô thứ 2 (1 màn trước + current + 2 màn sau),
+            // kẹp lại để luôn đủ `count` ô khi ở đầu/cuối danh sách.
+            int currentIndex = orders.IndexOf(current);
+            int start = Mathf.Clamp(currentIndex - 1, 0, orders.Count - count);
 
-                var btn = go.GetComponent<LevelButton>();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                var btn = _items[i];
                 if (btn == null) continue;
 
+                bool visible = i < count;
+                btn.gameObject.SetActive(visible);
+                if (!visible) continue;
+
+                int lv = orders[start + i];
                 bool unlocked = lv <= current;
                 bool isCurrent = lv == current;
                 var mode = catalog != null ? catalog.GetModeTypeByOrder(lv) : LevelModeType.Normal;
+
                 btn.Bind(lv, unlocked, isCurrent, mode,
                          normalSprite, currentSprite, hardSprite, veryHardSprite,
-                         hardIconSprite, veryHardIconSprite, OnPickLevel);
+                         hardIconSprite, veryHardIconSprite);
+            }
+        }
+
+        /// <summary>Lấy danh sách ô: ưu tiên mảng gán trong Inspector, trống thì lấy con của Content.</summary>
+        private void CollectItems()
+        {
+            _items.Clear();
+
+            if (items != null)
+            {
+                for (int i = 0; i < items.Length; i++)
+                {
+                    if (items[i] != null) _items.Add(items[i]);
+                }
+            }
+
+            if (_items.Count > 0 || content == null) return;
+
+            for (int i = 0; i < content.childCount; i++)
+            {
+                var btn = content.GetChild(i).GetComponent<LevelButton>();
+                if (btn != null) _items.Add(btn);
+            }
+        }
+
+        private void SetAllVisible(bool visible)
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] != null) _items[i].gameObject.SetActive(visible);
             }
         }
 
@@ -104,12 +153,6 @@ namespace _Game.Scripts.Meta
             // Fallback: chưa có catalog -> dùng maxLevel gán trong Inspector.
             for (int lv = 1; lv <= Mathf.Max(1, maxLevel); lv++) result.Add(lv);
             return result;
-        }
-
-        private static void OnPickLevel(int level)
-        {
-            if (EconomyService.Instance != null) EconomyService.Instance.PlayLevel(level);
-            SceneManager.LoadScene("Gameplay");
         }
     }
 }

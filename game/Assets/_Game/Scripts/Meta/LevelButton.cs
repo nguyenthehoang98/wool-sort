@@ -1,17 +1,18 @@
 namespace _Game.Scripts.Meta
 {
-    using System;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 
     /// <summary>
-    /// Một ô màn trong danh sách chọn màn (pick từ ItemLevelHome.prefab của dự án gốc).
+    /// Một ô HIỂN THỊ màn trong danh sách chọn màn — chỉ để xem, KHÔNG phải nút bấm:
+    /// cho người chơi biết đang ở màn nào, màn nào đã mở và độ khó của màn đó.
+    /// (Vào màn chơi bằng nút Start trên Home.)
     ///
     /// Sprite gốc: Button_Lv_1 = normal (xanh), Button_Lv_2 = màn hiện tại (be),
     /// Button_Lv_3 = hard (tím), Button_Lv_4 = very hard (đỏ).
     ///
-    /// Nền ô chọn theo độ khó (Normal / Hard / VeryHard) — giống 4 state của bản gốc
+    /// Nền ô theo độ khó (Normal / Hard / VeryHard) — giống 4 state của bản gốc
     /// (stateNormal / stateCurrent / stateHard / stateVeryHard); sprite "current" chỉ
     /// dùng cho màn Normal đang chơi. Hard / VeryHard hiện thêm badge `icon_hard` /
     /// `icon_veryhard` (bản gốc: ImgDecor).
@@ -21,13 +22,11 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Image icon;
         [SerializeField] private TMP_Text label;
         [SerializeField] private Image badge;
-        [SerializeField] private Button button;
 
         public void Bind(int level, bool unlocked, bool isCurrent, LevelModeType modeType,
                          Sprite normalSprite, Sprite currentSprite,
                          Sprite hardSprite, Sprite veryHardSprite,
-                         Sprite hardIconSprite, Sprite veryHardIconSprite,
-                         Action<int> onClick)
+                         Sprite hardIconSprite, Sprite veryHardIconSprite)
         {
             if (icon != null)
             {
@@ -40,13 +39,6 @@ namespace _Game.Scripts.Meta
 
             if (label != null) label.text = level.ToString();
             ApplyBadge(modeType, hardIconSprite, veryHardIconSprite);
-
-            if (button != null)
-            {
-                button.interactable = unlocked;
-                button.onClick.RemoveAllListeners();
-                if (unlocked) button.onClick.AddListener(() => onClick?.Invoke(level));
-            }
         }
 
         /// <summary>
