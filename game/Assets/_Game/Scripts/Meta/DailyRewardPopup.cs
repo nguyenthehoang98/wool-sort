@@ -89,7 +89,6 @@ namespace _Game.Scripts.Meta
 
             AudioService.Instance?.PlayCoinCollect();
             Refresh();
-            service.OnRewardClaimed?.Invoke(entry);
             Hide();
         }
 

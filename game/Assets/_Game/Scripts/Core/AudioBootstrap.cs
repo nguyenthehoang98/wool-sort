@@ -25,7 +25,7 @@ namespace _Game.Scripts.Core
             if (audioService.Config == null)
             {
                 var cfg = Resources.Load<AudioConfigAsset>("AudioConfig");
-                if (cfg != null) audioService.Config = cfg.config;
+                if (cfg != null) audioService.SetConfig(cfg.config);
             }
 
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -39,10 +39,10 @@ namespace _Game.Scripts.Core
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             var audioService = AudioService.Instance;
-            if (audioService == null || audioService.Config == null) return;
+            if (audioService == null || audioService.EffectiveConfig == null) return;
 
-            var clip = scene.name.Equals("Home") ? (bgmHome ?? audioService.Config.bgmHome)
-                 : scene.name.Equals("Gameplay") ? (bgmGameplay ?? audioService.Config.bgmGameplay)
+            var clip = scene.name.Equals("Home") ? (bgmHome ?? audioService.EffectiveConfig.bgmHome)
+                 : scene.name.Equals("Gameplay") ? (bgmGameplay ?? audioService.EffectiveConfig.bgmGameplay)
                  : null;
 
             if (clip != null) audioService.PlayMusic(clip, loop: true, persist: true);

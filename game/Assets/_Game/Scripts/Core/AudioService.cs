@@ -11,7 +11,13 @@ namespace _Game.Scripts.Core
 
         [Header("Config (kéo AudioConfig.asset vào đây)")]
         [SerializeField] private AudioConfigAsset configAsset;
-        public AudioConfig Config => configAsset != null ? configAsset.config : null;
+        public AudioConfig Config { get; private set; }
+
+        /// <summary>Gán config từ bên ngoài (dùng khi chưa gán qua Inspector).</summary>
+        public void SetConfig(AudioConfig cfg) => Config = cfg;
+
+        /// <summary>Config hiệu quả: ưu tiên Config đã set runtime, ngược lại lấy từ configAsset Inspector.</summary>
+        public AudioConfig EffectiveConfig => Config ?? (configAsset != null ? configAsset.config : null);
 
         private int _musicId = -1;
         private bool _initialized;
@@ -78,27 +84,27 @@ namespace _Game.Scripts.Core
         }
 
         /// <summary>Phát âm thanh click nút.</summary>
-        public void PlayClick() => PlayUISound(Config?.sfxClick);
+        public void PlayClick() => PlayUISound(EffectiveConfig?.sfxClick);
 
         /// <summary>Phát âm thanh mở popup.</summary>
-        public void PlayPopupOpen() => PlayUISound(Config?.sfxPopupOpen);
+        public void PlayPopupOpen() => PlayUISound(EffectiveConfig?.sfxPopupOpen);
 
         /// <summary>Phát âm thanh đóng popup.</summary>
-        public void PlayPopupClose() => PlayUISound(Config?.sfxPopupClose);
+        public void PlayPopupClose() => PlayUISound(EffectiveConfig?.sfxPopupClose);
 
         /// <summary>Phát âm thanh thắng màn.</summary>
-        public void PlayWin() => PlaySfx(Config?.sfxWin);
+        public void PlayWin() => PlaySfx(EffectiveConfig?.sfxWin);
 
         /// <summary>Phát âm thanh thua màn.</summary>
-        public void PlayLose() => PlaySfx(Config?.sfxLose);
+        public void PlayLose() => PlaySfx(EffectiveConfig?.sfxLose);
 
         /// <summary>Phát âm thanh dùng booster.</summary>
-        public void PlayBoosterUse() => PlaySfx(Config?.sfxBoosterUse);
+        public void PlayBoosterUse() => PlaySfx(EffectiveConfig?.sfxBoosterUse);
 
         /// <summary>Phát âm thanh mua booster.</summary>
-        public void PlayBoosterBuy() => PlaySfx(Config?.sfxBoosterBuy);
+        public void PlayBoosterBuy() => PlaySfx(EffectiveConfig?.sfxBoosterBuy);
 
         /// <summary>Phát âm thanh thu coin.</summary>
-        public void PlayCoinCollect() => PlaySfx(Config?.sfxCoinCollect);
+        public void PlayCoinCollect() => PlaySfx(EffectiveConfig?.sfxCoinCollect);
     }
 }
