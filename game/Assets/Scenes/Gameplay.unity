@@ -4567,7 +4567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 820000103}
-  cardRect: {fileID: 860000008}
+  cardRect: {fileID: 860000006}
   titleText: {fileID: 860000018}
   contentImage: {fileID: 860000022}
   descText: {fileID: 860000026}
@@ -4847,7 +4847,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 1999989051}
-  cardRect: {fileID: 830000016}
+  cardRect: {fileID: 1999989050}
   messageText: {fileID: 0}
   btnCoin: {fileID: 830000037}
   btnClose: {fileID: 0}
@@ -5742,7 +5742,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 837473202}
-  cardRect: {fileID: 840000016}
+  cardRect: {fileID: 837473201}
   levelText: {fileID: 840000026}
   progressFill: {fileID: 840000052}
   btnRestart: {fileID: 840000037}

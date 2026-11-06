@@ -32,6 +32,7 @@ namespace _Game.Scripts.Meta
         [Header("Ẩn/hiện")]
         [SerializeField] private GameObject shade;
         [SerializeField] private GameObject card;
+        [SerializeField] private CanvasGroup canvasGroup;
 
         // Chỉ prefab SettingPopupGamePlay (Gameplay) mới gán 2 nút này.
         [Header("Chỉ dùng trong Gameplay")]
