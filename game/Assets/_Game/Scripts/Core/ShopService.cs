@@ -70,7 +70,7 @@ namespace _Game.Scripts.Core
         public string GetPriceLabel(ShopItem item)
         {
             if (item == null) return string.Empty;
-            return item.coinCost.ToString();
+            return NumberFormatter.FormatCoin(item.coinCost);
         }
 
         public bool CanBuy(string itemId)

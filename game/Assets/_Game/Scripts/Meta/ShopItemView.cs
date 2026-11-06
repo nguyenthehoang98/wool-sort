@@ -3,6 +3,7 @@ namespace _Game.Scripts.Meta
     using System;
     using _Game.Scripts.Core;
     using _Game.Scripts.Gameplay;
+    using _Game.Scripts.Utils;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
@@ -47,7 +48,7 @@ namespace _Game.Scripts.Meta
         {
             if (item == null) return string.Empty;
             if (item.IsBooster) return $"x{item.boosterAmount} {item.boosterType}";
-            return item.coinAmount > 0 ? $"+{item.coinAmount} coins" : string.Empty;
+            return item.coinAmount > 0 ? $"+{NumberFormatter.FormatCoin(item.coinAmount)} coins" : string.Empty;
         }
 
         private void OnBuy(Action<string> onNotify)

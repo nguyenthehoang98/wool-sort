@@ -121,7 +121,7 @@ namespace _Game.Scripts.UI
         {
             // Chi hien so luong coin (icon coin ben canh lo).
             if (coinText != null)
-                coinText.text = newBalance.ToString();
+                coinText.text = NumberFormatter.FormatCoin(newBalance);
         }
     }
 }

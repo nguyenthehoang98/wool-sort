@@ -142,7 +142,7 @@ namespace _Game.Scripts.Meta
         private void RefreshCoin()
         {
             if (txtCoin == null || _economy == null) return;
-            txtCoin.text = _economy.GetCoin().ToString();
+            txtCoin.text = NumberFormatter.FormatCoin(_economy.GetCoin());
         }
 
         private void RefreshLevel()

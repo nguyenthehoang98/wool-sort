@@ -2,6 +2,7 @@ namespace _Game.Scripts.Meta
 {
     using _Game.Scripts.Core;
     using _Game.Scripts.Gameplay;
+    using _Game.Scripts.Utils;
     using DG.Tweening;
     using TMPro;
     using UnityEngine;
@@ -103,7 +104,7 @@ namespace _Game.Scripts.Meta
         private static string BuildAmount(ShopItem item)
         {
             if (item.IsBooster) return $"x{item.boosterAmount} {item.boosterType}";
-            return item.coinAmount > 0 ? $"+{item.coinAmount} coins" : string.Empty;
+            return item.coinAmount > 0 ? $"+{NumberFormatter.FormatCoin(item.coinAmount)} coins" : string.Empty;
         }
     }
 }
