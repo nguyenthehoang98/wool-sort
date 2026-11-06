@@ -127,7 +127,7 @@ namespace _Game.Scripts.Gameplay
         private void AddFadeRenderer(MeshRenderer rend, string label)
         {
             if (rend != null) fadeRenderers.Add(rend);
-            else Debug.LogError($"[WaitingAreaManager] thiếu renderer {label} — fade-in sẽ bỏ qua nó, kiểm tra lại prefab.", this);
+            else Debug.LogWarning($"[WaitingAreaManager] thiếu renderer {label} — fade-in sẽ bỏ qua nó, kiểm tra lại prefab.", this);
         }
 
         public void TryRefillAll()

@@ -157,9 +157,9 @@ namespace _Game.Scripts.Meta
         {
             if (txtVersion != null) txtVersion.text = "v" + Application.version;
 
-            if (lblSound != null) lblSound.text = SettingsService.Sound ? "BẬT" : "TẮT";
-            if (lblMusic != null) lblMusic.text = SettingsService.Music ? "BẬT" : "TẮT";
-            if (lblVibration != null) lblVibration.text = SettingsService.Vibration ? "BẬT" : "TẮT";
+            if (lblSound != null) lblSound.text = SettingsService.Sound ? "ON" : "OFF";
+            if (lblMusic != null) lblMusic.text = SettingsService.Music ? "ON" : "OFF";
+            if (lblVibration != null) lblVibration.text = SettingsService.Vibration ? "ON" : "OFF";
 
             SetToggleImage(btnSound, SettingsService.Sound);
             SetToggleImage(btnMusic, SettingsService.Music);

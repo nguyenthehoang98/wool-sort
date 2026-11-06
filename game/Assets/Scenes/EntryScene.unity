@@ -228,6 +228,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: CanvasLoading
       objectReference: {fileID: 0}
+    - target: {fileID: 636241149563838296, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 646741785273623268, guid: 48f273fa6ff4e1c4e9e4c9d23bb2055e,
         type: 3}
       propertyPath: m_Enabled
@@ -926,7 +931,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4440251758200155484, guid: b659f97418d9ed841b50c63803a3d44d,
         type: 3}
+      propertyPath: m_text
+      value: Waiting area is full, cannot add more slots
+      objectReference: {fileID: 0}
+    - target: {fileID: 4440251758200155484, guid: b659f97418d9ed841b50c63803a3d44d,
+        type: 3}
+      propertyPath: m_lineSpacing
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4440251758200155484, guid: b659f97418d9ed841b50c63803a3d44d,
+        type: 3}
       propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4440251758200155484, guid: b659f97418d9ed841b50c63803a3d44d,
+        type: 3}
+      propertyPath: m_hasFontAssetChanged
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -96,7 +96,7 @@ namespace _Game.Scripts.Gameplay
                     {
                         if(needShowToolTip)
                         {
-                            ShowTooltip("Vùng chờ đã đầy, không thêm được ô");
+                            ShowTooltip("Waiting area is full, cannot add more slots");
                         }
                     }
 
@@ -107,7 +107,7 @@ namespace _Game.Scripts.Gameplay
                     {
                         if(needShowToolTip)
                         {
-                            ShowTooltip("Vùng chờ đang trống, không có len nào để dọn");
+                            ShowTooltip("Waiting area is empty, nothing to clean");
                         }
                     }
                     return !flag2;

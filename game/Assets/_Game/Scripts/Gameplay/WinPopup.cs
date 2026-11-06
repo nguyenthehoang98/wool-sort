@@ -19,7 +19,7 @@ namespace _Game.Scripts.Gameplay
         public RectTransform cardRect;
         public TextMeshProUGUI messageText;
         public Button btnCoin;
-        public Button btnAds;
+        public Button btnClose;
 
         private bool _isNextAnimating;
 
@@ -47,7 +47,7 @@ namespace _Game.Scripts.Gameplay
             if (cardRect == null) Debug.LogWarning("[WinPopup] Chưa kéo cardRect.", this);
             if (messageText == null) Debug.LogWarning("[WinPopup] Chưa kéo messageText.", this);
             if (btnCoin == null) Debug.LogWarning("[WinPopup] Chưa kéo btnCoin.", this);
-            if (btnAds == null) Debug.LogWarning("[WinPopup] Chưa kéo btnAds.", this);
+            if (btnClose == null) Debug.LogWarning("[WinPopup] Chưa kéo btnClose.", this);
         }
 
         public void Show(int coinReward = 60)
@@ -58,7 +58,7 @@ namespace _Game.Scripts.Gameplay
                 + " cardRect=" + (cardRect != null)
                 + " messageText=" + (messageText != null)
                 + " btnCoin=" + (btnCoin != null)
-                + " btnAds=" + (btnAds != null)
+                + " btnClose=" + (btnClose != null)
     
                 + " | activeSelf=" + gameObject.activeSelf
                 + " | canvas=" + (canvas != null ? canvas.name + " scale=" + canvas.transform.localScale : "NULL"), this);
@@ -77,11 +77,11 @@ namespace _Game.Scripts.Gameplay
                 btnCoin.onClick.RemoveAllListeners();
                 btnCoin.onClick.AddListener(OnClickNext);
             }
-            if (btnAds != null)
+            if (btnClose != null)
             {
-                btnAds.interactable = true;
-                btnAds.onClick.RemoveAllListeners();
-                btnAds.onClick.AddListener(() => GameUIController.Instance.OnWinAds());
+                btnClose.interactable = true;
+                btnClose.onClick.RemoveAllListeners();
+                btnClose.onClick.AddListener(Hide);
             }
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (canvasGroup != null)

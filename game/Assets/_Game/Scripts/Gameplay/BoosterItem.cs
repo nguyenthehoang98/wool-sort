@@ -154,7 +154,7 @@ namespace _Game.Scripts.Gameplay
             if (_btnBoosterState == ButtonBoosterState.Lock)
             {
                 var unlockLevel = Configs.GetBoosterUnlockLevel(type);
-                ShowTooltip($"Mở khoá ở level {unlockLevel}");
+                ShowTooltip($"Unlocks at level {unlockLevel}");
                 return;
             }
 

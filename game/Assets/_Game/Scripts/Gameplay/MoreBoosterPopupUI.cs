@@ -20,18 +20,9 @@ namespace _Game.Scripts.Gameplay
         public Image contentImage;
         public TextMeshProUGUI descText;
         public Button btnCoin;
-        public Button btnAds;
         public Button btnClose;
-        public Image coinBtnIcon; // icon coin trên nút BUY
-        public Image adsBtnIcon;  // icon ads trên nút FREE
 
-        [Header("Sprites — kéo từ BoosterUI_Picked/Resources")]
-        public Sprite cardBg;
-        public Sprite buttonBlue;  // nền nút Coin
-        public Sprite buttonGreen; // nền nút Ads
-        public Sprite buttonClose;
-        public Sprite coinIcon;
-        public Sprite adsIcon;
+        [Header("Sprites — dùng sẵn trên prefab (Inspector)")]
         public Sprite[] contentIcons = new Sprite[3]; // AddSlot, Clean, MagicBox
 
         private BoosterType _currentType;
@@ -214,10 +205,7 @@ namespace _Game.Scripts.Gameplay
             if (contentImage == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo contentImage.", this);
             if (descText == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo descText.", this);
             if (btnCoin == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo btnCoin.", this);
-            if (btnAds == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo btnAds.", this);
             if (btnClose == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo btnClose.", this);
-            if (coinBtnIcon == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo coinBtnIcon.", this);
-            if (adsBtnIcon == null) Debug.LogWarning("[MoreBoosterPopupUI] Chưa kéo adsBtnIcon.", this);
         }
 
 
@@ -247,16 +235,7 @@ namespace _Game.Scripts.Gameplay
             // index 0 = AddSlot, 1 = Clean, 2 = MagicBox — clamp để không lỗi index
             int i = Mathf.Clamp((int)_currentType, 0, Titles.Length - 1);
 
-            // Card background
-            if (cardRect != null)
-            {
-                var cardImg = cardRect.GetComponent<Image>();
-                if (cardImg != null && cardBg != null)
-                {
-                    cardImg.sprite = cardBg;
-                    cardImg.color = Color.white;
-                }
-            }
+            // Card background: dùng sẵn sprite trên prefab (cardRect đã có Image component)
 
             // Title, Desc
             if (titleText != null) titleText.text = Titles[i];
@@ -278,26 +257,7 @@ namespace _Game.Scripts.Gameplay
             // Cost
             int cost = Configs.GetBoosterCost(_currentType);
 
-            // Button sprites
-            if (btnCoin != null)
-            {
-                var img = btnCoin.GetComponent<Image>();
-                if (img != null && buttonBlue != null) { img.sprite = buttonBlue; img.color = Color.white; }
-            }
-            if (btnAds != null)
-            {
-                var img = btnAds.GetComponent<Image>();
-                if (img != null && buttonGreen != null) { img.sprite = buttonGreen; img.color = Color.white; }
-            }
-            if (btnClose != null)
-            {
-                var img = btnClose.GetComponent<Image>();
-                if (img != null && buttonClose != null) { img.sprite = buttonClose; img.color = Color.white; }
-            }
-
-            // Icons on buttons
-            if (coinBtnIcon != null && coinIcon != null) { coinBtnIcon.sprite = coinIcon; coinBtnIcon.color = Color.white; coinBtnIcon.preserveAspect = true; }
-            if (adsBtnIcon != null && adsIcon != null) { adsBtnIcon.sprite = adsIcon; adsBtnIcon.color = Color.white; adsBtnIcon.preserveAspect = true; }
+            // Button sprites: dùng sẵn trên prefab (btnCoin / btnClose đã có Image component)
 
             // Button listeners
             if (btnCoin != null)
@@ -305,12 +265,6 @@ namespace _Game.Scripts.Gameplay
                 btnCoin.interactable = true;
                 btnCoin.onClick.RemoveAllListeners();
                 btnCoin.onClick.AddListener(BuyWithCoin);
-            }
-            if (btnAds != null)
-            {
-                btnAds.interactable = true;
-                btnAds.onClick.RemoveAllListeners();
-                btnAds.onClick.AddListener(BuyWithAds);
             }
             if (btnClose != null)
             {
@@ -335,15 +289,6 @@ namespace _Game.Scripts.Gameplay
             }
 
             Debug.Log($"[MoreBoosterPopupUI] Bought {_currentType} with coins. Remaining: {CoinManager.Instance.GetBalance()}");
-            GrantAndUse();
-        }
-
-        private void BuyWithAds()
-        {
-            if (_clicked) return;
-            _clicked = true;
-            Debug.Log($"[MoreBoosterPopupUI] Buy {_currentType} with ads — stub: coi như success.");
-            // TODO(W7): thay bằng AdsService.AuthorizeReward rồi mới grant.
             GrantAndUse();
         }
 
