@@ -119,6 +119,7 @@ namespace _Game.Scripts.Meta
 
             btnStart.onClick.AddListener(() =>
             {
+                AudioService.Instance?.PlayClick();
                 var flow = EntryFlow.Instance;
                 if (flow == null)
                 {

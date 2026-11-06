@@ -2,6 +2,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using _Game.Scripts.Core;
 
 namespace _Game.Scripts.Gameplay
 {
@@ -73,17 +74,19 @@ namespace _Game.Scripts.Gameplay
             if (levelText != null) levelText.text = "Level " + level + "  " + Mathf.RoundToInt(progress * 100f) + "%";
             if (progressFill != null) progressFill.fillAmount = Mathf.Clamp01(progress);
 
+            AudioService.Instance?.PlayLose();
+
             if (btnRestart != null)
             {
                 btnRestart.interactable = true;
                 btnRestart.onClick.RemoveAllListeners();
-                btnRestart.onClick.AddListener(() => GameUIController.Instance.OnLoseRetry());
+                btnRestart.onClick.AddListener(() => { AudioService.Instance?.PlayClick(); GameUIController.Instance.OnLoseRetry(); });
             }
             if (btnHome != null)
             {
                 btnHome.interactable = true;
                 btnHome.onClick.RemoveAllListeners();
-                btnHome.onClick.AddListener(() => GameUIController.Instance.OnLoseHome());
+                btnHome.onClick.AddListener(() => { AudioService.Instance?.PlayClick(); GameUIController.Instance.OnLoseHome(); });
             }
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (canvasGroup != null)

@@ -102,28 +102,33 @@ namespace _Game.Scripts.Meta
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             Refresh();
             SetVisible(true, false);
+            AudioService.Instance?.PlayPopupOpen();
         }
 
         public void Hide()
         {
             if (_isAnimating) return;
+            AudioService.Instance?.PlayPopupClose();
             SetVisible(false, true);
         }
 
         private void OnToggleSound()
         {
+            AudioService.Instance?.PlayClick();
             SettingsService.ToggleSound();
             Refresh();
         }
 
         private void OnToggleMusic()
         {
+            AudioService.Instance?.PlayClick();
             SettingsService.ToggleMusic();
             Refresh();
         }
 
         private void OnToggleVibration()
         {
+            AudioService.Instance?.PlayClick();
             SettingsService.ToggleVibration();
             Refresh();
         }

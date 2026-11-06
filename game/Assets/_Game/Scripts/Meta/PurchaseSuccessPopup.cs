@@ -82,6 +82,8 @@ namespace _Game.Scripts.Meta
 
             SetVisible(true);
 
+            AudioService.Instance?.PlayPopupOpen();
+
             if (cardRect != null)
             {
                 cardRect.DOKill();

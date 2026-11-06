@@ -57,6 +57,7 @@ namespace _Game.Scripts.Meta
 
             if (_shop.Buy(_item.id))
             {
+                AudioService.Instance?.PlayBoosterBuy();
                 Notify($"Purchased {_item.displayName}", onNotify);
                 // Màn hình nhận thưởng sau khi mua.
                 // Dùng Acquire() vì GameObject gốc của popup để TẮT trong scene

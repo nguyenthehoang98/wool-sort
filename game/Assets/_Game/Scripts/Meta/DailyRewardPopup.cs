@@ -98,6 +98,7 @@ namespace _Game.Scripts.Meta
             var entry = service.Claim();
             if (entry == null) return;
 
+            AudioService.Instance?.PlayCoinCollect();
             Refresh();
             service.OnRewardClaimed?.Invoke(entry);
             Hide();

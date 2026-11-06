@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using _Game.Scripts;
+using _Game.Scripts.Core;
 using _Game.Scripts.UI;
 
 namespace _Game.Scripts.Gameplay
@@ -71,6 +72,8 @@ namespace _Game.Scripts.Gameplay
             if (messageText != null) messageText.text = "Great job!";
             CoinManager.Instance?.AddCoins(coinReward);
 
+            AudioService.Instance?.PlayWin();
+
             if (btnCoin != null)
             {
                 btnCoin.interactable = true;
@@ -81,7 +84,7 @@ namespace _Game.Scripts.Gameplay
             {
                 btnClose.interactable = true;
                 btnClose.onClick.RemoveAllListeners();
-                btnClose.onClick.AddListener(Hide);
+                btnClose.onClick.AddListener(() => { AudioService.Instance?.PlayClick(); Hide(); });
             }
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (canvasGroup != null)
