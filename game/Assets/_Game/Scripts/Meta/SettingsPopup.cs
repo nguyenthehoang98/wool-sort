@@ -2,6 +2,7 @@ namespace _Game.Scripts.Meta
 {
     using _Game.Scripts.Core;
     using _Game.Scripts.Gameplay;
+    using DG.Tweening;
     using TMPro;
     using UnityEngine;
     using UnityEngine.SceneManagement;
@@ -41,6 +42,8 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Sprite toggleOn;
         [SerializeField] private Sprite toggleOff;
 
+        private bool _isAnimating;
+
         private void Awake()
         {
             Instance = this;
@@ -53,7 +56,7 @@ namespace _Game.Scripts.Meta
             if (btnReplay != null) btnReplay.onClick.AddListener(OnReplay);
             if (btnExitHome != null) btnExitHome.onClick.AddListener(OnExitHome);
 
-            SetVisible(false);
+            SetVisible(false, true);
         }
 
         private void Start()
@@ -94,14 +97,16 @@ namespace _Game.Scripts.Meta
 
         public void Show()
         {
+            if (_isAnimating) return;
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             Refresh();
-            SetVisible(true);
+            SetVisible(true, false);
         }
 
         public void Hide()
         {
-            SetVisible(false);
+            if (_isAnimating) return;
+            SetVisible(false, true);
         }
 
         private void OnToggleSound()
@@ -176,10 +181,66 @@ namespace _Game.Scripts.Meta
             img.color = Color.white;
         }
 
-        private void SetVisible(bool visible)
+        private void SetVisible(bool visible, bool instant)
         {
-            if (shade != null) shade.SetActive(visible);
-            if (card != null) card.SetActive(visible);
+            if (canvasGroup == null)
+            {
+                if (shade != null) shade.SetActive(visible);
+                if (card != null) card.SetActive(visible);
+                return;
+            }
+
+            canvasGroup.DOKill();
+            canvasGroup.transform.DOKill();
+
+            if (visible)
+            {
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+                if (shade != null) shade.SetActive(true);
+                if (card != null) card.SetActive(true);
+
+                if (instant)
+                {
+                    canvasGroup.alpha = 1f;
+                    canvasGroup.transform.localScale = Vector3.one;
+                }
+                else
+                {
+                    _isAnimating = true;
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.transform.localScale = Vector3.one * 0.85f;
+                    canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
+                    canvasGroup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack)
+                        .OnComplete(() => _isAnimating = false);
+                }
+            }
+            else
+            {
+                if (instant)
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.transform.localScale = Vector3.one;
+                    if (shade != null) shade.SetActive(false);
+                    if (card != null) card.SetActive(false);
+                    canvasGroup.interactable = false;
+                    canvasGroup.blocksRaycasts = false;
+                }
+                else
+                {
+                    _isAnimating = true;
+                    canvasGroup.DOFade(0f, 0.25f).SetEase(Ease.InBack);
+                    canvasGroup.transform.DOScale(0.85f, 0.25f).SetEase(Ease.InBack)
+                        .OnComplete(() =>
+                        {
+                            _isAnimating = false;
+                            if (shade != null) shade.SetActive(false);
+                            if (card != null) card.SetActive(false);
+                            canvasGroup.interactable = false;
+                            canvasGroup.blocksRaycasts = false;
+                        });
+                }
+            }
         }
     }
 }
