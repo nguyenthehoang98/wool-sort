@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using _Game.Scripts.Core;
 using _Game.Scripts.Gameplay;
+using _Game.Scripts.Utils;
 
 
 namespace _Game.Scripts.UI
