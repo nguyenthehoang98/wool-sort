@@ -1,4 +1,5 @@
 using _Game.Scripts.Utils;
+using _Game.Scripts.Core;
 using _KIT;
 using TMPro;
 using UnityEngine;
@@ -163,13 +164,13 @@ namespace _Game.Scripts.Gameplay
                 return;
             }
 
-            if (GameData.Instance.GetCount(type) <= 0)
+            if (EconomyService.Instance.GetBoosterCount(type) <= 0)
             {
                 OpenBuyPopup();
                 return;
             }
 
-            GameData.Instance.AddCount(type, -1, "use", "use_booster");
+            EconomyService.Instance.SpendBooster(type, 1, "use", "use_booster");
             boosterManager.UseBooster(type);
         }
 
