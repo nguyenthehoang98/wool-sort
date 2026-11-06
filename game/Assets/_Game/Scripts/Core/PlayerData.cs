@@ -32,6 +32,10 @@ namespace _Game.Scripts.Core
         public bool tutorialDone = false;
         public bool dailyRewardSeen = false;
 
+        [Header("Daily Reward")]
+        public int dailyStreak = 0;
+        public long lastDailyClaimUtcTicks = 0;
+
         public int GetBoosterCount(BoosterType type) => type switch
         {
             BoosterType.AddSlot => addSlotCount,
@@ -59,6 +63,9 @@ namespace _Game.Scripts.Core
             if (magicBoxCount < 0) magicBoxCount = 0;
             if (currentLevel < 1) currentLevel = 1;
             if (lastPlayedLevel < currentLevel) lastPlayedLevel = currentLevel;
+            if (dailyStreak < 0) dailyStreak = 0;
+            if (dailyStreak > 7) dailyStreak = 7;
+            if (lastDailyClaimUtcTicks < 0) lastDailyClaimUtcTicks = 0;
         }
     }
 }
