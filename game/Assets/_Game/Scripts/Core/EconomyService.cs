@@ -80,6 +80,8 @@ namespace _Game.Scripts.Core
             if (_data.heart < 0) _data.heart = 0;
             if (_data.heart > _data.maxHeart) _data.heart = _data.maxHeart;
             if (_data.coin < 0) _data.coin = 0;
+
+            _data.Validate();
         }
 
         private void RefreshHeartFromTime()

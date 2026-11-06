@@ -10,6 +10,7 @@ namespace _Game.Scripts.Core
         public static void Save(PlayerData data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
+            data.Validate();
             var json = JsonUtility.ToJson(data, true);
             PlayerPrefs.SetString(Key, json);
             PlayerPrefs.Save();

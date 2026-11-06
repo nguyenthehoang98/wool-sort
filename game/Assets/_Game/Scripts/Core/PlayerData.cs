@@ -49,5 +49,16 @@ namespace _Game.Scripts.Core
                 case BoosterType.MagicBox: magicBoxCount = Mathf.Max(0, value); break;
             }
         }
+
+        /// <summary>Đảm bảo invariant dữ liệu: không âm, level hợp lệ.</summary>
+        public void Validate()
+        {
+            if (coin < 0) coin = 0;
+            if (addSlotCount < 0) addSlotCount = 0;
+            if (cleanCount < 0) cleanCount = 0;
+            if (magicBoxCount < 0) magicBoxCount = 0;
+            if (currentLevel < 1) currentLevel = 1;
+            if (lastPlayedLevel < currentLevel) lastPlayedLevel = currentLevel;
+        }
     }
 }
