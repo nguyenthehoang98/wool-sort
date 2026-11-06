@@ -1,8 +1,9 @@
 namespace _Game.Scripts.Meta
 {
-    using _Game.Scripts.Core;
-    using UnityEngine;
-    using UnityEngine.UI;
+using TMPro;
+using _Game.Scripts.Core;
+using UnityEngine;
+using UnityEngine.UI;
 
     /// <summary>Một ô ngày trong Daily Reward popup. Kéo ref vào prefab: TxtDay, TxtAmount, Icon, Claimed, Button.</summary>
     public class DailyRewardItem : MonoBehaviour

@@ -2,6 +2,7 @@ namespace _Game.Scripts.Core
 {
     using System;
     using UnityEngine;
+    using _Game.Scripts.Gameplay;
 
     /// <summary>Quản lý Daily Reward (7 ngày, claim 1 lần/ngày). Lưu vào PlayerData qua EconomyService.</summary>
     public sealed class DailyRewardService : MonoBehaviour
