@@ -146,6 +146,9 @@ namespace _Game.Scripts.Gameplay
             if (currentLevel < 1)
                 currentLevel = 1;
 
+            // Phát BGM Gameplay khi vào màn chơi.
+            AudioService.Instance?.PlayMusic(AudioService.Instance?.Config?.bgmGameplay, loop: true, persist: true);
+
             // Thứ tự chơi (currentLevel) -> asset id (realCurrentLevel) lấy từ LevelCatalog.
             // Không có catalog (chưa sinh asset) thì fallback: id = thứ tự, đúng hành vi cũ.
             var catalog = LevelCatalogProvider.Catalog;

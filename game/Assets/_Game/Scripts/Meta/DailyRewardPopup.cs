@@ -1,21 +1,23 @@
 namespace _Game.Scripts.Meta
 {
     using System;
+    using System.Collections.Generic;
     using _Game.Scripts.Core;
     using DG.Tweening;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 
-    /// <summary>UI tạm Daily Reward: 7 ô, claim 1 lần/ngày. Kéo ref vào Inspector.</summary>
+    /// <summary>Popup Daily Reward 7 ngày. Claim 1 lần/ngày, streak tăng theo ngày liên tiếp.
+    /// Prefab cần: 7 con DailyRewardItem trong dayContainer, nút Close, canvasGroup, cardRect.</summary>
     public class DailyRewardPopup : MonoBehaviour
     {
         [Header("Config")]
         [SerializeField] private DailyRewardConfig config;
 
         [Header("Containers")]
-        [SerializeField] private Transform dayContainer; // cha chứa 7 ô ngày
-        [SerializeField] private GameObject dayItemPrefab; // prefab ô ngày (có btnClaim, txtDay, txtAmount, imgIcon, imgClaimed)
+        [SerializeField] private Transform dayContainer;
+        [SerializeField] private DailyRewardItem dayItemPrefab;
 
         [Header("Nút đóng")]
         [SerializeField] private Button btnClose;
@@ -24,6 +26,7 @@ namespace _Game.Scripts.Meta
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform cardRect;
 
+        private readonly List<DailyRewardItem> _items = new List<DailyRewardItem>(7);
         private bool _isAnimating;
 
         private void Awake()
@@ -38,11 +41,13 @@ namespace _Game.Scripts.Meta
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             Refresh();
             SetVisible(true, false);
+            AudioService.Instance?.PlayPopupOpen();
         }
 
         public void Hide()
         {
             if (_isAnimating) return;
+            AudioService.Instance?.PlayPopupClose();
             SetVisible(false, true);
         }
 
@@ -50,43 +55,27 @@ namespace _Game.Scripts.Meta
         {
             if (dayContainer == null || dayItemPrefab == null) return;
 
-            // Xoá ô cũ
-            foreach (Transform child in dayContainer)
-                Destroy(child.gameObject);
-
             var service = DailyRewardService.Instance;
             int streak = service != null ? service.Streak : 0;
             bool canClaim = service != null && service.CanClaimToday();
 
+            // Đảm bảo đủ 7 item
+            while (_items.Count < 7)
+            {
+                var go = Instantiate(dayItemPrefab, dayContainer);
+                _items.Add(go.GetComponent<DailyRewardItem>());
+            }
+
             for (int i = 0; i < 7; i++)
             {
                 var entry = config != null ? config.GetEntry(i) : null;
-                bool unlocked = streak >= i; // có thể claim ngày i+1 nếu streak >= i
-                bool claimedToday = !canClaim && streak > i; // đơn giản: nếu không claim được hôm nay và streak đã qua ngày này -> đã claim
+                // Ngày i+1 có thể claim nếu streak >= i (đã claim đủ i ngày trước) và chưa claim hôm nay
+                bool unlocked = streak >= i;
+                bool claimedToday = !canClaim && streak > i;
+                bool available = unlocked && canClaim && !claimedToday;
 
-                var go = Instantiate(dayItemPrefab, dayContainer);
-                var btn = go.GetComponentInChildren<Button>(true);
-                var txtDay = go.transform.Find("TxtDay")?.GetComponent<TMP_Text>();
-                var txtAmount = go.transform.Find("TxtAmount")?.GetComponent<TMP_Text>();
-                var imgIcon = go.transform.Find("Icon")?.GetComponent<Image>();
-                var imgClaimed = go.transform.Find("Claimed")?.GetComponent<Image>();
-
-                if (txtDay != null) txtDay.text = $"DAY {i + 1}";
-                if (entry != null)
-                {
-                    if (txtAmount != null) txtAmount.text = entry.amount.ToString();
-                    if (imgIcon != null && entry.icon != null) imgIcon.sprite = entry.icon;
-                }
-
-                if (btn != null)
-                {
-                    btn.interactable = unlocked && canClaim && !claimedToday;
-                    var dayIndex = i;
-                    btn.onClick.RemoveAllListeners();
-                    btn.onClick.AddListener(() => OnClaimDay(dayIndex));
-                }
-
-                if (imgClaimed != null) imgClaimed.gameObject.SetActive(claimedToday);
+                var item = _items[i];
+                item.Setup(i + 1, entry, unlocked, available, claimedToday, OnClaimDay);
             }
         }
 

@@ -1,7 +1,8 @@
 namespace _Game.Scripts.Core
 {
-    using UnityEngine;
-    using UnityEngine.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using _Game.Scripts.Core;
 
     public sealed class EntryFlow : MonoBehaviour
     {
@@ -61,6 +62,7 @@ namespace _Game.Scripts.Core
             var level = _economy != null ? _economy.GetLevel() : 1;
             var target = (!alwaysGoHome && level == 1) ? gameplaySceneName : homeSceneName;
             Debug.Log($"[EntryFlow] Level={level} -> chuyển vào {target}");
+            AudioService.Instance?.PlayClick();
             if (!string.IsNullOrEmpty(target))
                 SceneManager.LoadScene(target);
         }
@@ -71,11 +73,13 @@ namespace _Game.Scripts.Core
             var level = _economy != null ? _economy.GetLevel() : 1;
             _economy?.SetLevel(level);
             Debug.Log($"[EntryFlow] Start level {level} -> {gameplaySceneName}");
+            AudioService.Instance?.PlayClick();
             SceneManager.LoadScene(gameplaySceneName);
         }
 
         public void GoHome()
         {
+            AudioService.Instance?.PlayClick();
             SceneManager.LoadScene(homeSceneName);
         }
 

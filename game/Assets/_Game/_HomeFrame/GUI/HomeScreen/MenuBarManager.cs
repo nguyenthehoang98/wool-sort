@@ -1,4 +1,5 @@
 using System;
+using _Game.Scripts.Core;
 using HyperSonic;
 using UnityEngine;
 
@@ -58,18 +59,21 @@ namespace _Game.Scripts
 
         public void OpenShop()
         {
+            AudioService.Instance?.PlayClick();
             OnClickOpenShop?.Invoke();
             Focus(MenuBarOption.Shop);
         }
 
         public void OpenHome()
         {
+            AudioService.Instance?.PlayClick();
             OnClickOpenHome?.Invoke();
             Focus(MenuBarOption.Home);
         }
 
         public void OpenRanking()
         {
+            AudioService.Instance?.PlayClick();
             OnClickOpenRanking?.Invoke();
             Focus(MenuBarOption.Ranking);
         }
