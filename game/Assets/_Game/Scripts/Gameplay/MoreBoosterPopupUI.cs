@@ -8,6 +8,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using _Game.Scripts.Core;
 
 namespace _Game.Scripts.Gameplay
 {
@@ -306,8 +307,8 @@ namespace _Game.Scripts.Gameplay
             }
             if (!BoosterManager.Instance.CanUseBooster(_currentType)) return;
 
-            GameData.Instance.AddCount(_currentType, 1, "buy", "more_booster_popup");
-            GameData.Instance.AddCount(_currentType, -1, "use", "use_booster");
+            EconomyService.Instance.AddBooster(_currentType, 1, "buy", "more_booster_popup");
+            EconomyService.Instance.SpendBooster(_currentType, 1, "use", "use_booster");
 
             // Trì hoãn việc dùng booster tới khi popup đã đóng hẳn: đợi tween fade
             // (0.25s) + thêm 1 nhịp để chắc chắn không nhận event click của chính
