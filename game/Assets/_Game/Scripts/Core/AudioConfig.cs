@@ -5,7 +5,8 @@ namespace _Game.Scripts.Core
 
     /// <summary>Tập hợp clip âm thanh của game. Tạo bằng chuột phải Assets → Create → WoolSort/Audio Config.</summary>
     [Serializable]
-    public class AudioConfig
+    [CreateAssetMenu(fileName = "AudioConfig", menuName = "WoolSort/Audio Config")]
+    public class AudioConfig : ScriptableObject
     {
         [Header("BGM (loop, persistent)")]
         public AudioClip bgmHome;
@@ -23,11 +24,5 @@ namespace _Game.Scripts.Core
         public AudioClip sfxPopupOpen;
         public AudioClip sfxPopupClose;
         public AudioClip sfxBoosterBuy;
-    }
-
-    [CreateAssetMenu(fileName = "AudioConfig", menuName = "WoolSort/Audio Config")]
-    public class AudioConfigAsset : ScriptableObject
-    {
-        public AudioConfig config;
     }
 }

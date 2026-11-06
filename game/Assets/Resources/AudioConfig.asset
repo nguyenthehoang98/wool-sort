@@ -11,16 +11,15 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82abb6b11a79bf541afdde35be086df1, type: 3}
   m_Name: AudioConfig
-  m_EditorClassIdentifier: _Game.Scripts.Core::AudioConfigAsset
-  config:
-    bgmHome: {fileID: 0}
-    bgmGameplay: {fileID: 0}
-    sfxWin: {fileID: 0}
-    sfxLose: {fileID: 0}
-    sfxBoosterUse: {fileID: 0}
-    sfxCoinCollect: {fileID: 0}
-    sfxBoxClose: {fileID: 0}
-    sfxClick: {fileID: 0}
-    sfxPopupOpen: {fileID: 0}
-    sfxPopupClose: {fileID: 0}
-    sfxBoosterBuy: {fileID: 0}
+  m_EditorClassIdentifier: _Game.Scripts.Core::AudioConfig
+  bgmHome: {fileID: 7400000, guid: 5d0193309478c4b4f8a9b221884d12d1, type: 3}
+  bgmGameplay: {fileID: 7400000, guid: 59dc8ca741563a340980af13e4d63602, type: 3}
+  sfxWin: {fileID: 7400000, guid: 792e7e65e6b004842a0566536bfc4e2c, type: 3}
+  sfxLose: {fileID: 7400000, guid: 3756fceb3525f2f46bff6d685493bcf9, type: 3}
+  sfxBoosterUse: {fileID: 7400000, guid: 403063564f835ad44a083a1f619a5b09, type: 3}
+  sfxCoinCollect: {fileID: 7400000, guid: 2411c89fd652eeb4989c88008f0a63a6, type: 3}
+  sfxBoxClose: {fileID: 7400000, guid: ad7611bfd3a55394bb5b0fe57afb8393, type: 3}
+  sfxClick: {fileID: 7400000, guid: 6583ae85fba72a04197882734ad263bc, type: 3}
+  sfxPopupOpen: {fileID: 7400000, guid: 3e8c4bbd9d0f6934ca76d04feff15748, type: 3}
+  sfxPopupClose: {fileID: 7400000, guid: d3c346ec742154a4cb40effa07962dd0, type: 3}
+  sfxBoosterBuy: {fileID: 7400000, guid: d81e9c439d14ccb4982bb5bac3a63596, type: 3}

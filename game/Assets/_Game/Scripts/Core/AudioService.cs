@@ -7,29 +7,53 @@ namespace _Game.Scripts.Core
     /// <summary>Quản lý âm thanh: BGM, SFX, UI sound. Đứng theo SettingsService (sound/music).</summary>
     public sealed class AudioService : MonoBehaviour
     {
-        public static AudioService Instance { get; private set; }
+        private static AudioService _instance;
+        public static AudioService Instance
+        {
+            get
+            {
+                if (_instance == null) _instance = EnsureInstance();
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         [Header("Config (kéo AudioConfig.asset vào đây)")]
-        [SerializeField] private AudioConfigAsset configAsset;
+        [SerializeField] private AudioConfig config;
         public AudioConfig Config { get; private set; }
 
         /// <summary>Gán config từ bên ngoài (dùng khi chưa gán qua Inspector).</summary>
         public void SetConfig(AudioConfig cfg) => Config = cfg;
 
-        /// <summary>Config hiệu quả: ưu tiên Config đã set runtime, ngược lại lấy từ configAsset Inspector.</summary>
-        public AudioConfig EffectiveConfig => Config ?? (configAsset != null ? configAsset.config : null);
+        /// <summary>Config hiệu quả: ưu tiên Config đã set runtime, ngược lại lấy từ config Inspector hoặc Resources.</summary>
+        public AudioConfig EffectiveConfig
+        {
+            get
+            {
+                if (Config != null) return Config;
+                if (config != null) return config;
+                var loaded = Resources.Load<AudioConfig>("AudioConfig");
+                if (loaded != null)
+                {
+                    SetConfig(loaded);
+                    return loaded;
+                }
+                Debug.LogWarning("[AudioService] AudioConfig not found in Resources! Place AudioConfig.asset under Assets/Resources/");
+                return null;
+            }
+        }
 
         private int _musicId = -1;
         private bool _initialized;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            Instance = this;
+            _instance = this;
             DontDestroyOnLoad(gameObject);
 
             _initialized = true;
@@ -39,7 +63,7 @@ namespace _Game.Scripts.Core
         /// <summary>Đảm bảo đã có instance (tự tạo GameObject nếu chưa có).</summary>
         public static AudioService EnsureInstance()
         {
-            if (Instance != null) return Instance;
+            if (_instance != null) return _instance;
             var go = new GameObject("AudioService");
             return go.AddComponent<AudioService>();
         }
@@ -56,7 +80,11 @@ namespace _Game.Scripts.Core
         {
             if (clip == null) return;
             if (!SettingsService.Music) return;
-            if (_musicId >= 0) KitSound.StopAudioSound(_musicId);
+            if (_musicId >= 0)
+            {
+                var prev = KitSound.GetMusicAudio(_musicId);
+                if (prev != null) prev.Stop();
+            }
             _musicId = KitSound.PlayMusic(clip, 1f, loop, persist);
         }
 
@@ -64,7 +92,8 @@ namespace _Game.Scripts.Core
         {
             if (_musicId >= 0)
             {
-                KitSound.StopAudioSound(_musicId);
+                var prev = KitSound.GetMusicAudio(_musicId);
+                if (prev != null) prev.Stop();
                 _musicId = -1;
             }
         }

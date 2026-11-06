@@ -14,11 +14,10 @@ public class AudioSetupEditor
     public static void Setup()
     {
         // 1) Tạo AudioConfig.asset nếu chưa có
-        var config = AssetDatabase.LoadAssetAtPath<AudioConfigAsset>(AssetPath);
+        var config = AssetDatabase.LoadAssetAtPath<AudioConfig>(AssetPath);
         if (config == null)
         {
-            config = ScriptableObject.CreateInstance<AudioConfigAsset>();
-            config.config = new AudioConfig();
+            config = ScriptableObject.CreateInstance<AudioConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
             AssetDatabase.SaveAssets();
             Debug.Log("[AudioSetup] Đã tạo " + AssetPath + " — hãy kéo clip âm thanh vào Inspector.");

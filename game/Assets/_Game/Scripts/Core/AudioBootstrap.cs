@@ -24,8 +24,9 @@ namespace _Game.Scripts.Core
             var audioService = AudioService.EnsureInstance();
             if (audioService.Config == null)
             {
-                var cfg = Resources.Load<AudioConfigAsset>("AudioConfig");
-                if (cfg != null) audioService.SetConfig(cfg.config);
+                var cfg = Resources.Load<AudioConfig>("AudioConfig");
+                if (cfg != null) audioService.SetConfig(cfg);
+                else Debug.LogWarning("[AudioBootstrap] AudioConfig not found in Resources!");
             }
 
             SceneManager.sceneLoaded += OnSceneLoaded;

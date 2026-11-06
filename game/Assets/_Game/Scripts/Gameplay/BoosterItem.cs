@@ -61,17 +61,20 @@ namespace _Game.Scripts.Gameplay
 
         private void OnEnable()
         {
-            GameConst.OnChangeBooster += OnChangeBooster;
+            if (EconomyService.Instance != null)
+                EconomyService.Instance.OnBoosterChanged += OnBoosterChanged;
         }
 
         private void OnDisable()
         {
-            GameConst.OnChangeBooster -= OnChangeBooster;
+            if (EconomyService.Instance != null)
+                EconomyService.Instance.OnBoosterChanged -= OnBoosterChanged;
         }
 
-        private void OnChangeBooster(ChangeBoosterArgs args)
+        private void OnBoosterChanged(BoosterType changedType, int count)
         {
-            Setup();
+            if (changedType == type)
+                Setup();
         }
 
         public void Setup()
@@ -119,7 +122,9 @@ namespace _Game.Scripts.Gameplay
 
             if (_btnBoosterState != ButtonBoosterState.Lock)
             {
-                int count = GameData.Instance.GetCount(type);
+                int count = EconomyService.Instance != null
+                    ? EconomyService.Instance.GetBoosterCount(type)
+                    : GameData.Instance.GetCount(type);
                 if (count > 0)
                 {
                     _btnBoosterState = ButtonBoosterState.Noti;
