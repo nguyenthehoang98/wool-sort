@@ -1222,6 +1222,23 @@ Checklist test tay trong Unity: mở `EntryScene` → Play; và mở thẳng `Ga
 
 > Mapping clip cho 9 field mới là lựa chọn hợp lý (dễ đổi: kéo clip khác vào `AudioConfig.asset` trong Inspector).
 
+### FX bắn coin lên HUD khi mua gói coin (2026-11-07)
+
+Yêu cầu: *"thêm khi mua gói coin thì cũng có fx bắn coin lên hudcoin (như lúc win)"*.
+
+Lúc win, `WinPopup.OnClickNext` gọi `SplashItem.SplashCoin(5, btnCoin, CoinHUD.IconTransform, …)` rồi `CoinHUD.ShowVFX()`.
+Nhưng `SplashItem` chỉ được đặt sẵn trong scene **Gameplay/Entry**, **không có ở Home** (nơi có shop) → hiệu ứng không chạy được ở shop.
+
+| Phần | Trước | Sau |
+|---|---|---|
+| `SplashItem` | chỉ có khi scene đặt sẵn (Gameplay/Entry) | thêm `EnsureInstance()` tự tạo dưới Canvas trên cùng nếu thiếu; `prfCoin` fallback `Resources.Load("ImgCoin")` |
+| `ImgCoin.prefab` | `_Game/Prefab/UI/` | **`git mv` → `_Game/Resources/ImgCoin.prefab`** (giữ GUID `4cb69919…`, scene cũ vẫn resolve) |
+| `PurchaseSuccessPopup` | nút OK/Close đều chỉ `Hide()` | OK: nếu là **gói coin** → `SplashItem.EnsureInstance().SplashCoin(5, btnOk → CoinHUD.IconTransform)` → `CoinHUD.ShowVFX()` → mới đóng; booster đóng luôn |
+| `CoinHUD.ShowVFX` | `EffectUIManager.Instance != null` (log lỗi khi thiếu) | `EffectUIManager.HasInstance` (Home không có EffectUIManager → bỏ qua burst, không log lỗi) |
+
+**Verify:** compile `Assembly-CSharp` + `Assembly-CSharp-Editor` PASS 0 error; `ImgCoin.prefab.meta` giữ đúng GUID; `PurchaseSuccessPopup.prefab` có `btnOk`/`btnClose`.
+**Còn:** hiệu ứng bắn coin của shop phát khi bấm **OK** (đóng popup thưởng) — đúng nhịp như lúc win (bấm nút trên popup); burst hạt của HUD chỉ có ở scene có `EffectUIManager` (Gameplay), ở Home chỉ có coin bay + nảy thanh coin. Chờ test Play mode.
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

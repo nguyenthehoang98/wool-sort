@@ -1,7 +1,9 @@
 namespace _Game.Scripts.Meta
 {
+    using _Game.Scripts;
     using _Game.Scripts.Core;
     using _Game.Scripts.Gameplay;
+    using _Game.Scripts.UI;
     using _Game.Scripts.Utils;
     using DG.Tweening;
     using TMPro;
@@ -26,14 +28,41 @@ namespace _Game.Scripts.Meta
         [SerializeField] private GameObject card;
         [SerializeField] private RectTransform cardRect;
 
+        private ShopItem _item;
+
         private void Awake()
         {
             Instance = this;
 
-            if (btnOk != null) btnOk.onClick.AddListener(Hide);
+            if (btnOk != null) btnOk.onClick.AddListener(OnClickOk);
             if (btnClose != null) btnClose.onClick.AddListener(Hide);
 
             SetVisible(false);
+        }
+
+        /// <summary>
+        /// Bấm OK: nếu là GÓI COIN thì bắn coin từ nút lên HUD coin (giống lúc Win) rồi mới đóng;
+        /// gói khác (booster) đóng luôn.
+        /// </summary>
+        private void OnClickOk()
+        {
+            var hud = CoinHUD.Instance;
+            bool isCoinPack = _item != null && !_item.IsBooster && _item.coinAmount > 0;
+
+            if (isCoinPack && hud != null)
+            {
+                var splash = SplashItem.EnsureInstance();
+                if (splash != null)
+                {
+                    var from = btnOk != null ? btnOk.gameObject : gameObject;
+                    splash.SplashCoin(5, from, hud.IconTransform.gameObject, 0.5f, null,
+                        () => hud.ShowVFX(),
+                        Hide);
+                    return;
+                }
+            }
+
+            Hide();
         }
 
         private void OnDestroy()
@@ -71,6 +100,8 @@ namespace _Game.Scripts.Meta
         public void Show(ShopItem item)
         {
             if (item == null) return;
+
+            _item = item;
 
             // GameObject gốc có thể đang tắt (đặt vậy trong scene) -> bật lên.
             if (!gameObject.activeSelf) gameObject.SetActive(true);

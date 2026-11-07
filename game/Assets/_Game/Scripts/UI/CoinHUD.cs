@@ -58,7 +58,9 @@ namespace _Game.Scripts.UI
                 });
             }
 
-            if (EffectUIManager.Instance != null)
+            // EffectUIManager chỉ có ở vài scene (Gameplay/Entry). Dùng HasInstance để
+            // không log lỗi "could not be found" khi mở thẳng Home.
+            if (EffectUIManager.HasInstance)
                 EffectUIManager.Instance.ShowGetCoinEffect(IconTransform.position);
         }
 

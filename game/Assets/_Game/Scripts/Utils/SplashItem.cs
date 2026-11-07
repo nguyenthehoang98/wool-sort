@@ -15,6 +15,46 @@ namespace _Game.Scripts
         [SerializeField] private AnimationCurve coinSplashCurve;
         [SerializeField] private AnimationCurve coinToBarCurve;
 
+        protected override void OnAwake()
+        {
+            // Khi SplashItem được tạo tự động (không kéo prfCoin trong Inspector)
+            // thì lấy prefab đồng xu từ Resources.
+            if (prfCoin == null)
+                prfCoin = Resources.Load<GameObject>("ImgCoin");
+        }
+
+        /// <summary>
+        /// Bảo đảm có instance trong scene hiện tại — tự tạo (dưới Canvas trên cùng) nếu scene
+        /// chưa đặt sẵn SplashItem. Nhờ vậy hiệu ứng bắn coin chạy được ở cả Home (nơi shop ở),
+        /// không chỉ ở Gameplay/Entry.
+        /// </summary>
+        public static SplashItem EnsureInstance()
+        {
+            if (HasInstance) return Instance;
+
+            var canvas = FindTopCanvas();
+            var go = new GameObject("SplashItem", typeof(RectTransform));
+            if (canvas != null)
+            {
+                go.transform.SetParent(canvas.transform, false);
+                go.transform.SetAsLastSibling();
+            }
+            return go.AddComponent<SplashItem>();
+        }
+
+        private static Canvas FindTopCanvas()
+        {
+            Canvas best = null;
+            var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            foreach (var c in canvases)
+            {
+                if (c == null || !c.isActiveAndEnabled) continue;
+                if (c.renderMode != RenderMode.ScreenSpaceOverlay) continue;
+                if (best == null || c.sortingOrder >= best.sortingOrder) best = c;
+            }
+            return best;
+        }
+
         public void SplashCoin(int quantity, GameObject objSpawn, GameObject objTarget, float timeDelayLastCallback,
             Action callbackPerCoin, Action firstCallback, Action lastCallback)
         {
