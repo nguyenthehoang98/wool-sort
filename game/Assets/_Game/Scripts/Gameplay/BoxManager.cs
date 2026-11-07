@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using _KIT;
+using _Game.Scripts.Core;
 using UnityEngine;
 using Ease = DG.Tweening.Ease;
 
@@ -251,6 +252,7 @@ namespace _Game.Scripts.Gameplay
                         yarnColor = gm.ChooseNextBoxColor();
                         break;
                     case UnlockBoxType.Revive:
+                        AudioService.Instance?.PlayRevive();
                         yarnColor = gm.ChooseNextBoxColorRevive();
                         AddScheduleMinPrioritySpawn(1);
                         break;

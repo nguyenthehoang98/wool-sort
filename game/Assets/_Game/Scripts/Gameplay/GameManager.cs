@@ -272,6 +272,9 @@ namespace _Game.Scripts.Gameplay
         {
             isAnimatingStartLevel = true;
 
+            // Tiếng vào màn (transition)
+            AudioService.Instance?.PlayLevelStart();
+
             // 0) Prep: ẩn UI, block input, ẩn box + waiting area
             GameUIController.Instance.SetAllUIVisible(false);
             // Ensure popups are hidden at level start

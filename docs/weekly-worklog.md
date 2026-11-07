@@ -1132,6 +1132,96 @@ Target cũng chưa có **file âm thanh nào** (0 wav/mp3/ogg).
 | Validator `Gameplay.unity` | 10 lỗi **có sẵn** từ đợt đổi tên asset (icon BoosterBtn / MoreBoosterPopup / WinPopup) — không liên quan tới settings (GUID `1460a9d2…` / `f4b7b06b…` không xuất hiện) |
 | Audit asset toàn repo | 0 thiếu `.meta`, 0 `.meta` mồ côi, 0 GUID trùng |
 
+## Vòng 23 — Bổ sung SFX đầy đủ + fix gốc khiến TOÀN BỘ âm thanh câm (2026-11-07)
+
+Yêu cầu: *"check hiện tại bổ sung sfx đầy đủ cho tôi. dự án hiện thiếu nhiều sfx và validate play xem được không"*.
+
+### Nguyên nhân gốc — cả hệ thống âm thanh bị câm
+
+`Assets/Resources/AudioConfig.asset` khi được điền clip đã ghi **sai `fileID`** cho mọi clip:
+dùng `7400000` (fileID của **AnimationClip**) thay vì `8300000` (fileID của **AudioClip**).
+Vì `fileID` sai nên **tất cả** field (kể cả BGM) deserialize thành `null` → `AudioService`
+thấy clip `null` nên return sớm → **không có âm thanh nào phát**, ở mọi level/scene.
+
+Bằng chứng: dự án gốc (Unity 2022) serialize clip là `{fileID: 8300000, guid: …}` trong
+`_Game/_SettingManager/Resources/AudioDefaultSO.asset` **và** trong `SettingManager.prefab`
+(`m_audioClip`). `7400000` chỉ xuất hiện trong các `.controller` (khóa `m_Motion` → AnimationClip)
+của cả hai dự án.
+
+### Đã làm
+
+| Phần | Trước | Sau |
+|---|---|---|
+| `AudioConfig.asset` — `fileID` clip | `7400000` (AnimationClip) cho 11/11 field | `8300000` (AudioClip) cho 21/21 field |
+| Field SFX có clip | 11/21 (10 field trống: `sfxTap`, `sfxDissolve`, `sfxRope`, `sfxHold`, `sfxBoxFull`, `sfxBoosterAddSlot`, `sfxBoosterClean`, `sfxBoosterMagicBox`, `sfxLevelStart`, `sfxRevive`) | 21/21 |
+| File trong `Assets/AudioClip/` | 11 | 20 (thêm 9 clip Ver2) |
+| `Play*()` có call site | 11 | 18 (+`PlayBoxClose` thêm mới accessor) |
+| `YarnPart.cs` | **Hỏng compile** (tool sửa nhầm: `using DG.Dotween;`, `using prefab = prefab;`, mất chữ ký `HandleFingerDown`, chèn literal `captain.transform\r\n`, `childPart.SetActive` sai) | Khôi phục từ HEAD + thêm lại call SFX sạch |
+
+**9 clip mới** copy từ bộ **Ver2** của dự án `threadscrew` (`D:\BB_Project\threadscrew\Assets\_Game\Sounds\Ver2`),
+giữ nguyên `.meta`/GUID (đúng như bộ clip Ver2 đã có sẵn trong target):
+
+| Field | File | Nguồn Ver2 |
+|---|---|---|
+| `sfxTap` | `candy_collect.wav` | candy_collect |
+| `sfxDissolve` | `knitting.wav` | knitting |
+| `sfxRope` | `spool_thud.wav` | spool_thud |
+| `sfxHold` | `SFX_SwishAnim.wav` | SFX_SwishAnim |
+| `sfxBoxFull` | `box_in.wav` | box_in |
+| `sfxBoosterAddSlot` | `booster_slot.wav` | booster_slot |
+| `sfxBoosterClean` | `booster_broom.wav` | booster_broom |
+| `sfxLevelStart` | `SFX_MassiveDeal.wav` | SFX_MassiveDeal |
+| `sfxRevive` | `SFX_MagicalPoof.wav` | SFX_MagicalPoof |
+| `sfxBoosterMagicBox` | `booster_magic.wav` | (dùng lại clip có sẵn) |
+
+**Call site mới** (theo đúng sự kiện của bản gốc):
+
+| SFX | Chỗ phát |
+|---|---|
+| `PlayTap` / `PlayDissolve` / `PlayHold` | `YarnPart` (tap / tan len / hold) + `Vibrate()` |
+| `PlayRope` | `YarnRopeController.SpawnRope` |
+| `PlayBoxFull` / `PlayBoxClose` | `Box.HandleSlotFilled` / `Box.HandleSlotAnimationFilled` |
+| `PlayBoosterAddSlot/Clean/MagicBox` | `BoosterManager.UseBooster` (khớp `BoosterManager` gốc) |
+| `PlayLevelStart` | `GameManager.PlayStartLevelSequence` |
+| `PlayRevive` | `BoxManager.SpawnBoxRoutine` (case `UnlockBoxType.Revive`) |
+
+### Volume từng SFX
+
+Theo yêu cầu *"chỉnh volume từng sfx ở đâu"*: `AudioConfig` thêm **19 field `[Range(0,1)] <tên>Volume`**
+(mỗi clip SFX 1 field, cạnh clip — BGM chưa có volume riêng). `AudioService` có overload
+`PlaySfx(clip, volume)` / `PlayUISound(clip, volume)` (clamp 0..1) và mọi `Play*()` truyền volume của clip đó.
+
+Công thức cuối: `AudioSource.volume = volumeClip × KitSound.GlobalSoundsVolume (hay GlobalUISoundsVolume) × GlobalVolume`.
+→ Volume **riêng từng tiếng** chỉnh ở `Assets/Resources/AudioConfig.asset` (Inspector);
+volume **toàn cục** (bật/tắt) ở `SettingsService`.
+
+### Verify
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile `Assembly-CSharp` (csc Unity 6) | PASS — 0 error (chỉ warning có sẵn: `FindObjectOfType` obsolete, unused field) |
+| Compile `Assembly-CSharp-Editor` (chain `ref.dll` vừa build) | PASS — 0 error |
+| Resolve clip: 21/21 field trỏ tới file thật | PASS — tất cả `fileID=8300000`, GUID khớp file trong `AudioClip/` |
+| GUID trùng toàn repo (1765 `.meta`) | 0 |
+| `Play*()` chưa có call site | Chỉ còn `PlayBoosterUse` (trùng clip với `PlayBoosterMagicBox`) — để nguyên |
+| Field volume per-SFX | 19 field `...Volume` khớp 1-1 giữa `AudioConfig.cs` ↔ `AudioConfig.asset` (chỉ BGM không có) |
+| Default `SettingsService.Sound/Music/Vibration` | `true` → không bị tắt tiếng mặc định |
+| `AudioBootstrap` trong scene | `EntryScene` có (DontDestroyOnLoad) → BGM Home qua `sceneLoaded`; BGM Gameplay qua `GameManager.LoadLevel` |
+
+### Chưa verify (cần Play mode — Editor đang mở, không `-batchmode` được)
+
+Checklist test tay trong Unity: mở `EntryScene` → Play; và mở thẳng `Gameplay` → Play.
+1. Nghe **BGM** Home (Entry→Home) và Gameplay.
+2. **Click nút / mở-đóng popup** → có tiếng.
+3. **Tap 1 sợi len** → tiếng pop + rung; **giữ (hold)** → tiếng hold; len **tan dần** → tiếng dissolve.
+4. Len bay vào slot có **tiếng dây**.
+5. Hộp **đầy** → tiếng box full; hộp **đóng nắp** → tiếng box close.
+6. Dùng **3 booster** → mỗi loại 1 tiếng riêng; mua booster → tiếng mua.
+7. **Win** → win sfx; **Lose** → lose sfx.
+8. Vào **Settings** tắt Sound/Music → tiếng tắt ngay.
+
+> Mapping clip cho 9 field mới là lựa chọn hợp lý (dễ đổi: kéo clip khác vào `AudioConfig.asset` trong Inspector).
+
 ## Tổng kết sau mỗi tuần
 
 | Tuần | Kết quả đạt được | Task chưa xong | Blocker | Evidence chính | Quyết định tuần sau |

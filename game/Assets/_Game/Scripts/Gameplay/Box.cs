@@ -1,4 +1,5 @@
 using _Game.Scripts.Pool;
+using _Game.Scripts.Core;
 using DG.Tweening;
 using System;
 using System.Collections;
@@ -119,6 +120,7 @@ private YarnColor boxColor;
             if (slots.All(x => x.IsFilled))
             {
                 Debug.Log($"Box color {boxColor} full");
+                AudioService.Instance?.PlayBoxFull();
                 OnBoxFull?.Invoke(this);
             }
         }
@@ -133,7 +135,10 @@ private YarnColor boxColor;
             pendingCloseCount++;
             Debug.Log($"Box color {boxColor} | pending close count = {pendingCloseCount}");
             if (pendingCloseCount >= slots.Count)
+            {
+                AudioService.Instance?.PlayBoxClose();
                 OnBoxClose?.Invoke(this);
+            }
         }
 
         private void ApplyColor(YarnColor color)

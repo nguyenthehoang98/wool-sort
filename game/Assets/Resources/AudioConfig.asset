@@ -12,14 +12,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82abb6b11a79bf541afdde35be086df1, type: 3}
   m_Name: AudioConfig
   m_EditorClassIdentifier: _Game.Scripts.Core::AudioConfig
-  bgmHome: {fileID: 7400000, guid: 5d0193309478c4b4f8a9b221884d12d1, type: 3}
-  bgmGameplay: {fileID: 7400000, guid: 59dc8ca741563a340980af13e4d63602, type: 3}
-  sfxWin: {fileID: 7400000, guid: 792e7e65e6b004842a0566536bfc4e2c, type: 3}
-  sfxLose: {fileID: 7400000, guid: 3756fceb3525f2f46bff6d685493bcf9, type: 3}
-  sfxBoosterUse: {fileID: 7400000, guid: 403063564f835ad44a083a1f619a5b09, type: 3}
-  sfxCoinCollect: {fileID: 7400000, guid: 2411c89fd652eeb4989c88008f0a63a6, type: 3}
-  sfxBoxClose: {fileID: 7400000, guid: ad7611bfd3a55394bb5b0fe57afb8393, type: 3}
-  sfxClick: {fileID: 7400000, guid: 6583ae85fba72a04197882734ad263bc, type: 3}
-  sfxPopupOpen: {fileID: 7400000, guid: 3e8c4bbd9d0f6934ca76d04feff15748, type: 3}
-  sfxPopupClose: {fileID: 7400000, guid: d3c346ec742154a4cb40effa07962dd0, type: 3}
-  sfxBoosterBuy: {fileID: 7400000, guid: d81e9c439d14ccb4982bb5bac3a63596, type: 3}
+  bgmHome: {fileID: 8300000, guid: 5d0193309478c4b4f8a9b221884d12d1, type: 3}
+  bgmGameplay: {fileID: 8300000, guid: 59dc8ca741563a340980af13e4d63602, type: 3}
+  sfxWin: {fileID: 8300000, guid: 792e7e65e6b004842a0566536bfc4e2c, type: 3}
+  sfxWinVolume: 1.5
+  sfxLose: {fileID: 8300000, guid: 3756fceb3525f2f46bff6d685493bcf9, type: 3}
+  sfxLoseVolume: 1.5
+  sfxBoosterUse: {fileID: 8300000, guid: 403063564f835ad44a083a1f619a5b09, type: 3}
+  sfxBoosterUseVolume: 1
+  sfxCoinCollect: {fileID: 8300000, guid: 2411c89fd652eeb4989c88008f0a63a6, type: 3}
+  sfxCoinCollectVolume: 1
+  sfxBoxClose: {fileID: 8300000, guid: ad7611bfd3a55394bb5b0fe57afb8393, type: 3}
+  sfxBoxCloseVolume: 1
+  sfxTap: {fileID: 8300000, guid: c75329fd5891dad47820c89fab9d611a, type: 3}
+  sfxTapVolume: 0.5
+  sfxDissolve: {fileID: 8300000, guid: b775b42f397e897438abba28a20ab827, type: 3}
+  sfxDissolveVolume: 1
+  sfxRope: {fileID: 8300000, guid: 12e89e62309c2924cb71bed3ea63212d, type: 3}
+  sfxRopeVolume: 1
+  sfxHold: {fileID: 8300000, guid: 84f5268ea807c7a4e834b78217635180, type: 3}
+  sfxHoldVolume: 1
+  sfxBoxFull: {fileID: 8300000, guid: b2022f2065e4f9445aa7798676d27bba, type: 3}
+  sfxBoxFullVolume: 1
+  sfxBoosterAddSlot: {fileID: 8300000, guid: e94fc31d87d0bb844b801f165c21d2c8, type: 3}
+  sfxBoosterAddSlotVolume: 1
+  sfxBoosterClean: {fileID: 8300000, guid: e020587789d757d4fb3576c6abcc255b, type: 3}
+  sfxBoosterCleanVolume: 1
+  sfxBoosterMagicBox: {fileID: 8300000, guid: 403063564f835ad44a083a1f619a5b09, type: 3}
+  sfxBoosterMagicBoxVolume: 1
+  sfxLevelStart: {fileID: 8300000, guid: d59064b2f916c0b4b998fe05182a59ec, type: 3}
+  sfxLevelStartVolume: 1
+  sfxRevive: {fileID: 8300000, guid: e927010ca90a8fb4ea040e6318088d71, type: 3}
+  sfxReviveVolume: 1
+  sfxClick: {fileID: 8300000, guid: 6583ae85fba72a04197882734ad263bc, type: 3}
+  sfxClickVolume: 1
+  sfxPopupOpen: {fileID: 8300000, guid: 3e8c4bbd9d0f6934ca76d04feff15748, type: 3}
+  sfxPopupOpenVolume: 1
+  sfxPopupClose: {fileID: 8300000, guid: d3c346ec742154a4cb40effa07962dd0, type: 3}
+  sfxPopupCloseVolume: 1
+  sfxBoosterBuy: {fileID: 8300000, guid: d81e9c439d14ccb4982bb5bac3a63596, type: 3}
+  sfxBoosterBuyVolume: 1

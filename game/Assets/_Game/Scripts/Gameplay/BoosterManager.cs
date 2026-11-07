@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using _KIT;
 using _KIT.Utils;
+using _Game.Scripts.Core;
 using DG.Tweening;
 using UnityEngine;
 using Ease = _KIT.Ease;
@@ -145,12 +146,15 @@ namespace _Game.Scripts.Gameplay
             switch(type)
             {
                 case BoosterType.AddSlot:
+                    AudioService.Instance?.PlayBoosterAddSlot();
                     UseBoosterAddSlot();
                     break;
                 case BoosterType.Clean:
+                    AudioService.Instance?.PlayBoosterClean();
                     UseBoosterClean();
                     break;
                 case BoosterType.MagicBox:
+                    AudioService.Instance?.PlayBoosterMagicBox();
                     UseBoosterMagicBox();
                     break;
             }

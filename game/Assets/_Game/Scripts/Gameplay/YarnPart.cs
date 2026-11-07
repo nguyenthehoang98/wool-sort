@@ -11,6 +11,7 @@ using UnityEditor.SceneManagement;
 #endif
 using UnityEngine;
 using UnityEventBus;
+using _Game.Scripts.Core;
 
 namespace _Game.Scripts.Gameplay
 {
@@ -221,6 +222,10 @@ namespace _Game.Scripts.Gameplay
                         return;
                     }
 
+                    // Tap len thanh cong: tieng pop + rung nhe
+                    AudioService.Instance?.PlayTap();
+                    AudioService.Instance?.Vibrate();
+
                     IsDissolving = true;
                     Debug.Log("Handle Finger Tap " + part.name);
                     GlobalBus.Send<YarnClickedMessage>(new YarnClickedMessage(this));
@@ -245,6 +250,8 @@ namespace _Game.Scripts.Gameplay
 
             IsDissolving = true;
             gameObject.SetActive(true);
+            AudioService.Instance?.PlayDissolve();
+            AudioService.Instance?.Vibrate();
             dissolveRoutine = GameManager.Instance.StartCoroutine(DissolveAndDrop(needGrowInner)); // sử dụng game manager để cố fix bug không dissolve được thi thoảng xảy ra
         }
 
@@ -318,6 +325,8 @@ namespace _Game.Scripts.Gameplay
                     childPart.gameObject.SetActive(true);
                 }
 
+                AudioService.Instance?.PlayHold();
+
                 GlobalBus.Send<YarnStartHoldMessage>(new YarnStartHoldMessage(this));
             }
         }
@@ -329,6 +338,7 @@ namespace _Game.Scripts.Gameplay
             {
                 childPart.gameObject.SetActive(true);
             }
+            AudioService.Instance?.PlayHold();
         }
 
         public void ForceVisualRelease()

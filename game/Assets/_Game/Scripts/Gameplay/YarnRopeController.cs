@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _Game.Scripts.Pool;
+using _Game.Scripts.Core;
 using DG.Tweening;
 using UnityEngine;
 
@@ -54,6 +55,9 @@ namespace _Game.Scripts.Gameplay
         {
             // Lấy từ pool
             var rope = PoolManager.Instance.Get<Rope>("rope");
+
+            // Tiếng dây khi len bay vào slot
+            AudioService.Instance?.PlayRope();
 
             // Chọn material theo màu yarn
             YarnColor c = (color == YarnColor.None) ? part.CurrentColor : color;

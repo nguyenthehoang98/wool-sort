@@ -99,41 +99,87 @@ namespace _Game.Scripts.Core
         }
 
         /// <summary>Phát SFX một lần (dùng cho win/lose/booster/coin...). Tuân theo cài Sound.</summary>
-        public void PlaySfx(AudioClip clip)
+        public void PlaySfx(AudioClip clip) => PlaySfx(clip, 1f);
+
+        /// <summary>Phát SFX một lần với volume riêng (0..1). Tuân theo cài Sound.</summary>
+        public void PlaySfx(AudioClip clip, float volume)
         {
             if (clip == null || !SettingsService.Sound) return;
-            KitSound.PlaySound(clip, 1f);
+            KitSound.PlaySound(clip, Mathf.Clamp01(volume));
         }
 
         /// <summary>Phát UI sound một lần (click, mở/đóng popup...). Tuân theo cài Sound.</summary>
-        public void PlayUISound(AudioClip clip)
+        public void PlayUISound(AudioClip clip) => PlayUISound(clip, 1f);
+
+        /// <summary>Phát UI sound một lần với volume riêng (0..1). Tuân theo cài Sound.</summary>
+        public void PlayUISound(AudioClip clip, float volume)
         {
             if (clip == null || !SettingsService.Sound) return;
-            KitSound.PlayUISound(clip, 1f);
+            KitSound.PlayUISound(clip, Mathf.Clamp01(volume));
         }
 
         /// <summary>Phát âm thanh click nút.</summary>
-        public void PlayClick() => PlayUISound(EffectiveConfig?.sfxClick);
+        public void PlayClick() => PlayUISound(EffectiveConfig?.sfxClick, EffectiveConfig?.sfxClickVolume ?? 1f);
 
         /// <summary>Phát âm thanh mở popup.</summary>
-        public void PlayPopupOpen() => PlayUISound(EffectiveConfig?.sfxPopupOpen);
+        public void PlayPopupOpen() => PlayUISound(EffectiveConfig?.sfxPopupOpen, EffectiveConfig?.sfxPopupOpenVolume ?? 1f);
 
         /// <summary>Phát âm thanh đóng popup.</summary>
-        public void PlayPopupClose() => PlayUISound(EffectiveConfig?.sfxPopupClose);
+        public void PlayPopupClose() => PlayUISound(EffectiveConfig?.sfxPopupClose, EffectiveConfig?.sfxPopupCloseVolume ?? 1f);
 
         /// <summary>Phát âm thanh thắng màn.</summary>
-        public void PlayWin() => PlaySfx(EffectiveConfig?.sfxWin);
+        public void PlayWin() => PlaySfx(EffectiveConfig?.sfxWin, EffectiveConfig?.sfxWinVolume ?? 1f);
 
         /// <summary>Phát âm thanh thua màn.</summary>
-        public void PlayLose() => PlaySfx(EffectiveConfig?.sfxLose);
+        public void PlayLose() => PlaySfx(EffectiveConfig?.sfxLose, EffectiveConfig?.sfxLoseVolume ?? 1f);
 
         /// <summary>Phát âm thanh dùng booster.</summary>
-        public void PlayBoosterUse() => PlaySfx(EffectiveConfig?.sfxBoosterUse);
+        public void PlayBoosterUse() => PlaySfx(EffectiveConfig?.sfxBoosterUse, EffectiveConfig?.sfxBoosterUseVolume ?? 1f);
 
         /// <summary>Phát âm thanh mua booster.</summary>
-        public void PlayBoosterBuy() => PlaySfx(EffectiveConfig?.sfxBoosterBuy);
+        public void PlayBoosterBuy() => PlaySfx(EffectiveConfig?.sfxBoosterBuy, EffectiveConfig?.sfxBoosterBuyVolume ?? 1f);
 
         /// <summary>Phát âm thanh thu coin.</summary>
-        public void PlayCoinCollect() => PlaySfx(EffectiveConfig?.sfxCoinCollect);
+        public void PlayCoinCollect() => PlaySfx(EffectiveConfig?.sfxCoinCollect, EffectiveConfig?.sfxCoinCollectVolume ?? 1f);
+
+        /// <summary>Phát âm thanh tap len (pop nhẹ).</summary>
+        public void PlayTap() => PlaySfx(EffectiveConfig?.sfxTap, EffectiveConfig?.sfxTapVolume ?? 1f);
+
+        /// <summary>Phát âm thanh len tan (dissolve).</summary>
+        public void PlayDissolve() => PlaySfx(EffectiveConfig?.sfxDissolve, EffectiveConfig?.sfxDissolveVolume ?? 1f);
+
+        /// <summary>Phát âm thanh dây rope khi len vào slot.</summary>
+        public void PlayRope() => PlaySfx(EffectiveConfig?.sfxRope, EffectiveConfig?.sfxRopeVolume ?? 1f);
+
+        /// <summary>Phát âm thanh hold (xem trước lớp trong).</summary>
+        public void PlayHold() => PlaySfx(EffectiveConfig?.sfxHold, EffectiveConfig?.sfxHoldVolume ?? 1f);
+
+        /// <summary>Phát âm thanh box vừa full (bounce).</summary>
+        public void PlayBoxFull() => PlaySfx(EffectiveConfig?.sfxBoxFull, EffectiveConfig?.sfxBoxFullVolume ?? 1f);
+
+        /// <summary>Phát âm thanh box đóng nắp.</summary>
+        public void PlayBoxClose() => PlaySfx(EffectiveConfig?.sfxBoxClose, EffectiveConfig?.sfxBoxCloseVolume ?? 1f);
+
+        /// <summary>Phát âm thanh dùng booster AddSlot.</summary>
+        public void PlayBoosterAddSlot() => PlaySfx(EffectiveConfig?.sfxBoosterAddSlot, EffectiveConfig?.sfxBoosterAddSlotVolume ?? 1f);
+
+        /// <summary>Phát âm thanh dùng booster Clean.</summary>
+        public void PlayBoosterClean() => PlaySfx(EffectiveConfig?.sfxBoosterClean, EffectiveConfig?.sfxBoosterCleanVolume ?? 1f);
+
+        /// <summary>Phát âm thanh dùng booster MagicBox.</summary>
+        public void PlayBoosterMagicBox() => PlaySfx(EffectiveConfig?.sfxBoosterMagicBox, EffectiveConfig?.sfxBoosterMagicBoxVolume ?? 1f);
+
+        /// <summary>Phát âm thanh revive (thua → play lại).</summary>
+        public void PlayRevive() => PlaySfx(EffectiveConfig?.sfxRevive, EffectiveConfig?.sfxReviveVolume ?? 1f);
+
+        /// <summary>Phát âm thanh level start transition.</summary>
+        public void PlayLevelStart() => PlaySfx(EffectiveConfig?.sfxLevelStart, EffectiveConfig?.sfxLevelStartVolume ?? 1f);
+
+        /// <summary>Rung máy theo cài đặt.</summary>
+        public void Vibrate()
+        {
+            if (SettingsService.Vibration)
+                SettingsService.Vibrate();
+        }
     }
 }
