@@ -3,24 +3,63 @@ namespace _Game.Scripts.Core
     using UnityEngine;
     using UnityEngine.SceneManagement;
 
-    /// <summary>Đặt sẵn vào EntryScene (hoặc scene đầu tiên). Tự ensure AudioService, load AudioConfig từ Resources,
-    /// và phát BGM phù hợp khi chuyển scene Home / Gameplay.</summary>
+    /// <summary>
+    /// Phát BGM theo scene (Home/Gameplay). Tự boot ở MỌI scene — không phụ thuộc việc scene
+    /// có đặt sẵn component hay không, và phát lại BGM mỗi khi load scene khác.
+    /// </summary>
     public class AudioBootstrap : MonoBehaviour
     {
         [Header("BGM theo scene (nếu không gán sẽ lấy từ AudioConfig)")]
         [SerializeField] private AudioClip bgmHome;
         [SerializeField] private AudioClip bgmGameplay;
 
-        private static bool _booted;
+        private static AudioBootstrap _instance;
+
+        // Reset static khi vào Play mode (kể cả khi Domain Reload tắt) — nếu không, giá trị
+        // cũ còn sót lại làm lần Play sau không boot được BGM.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => _instance = null;
+
+        // Tự tạo AudioBootstrap nếu scene hiện tại không có, rồi phát BGM của scene đang mở.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoBoot()
+        {
+            var existing = FindFirstObjectByType<AudioBootstrap>();
+            if (existing != null)
+            {
+                _instance = existing;
+                existing.PlayBgm(SceneManager.GetActiveScene());
+                return;
+            }
+
+            var go = new GameObject("AudioBootstrap");
+            DontDestroyOnLoad(go);
+            _instance = go.AddComponent<AudioBootstrap>(); // Awake chạy ngay, giữ DontDestroyOnLoad
+            _instance.PlayBgm(SceneManager.GetActiveScene());
+        }
 
         private void Awake()
         {
-            // Chỉ boot 1 lần (DontDestroyOnLoad).
-            if (_booted) { Destroy(gameObject); return; }
-            _booted = true;
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Đảm bảo AudioService có sẵn.
+            EnsureAudioService();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_instance == this) _instance = null;
+        }
+
+        private void EnsureAudioService()
+        {
             var audioService = AudioService.EnsureInstance();
             if (audioService.Config == null)
             {
@@ -28,23 +67,20 @@ namespace _Game.Scripts.Core
                 if (cfg != null) audioService.SetConfig(cfg);
                 else Debug.LogWarning("[AudioBootstrap] AudioConfig not found in Resources!");
             }
-
-            SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private void OnDestroy()
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlayBgm(scene);
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        /// <summary>Phát BGM khớp tên scene (Home → bgmHome, Gameplay → bgmGameplay).</summary>
+        private void PlayBgm(Scene scene)
         {
             var audioService = AudioService.Instance;
-            if (audioService == null || audioService.EffectiveConfig == null) return;
+            if (audioService == null) return;
 
-            var clip = scene.name.Equals("Home") ? (bgmHome ?? audioService.EffectiveConfig.bgmHome)
-                 : scene.name.Equals("Gameplay") ? (bgmGameplay ?? audioService.EffectiveConfig.bgmGameplay)
-                 : null;
+            var cfg = audioService.EffectiveConfig;
+            var clip = scene.name.Equals("Home") ? (bgmHome != null ? bgmHome : cfg?.bgmHome)
+                     : scene.name.Equals("Gameplay") ? (bgmGameplay != null ? bgmGameplay : cfg?.bgmGameplay)
+                     : null;
 
             if (clip != null) audioService.PlayMusic(clip, loop: true, persist: true);
         }

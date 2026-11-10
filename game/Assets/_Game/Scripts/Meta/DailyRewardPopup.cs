@@ -1,36 +1,36 @@
 namespace _Game.Scripts.Meta
 {
-    using System;
     using System.Collections.Generic;
     using _Game.Scripts.Core;
     using DG.Tweening;
-    using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
 
-    /// <summary>Popup Daily Reward 7 ngày. Claim 1 lần/ngày, streak tăng theo ngày liên tiếp.
-    /// Prefab cần: 7 con DailyRewardItem trong dayContainer, nút Close, canvasGroup, cardRect.</summary>
+    /// <summary>Popup Daily Reward 7 ngày. Mỗi ngày có thể nhiều phần thưởng; claim 1 lần/ngày.
+    /// Prefab cần: dayContainer + dayItemPrefab (DailyRewardItem), btnClaim, btnClaimInactive, btnClose, cardRect.</summary>
     public class DailyRewardPopup : MonoBehaviour
     {
         [Header("Config")]
-        [SerializeField] private DailyRewardConfig config;
+        public DailyRewardConfig config;
 
         [Header("Containers")]
-        [SerializeField] private Transform dayContainer;
-        [SerializeField] private DailyRewardItem dayItemPrefab;
+        public Transform dayContainer;
+        public DailyRewardItem dayItemPrefab;
 
-        [Header("Nút đóng")]
-        [SerializeField] private Button btnClose;
+        [Header("Buttons")]
+        public Button btnClaim;
+        public Button btnClaimInactive;
+        public Button btnClose;
 
         [Header("Hiệu ứng")]
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform cardRect;
+        public RectTransform cardRect;
 
         private readonly List<DailyRewardItem> _items = new List<DailyRewardItem>(7);
         private bool _isAnimating;
 
         private void Awake()
         {
+            if (btnClaim != null) btnClaim.onClick.AddListener(OnClaim);
             if (btnClose != null) btnClose.onClick.AddListener(Hide);
             SetVisible(false, true);
         }
@@ -51,98 +51,82 @@ namespace _Game.Scripts.Meta
             SetVisible(false, true);
         }
 
+        private void OnClaim()
+        {
+            var svc = DailyRewardService.Instance;
+            if (svc == null || !svc.CanClaimToday()) return;
+
+            int claimed = svc.Claim();
+            if (claimed < 0) return;
+
+            AudioService.Instance?.PlayCoinCollect();
+            Refresh(); // giữ popup mở để thấy tick
+        }
+
         private void Refresh()
         {
-            if (dayContainer == null || dayItemPrefab == null) return;
+            if (dayContainer == null || dayItemPrefab == null)
+            {
+                Debug.LogWarning("[DailyRewardPopup] Thiếu dayContainer hoặc dayItemPrefab.");
+                return;
+            }
 
-            var service = DailyRewardService.Instance;
-            int streak = service != null ? service.Streak : 0;
-            bool canClaim = service != null && service.CanClaimToday();
-
-            // Đảm bảo đủ 7 item
             while (_items.Count < 7)
             {
                 var go = Instantiate(dayItemPrefab, dayContainer);
-                _items.Add(go.GetComponent<DailyRewardItem>());
+                _items.Add(go);
             }
+
+            var svc = DailyRewardService.Instance;
+            int streak = svc != null ? svc.Streak : 0;
+            bool canClaim = svc != null && svc.CanClaimToday();
 
             for (int i = 0; i < 7; i++)
             {
-                var entry = config != null ? config.GetEntry(i) : null;
-                // Ngày i+1 có thể claim nếu streak >= i (đã claim đủ i ngày trước) và chưa claim hôm nay
-                bool unlocked = streak >= i;
-                bool claimedToday = !canClaim && streak > i;
-                bool available = unlocked && canClaim && !claimedToday;
-
-                var item = _items[i];
-                item.Setup(i + 1, entry, unlocked, available, claimedToday, OnClaimDay);
+                var day = config != null ? config.GetDay(i) : null;
+                bool isToday = i == streak;
+                bool claimed = i < streak;
+                _items[i].Setup(i, day, isToday, claimed, false);
             }
-        }
 
-        private void OnClaimDay(int dayIndex)
-        {
-            var service = DailyRewardService.Instance;
-            if (service == null) return;
-
-            var entry = service.Claim();
-            if (entry == null) return;
-
-            AudioService.Instance?.PlayCoinCollect();
-            Refresh();
-            Hide();
+            if (btnClaim != null) btnClaim.gameObject.SetActive(canClaim);
+            if (btnClaimInactive != null) btnClaimInactive.gameObject.SetActive(!canClaim);
         }
 
         private void SetVisible(bool visible, bool instant)
         {
-            if (canvasGroup == null)
-            {
-                gameObject.SetActive(visible);
-                return;
-            }
-
-            canvasGroup.DOKill();
-            cardRect?.DOKill();
+            if (cardRect != null) cardRect.DOKill();
 
             if (visible)
             {
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
-                if (instant)
+                gameObject.SetActive(true);
+                if (instant || cardRect == null)
                 {
-                    canvasGroup.alpha = 1f;
-                    cardRect.transform.localScale = Vector3.one;
+                    if (cardRect != null) cardRect.localScale = Vector3.one;
                 }
                 else
                 {
                     _isAnimating = true;
-                    canvasGroup.alpha = 0f;
-                    cardRect.transform.localScale = Vector3.one * 0.85f;
-                    canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutBack);
-                    cardRect.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack)
-                        .OnComplete(() => _isAnimating = false);
+                    cardRect.localScale = Vector3.one * 0.85f;
+                    cardRect.DOScale(1f, 0.25f).SetEase(Ease.OutBack).OnComplete(() => _isAnimating = false);
                 }
             }
             else
             {
-                if (instant)
+                if (instant || cardRect == null)
                 {
-                    canvasGroup.alpha = 0f;
-                    cardRect.transform.localScale = Vector3.one;
-                    canvasGroup.interactable = false;
-                    canvasGroup.blocksRaycasts = false;
+                    _isAnimating = false;
+                    if (cardRect != null) cardRect.localScale = Vector3.one;
+                    gameObject.SetActive(false);
                 }
                 else
                 {
                     _isAnimating = true;
-                    canvasGroup.DOFade(0f, 0.25f).SetEase(Ease.InBack);
-                    cardRect.transform.DOScale(0.85f, 0.25f).SetEase(Ease.InBack)
-                        .OnComplete(() =>
-                        {
-                            _isAnimating = false;
-                            canvasGroup.interactable = false;
-                            canvasGroup.blocksRaycasts = false;
-                            gameObject.SetActive(false);
-                        });
+                    cardRect.DOScale(0.85f, 0.25f).SetEase(Ease.InBack).OnComplete(() =>
+                    {
+                        _isAnimating = false;
+                        gameObject.SetActive(false);
+                    });
                 }
             }
         }

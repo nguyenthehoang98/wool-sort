@@ -60,7 +60,9 @@ namespace _Game.Scripts.Core
         [Range(0f, 2f)] public float sfxPopupOpenVolume = 1f;
         public AudioClip sfxPopupClose;
         [Range(0f, 2f)] public float sfxPopupCloseVolume = 1f;
-        public AudioClip sfxBoosterBuy;
-        [Range(0f, 2f)] public float sfxBoosterBuyVolume = 1f;
+        public AudioClip sfxBuyCoin;
+        [Range(0f, 2f)] public float sfxBuyCoinVolume = 1f;
+        public AudioClip sfxBuyBooster;
+        [Range(0f, 2f)] public float sfxBuyBoosterVolume = 1f;
     }
 }

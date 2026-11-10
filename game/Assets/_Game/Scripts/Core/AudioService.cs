@@ -105,7 +105,7 @@ namespace _Game.Scripts.Core
         public void PlaySfx(AudioClip clip, float volume)
         {
             if (clip == null || !SettingsService.Sound) return;
-            KitSound.PlaySound(clip, Mathf.Clamp01(volume));
+            KitSound.PlaySound(clip, volume);
         }
 
         /// <summary>Phát UI sound một lần (click, mở/đóng popup...). Tuân theo cài Sound.</summary>
@@ -115,7 +115,7 @@ namespace _Game.Scripts.Core
         public void PlayUISound(AudioClip clip, float volume)
         {
             if (clip == null || !SettingsService.Sound) return;
-            KitSound.PlayUISound(clip, Mathf.Clamp01(volume));
+            KitSound.PlayUISound(clip, volume);
         }
 
         /// <summary>Phát âm thanh click nút.</summary>
@@ -136,8 +136,11 @@ namespace _Game.Scripts.Core
         /// <summary>Phát âm thanh dùng booster.</summary>
         public void PlayBoosterUse() => PlaySfx(EffectiveConfig?.sfxBoosterUse, EffectiveConfig?.sfxBoosterUseVolume ?? 1f);
 
-        /// <summary>Phát âm thanh mua booster.</summary>
-        public void PlayBoosterBuy() => PlaySfx(EffectiveConfig?.sfxBoosterBuy, EffectiveConfig?.sfxBoosterBuyVolume ?? 1f);
+        /// <summary>Phát âm thanh mua GÓI COIN (tiếng coin).</summary>
+        public void PlayBuyCoin() => PlaySfx(EffectiveConfig?.sfxBuyCoin, EffectiveConfig?.sfxBuyCoinVolume ?? 1f);
+
+        /// <summary>Phát âm thanh mua BOOSTER (tiếng riêng).</summary>
+        public void PlayBuyBooster() => PlaySfx(EffectiveConfig?.sfxBuyBooster, EffectiveConfig?.sfxBuyBoosterVolume ?? 1f);
 
         /// <summary>Phát âm thanh thu coin.</summary>
         public void PlayCoinCollect() => PlaySfx(EffectiveConfig?.sfxCoinCollect, EffectiveConfig?.sfxCoinCollectVolume ?? 1f);

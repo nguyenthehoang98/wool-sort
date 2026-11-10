@@ -10,7 +10,7 @@ namespace _Game.Scripts.Meta
     ///
     /// Các ô màn (<see cref="LevelButton"/>) được ĐẶT SẴN trong prefab/scene để chỉnh
     /// tay bằng Inspector. Script KHÔNG Instantiate/Destroy gì lúc chạy: nó chỉ đẩy dữ
-    /// liệu (số màn, khoá/mở, sprite nền, badge) vào các ô có sẵn và ẩn các ô dư.
+    /// liệu (số màn, khoá/mở, sprite nền) vào các ô có sẵn và ẩn các ô dư.
     ///
     /// Số ô hiển thị = <see cref="maxVisibleItems"/> (mặc định 4). Cửa sổ trượt theo màn
     /// hiện tại: 1 màn trước + màn hiện tại + 2 màn sau, tự kẹp ở đầu/cuối danh sách.
@@ -23,7 +23,7 @@ namespace _Game.Scripts.Meta
     /// được; các ô do `VerticalLayoutGroup` trên Holder xếp sẵn.
     ///
     /// Danh sách màn lấy từ `LevelCatalog` (Resources/LevelCatalog.asset): số màn và độ khó
-    /// (Normal / Hard / VeryHard → đổi sprite ô + badge) không còn hardcode trong prefab nữa.
+    /// (Normal / Hard / VeryHard → đổi sprite ô) không còn hardcode trong prefab nữa.
     /// Khi chưa có catalog thì fallback về `maxLevel` gán trong Inspector.
     /// </summary>
     public class LevelList : MonoBehaviour
@@ -40,10 +40,6 @@ namespace _Game.Scripts.Meta
         [SerializeField] private Sprite currentSprite;  // Button_Lv_2 - be
         [SerializeField] private Sprite hardSprite;    // Button_Lv_3 - tím
         [SerializeField] private Sprite veryHardSprite;// Button_Lv_4 - đỏ
-
-        [Header("Badge độ khó (pick từ dự án gốc)")]
-        [SerializeField] private Sprite hardIconSprite;    // icon_hard
-        [SerializeField] private Sprite veryHardIconSprite;// icon_veryhard
 
         [Header("Cấu hình")]
         [Tooltip("Số ô hiển thị tối đa. Ô dư trong danh sách sẽ bị ẩn.")]
@@ -103,8 +99,7 @@ namespace _Game.Scripts.Meta
                 var mode = catalog != null ? catalog.GetModeTypeByOrder(lv) : LevelModeType.Normal;
 
                 btn.Bind(lv, isCurrent, mode,
-                         normalSprite, currentSprite, hardSprite, veryHardSprite,
-                         hardIconSprite, veryHardIconSprite);
+                         normalSprite, currentSprite, hardSprite, veryHardSprite);
             }
         }
 

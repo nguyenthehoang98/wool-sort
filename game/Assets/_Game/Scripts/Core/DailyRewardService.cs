@@ -4,13 +4,14 @@ namespace _Game.Scripts.Core
     using UnityEngine;
     using _Game.Scripts.Gameplay;
 
-    /// <summary>Quản lý Daily Reward (7 ngày, claim 1 lần/ngày). Lưu vào PlayerData qua EconomyService.</summary>
+    /// <summary>Quản lý Daily Reward (7 ngày, claim 1 lần/ngày, mỗi ngày có thể nhiều phần thưởng).
+    /// Lưu vào PlayerData qua EconomyService.</summary>
     public sealed class DailyRewardService : MonoBehaviour
     {
         public static DailyRewardService Instance { get; private set; }
 
-        public event Action<int> OnStreakChanged; // streak mới
-        public event Action<DailyRewardEntry> OnRewardClaimed;
+        public event Action<int> OnStreakChanged;      // streak mới
+        public event Action<int> OnRewardClaimed;      // day index (0-based) vừa nhận
 
         [Header("Config (kéo DailyRewardConfig.asset vào đây)")]
         [SerializeField] private DailyRewardConfig config;
@@ -32,46 +33,40 @@ namespace _Game.Scripts.Core
             _lastClaimUtcTicks = EconomyService.Instance?.Data?.lastDailyClaimUtcTicks ?? 0;
         }
 
+        public int Streak => _streak;
+        public DailyRewardConfig Config => config;
+
+        /// <summary>Hôm nay đã nhận chưa.</summary>
         public bool CanClaimToday()
         {
             if (_lastClaimUtcTicks <= 0) return true;
             var last = DateTime.FromBinary(_lastClaimUtcTicks);
-            var now = DateTime.UtcNow;
-            return last.Date != now.Date;
+            return last.Date != DateTime.UtcNow.Date;
         }
 
-        public int Streak => _streak;
+        /// <summary>Index ngày đang hiện (0-based).</summary>
+        public int TodayIndex => _streak;
 
-        public DailyRewardConfig Config => config;
-
-        /// <summary>Claim thưởng ngày hiện tại. Trả entry đã grant hoặc null nếu chưa đến lượt/đã claim.</summary>
-        public DailyRewardEntry Claim()
+        /// <summary>Nhận thưởng ngày hiện tại. Trả về index ngày (0-based) vừa nhận, hoặc -1 nếu chưa tới lượt/đã claim.</summary>
+        public int Claim()
         {
-            if (!CanClaimToday()) return null;
+            if (!CanClaimToday()) return -1;
             if (config == null)
             {
                 Debug.LogWarning("[DailyRewardService] Chưa gán DailyRewardConfig.");
-                return null;
+                return -1;
             }
 
-            var entry = config.GetEntry(_streak); // streak 0-based -> day streak+1
-            if (entry == null) return null;
+            var day = config.GetDay(_streak);
+            if (day == null || day.rewards == null || day.rewards.Count == 0) return -1;
 
-            // Grant reward
-            if (entry.rewardId == "coin")
-            {
-                EconomyService.Instance.AddCoins(entry.amount, "daily_reward", $"day_{entry.day}");
-            }
-            else
-            {
-                var type = ParseBooster(entry.rewardId);
-                if (type != BoosterType.None)
-                    EconomyService.Instance.AddBooster(type, entry.amount, "daily_reward", $"day_{entry.day}");
-            }
+            int claimedIndex = _streak;
+            foreach (var r in day.rewards)
+                Grant(r, claimedIndex);
 
-            // Tăng streak (tối đa 7, rồi vòng lại)
+            // Tăng streak (0..6), hết 7 ngày thì vòng lại từ 0
             _streak++;
-            if (_streak > 7) _streak = 1;
+            if (_streak >= 7) _streak = 0;
 
             _lastClaimUtcTicks = DateTime.UtcNow.Ticks;
 
@@ -81,8 +76,24 @@ namespace _Game.Scripts.Core
             SaveService.Save(data);
 
             OnStreakChanged?.Invoke(_streak);
-            OnRewardClaimed?.Invoke(entry);
-            return entry;
+            OnRewardClaimed?.Invoke(claimedIndex);
+            return claimedIndex;
+        }
+
+        private static void Grant(DailyRewardEntry entry, int dayIndex)
+        {
+            if (entry == null || entry.amount <= 0) return;
+            var reason = $"day_{dayIndex + 1}";
+
+            if (entry.rewardId == "coin")
+            {
+                EconomyService.Instance.AddCoins(entry.amount, "daily_reward", reason);
+                return;
+            }
+
+            var type = ParseBooster(entry.rewardId);
+            if (type != BoosterType.None)
+                EconomyService.Instance.AddBooster(type, entry.amount, "daily_reward", reason);
         }
 
         private static BoosterType ParseBooster(string id) => id switch

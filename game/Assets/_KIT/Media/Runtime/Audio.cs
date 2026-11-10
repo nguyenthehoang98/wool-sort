@@ -427,6 +427,11 @@ namespace _KIT
 
             AudioSource.Play();
             IsPlaying = true;
+            // Play lại thì huỷ trạng thái "đang dừng" còn sót. KitSound.PlayAudio gọi
+            // StopAllMusic trước khi Play -> chính clip mới cũng bị đánh dấu Stopping,
+            // và bị tắt ngay ở frame delta=0 (vừa load scene) => mất BGM.
+            Stopping = false;
+            Paused = false;
 
             fadeInterpolater = 0f;
             onFadeStartVolume = this.Volume;

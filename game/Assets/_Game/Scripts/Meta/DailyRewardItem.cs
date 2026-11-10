@@ -1,51 +1,79 @@
 namespace _Game.Scripts.Meta
 {
-using TMPro;
-using _Game.Scripts.Core;
-using UnityEngine;
-using UnityEngine.UI;
+    using _Game.Scripts.Core;
+    using TMPro;
+    using UnityEngine;
+    using UnityEngine.UI;
 
-    /// <summary>Một ô ngày trong Daily Reward popup. Kéo ref vào prefab: TxtDay, TxtAmount, Icon, Claimed, Button.</summary>
+    /// <summary>Một ô ngày trong Daily Reward popup (7 ô). Hiển thị các phần thưởng của ngày đó + trạng thái.
+    /// Kéo ref trong prefab DailyRewardItem.</summary>
     public class DailyRewardItem : MonoBehaviour
     {
-        [Header("Controls (kéo thả trong Inspector / prefab)")]
-        public TextMeshProUGUI txtDay;
-        public TextMeshProUGUI txtAmount;
-        public Image icon;
+        [Header("State overlays (tùy chọn)")]
+        public GameObject normalState;
+        public GameObject todayState;
+        public GameObject missedState;
+
+        [Header("Reward display")]
+        public Transform rewardContainer;
+        public DailyRewardIcon rewardIconPrefab;
+        [Tooltip("Icon dự phòng khi entry.icon trống")]
+        public Sprite coinIcon;
+        public Sprite addSlotIcon;
+        public Sprite cleanIcon;
+        public Sprite magicBoxIcon;
+
+        [Header("Claimed")]
         public GameObject claimedMark;
-        public Button btn;
 
-        [Header("Sprite trạng thái nút (tùy chọn)")]
-        public Sprite btnLocked;
-        public Sprite btnAvailable;
+        [Header("Text")]
+        public TextMeshProUGUI txtDay;
 
-        public int Day { get; private set; }
-        public DailyRewardEntry Entry { get; private set; }
+        public int DayIndex { get; private set; }
 
-        public void Setup(int day, DailyRewardEntry entry, bool unlocked, bool available, bool claimed, System.Action<int> onClaim)
+        public void Setup(int dayIndex, DailyRewardDay day, bool isToday, bool isClaimed, bool isMissed)
         {
-            Day = day;
-            Entry = entry;
+            DayIndex = dayIndex;
 
-            if (txtDay != null) txtDay.text = $"DAY {day}";
-            if (txtAmount != null && entry != null) txtAmount.text = entry.amount.ToString();
-            if (icon != null && entry != null && entry.icon != null) icon.sprite = entry.icon;
+            if (txtDay != null) txtDay.text = $"DAY {dayIndex + 1}";
 
-            bool interactable = unlocked && available && !claimed;
-            if (btn != null)
+            // Dựng lại icon phần thưởng
+            if (rewardContainer != null)
             {
-                btn.interactable = interactable;
-                btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(() => onClaim?.Invoke(Day));
+                for (int i = rewardContainer.childCount - 1; i >= 0; i--)
+                    Destroy(rewardContainer.GetChild(i).gameObject);
+
+                if (day != null && day.rewards != null && rewardIconPrefab != null)
+                {
+                    foreach (var r in day.rewards)
+                    {
+                        var go = Instantiate(rewardIconPrefab, rewardContainer);
+                        go.Set(r.icon != null ? r.icon : IconFor(r.rewardId), AmountText(r));
+                    }
+                }
             }
 
-            if (claimedMark != null) claimedMark.SetActive(claimed);
+            if (normalState != null) normalState.SetActive(!isToday && !isMissed);
+            if (todayState != null) todayState.SetActive(isToday);
+            if (missedState != null) missedState.SetActive(isMissed);
 
-            if (btnLocked != null && btnAvailable != null)
-            {
-                var img = btn.GetComponent<Image>();
-                if (img != null) img.sprite = interactable ? btnAvailable : btnLocked;
-            }
+            if (claimedMark != null) claimedMark.SetActive(isClaimed);
+            if (rewardContainer != null) rewardContainer.gameObject.SetActive(!isClaimed);
+        }
+
+        private Sprite IconFor(string rewardId) => rewardId switch
+        {
+            "coin" => coinIcon,
+            "addslot" => addSlotIcon,
+            "clean" => cleanIcon,
+            "magicbox" => magicBoxIcon,
+            _ => null
+        };
+
+        private static string AmountText(DailyRewardEntry e)
+        {
+            if (e == null) return string.Empty;
+            return e.rewardId == "coin" ? e.amount.ToString() : $"x{e.amount}";
         }
     }
 }

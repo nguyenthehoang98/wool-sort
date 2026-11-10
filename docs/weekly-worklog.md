@@ -1227,17 +1227,65 @@ Checklist test tay trong Unity: mở `EntryScene` → Play; và mở thẳng `Ga
 Yêu cầu: *"thêm khi mua gói coin thì cũng có fx bắn coin lên hudcoin (như lúc win)"*.
 
 Lúc win, `WinPopup.OnClickNext` gọi `SplashItem.SplashCoin(5, btnCoin, CoinHUD.IconTransform, …)` rồi `CoinHUD.ShowVFX()`.
-Nhưng `SplashItem` chỉ được đặt sẵn trong scene **Gameplay/Entry**, **không có ở Home** (nơi có shop) → hiệu ứng không chạy được ở shop.
+`SplashItem` kế thừa singleton `HyperSonic.Singleton<T>`. Ban đầu nó chỉ có ở Gameplay/Entry; sau khi thêm vào **Home** thì lộ bug singleton: chuyển scene xong `Instance` bị null/trỏ nhầm nên hiệu ứng không chạy.
 
 | Phần | Trước | Sau |
 |---|---|---|
-| `SplashItem` | chỉ có khi scene đặt sẵn (Gameplay/Entry) | thêm `EnsureInstance()` tự tạo dưới Canvas trên cùng nếu thiếu; `prfCoin` fallback `Resources.Load("ImgCoin")` |
-| `ImgCoin.prefab` | `_Game/Prefab/UI/` | **`git mv` → `_Game/Resources/ImgCoin.prefab`** (giữ GUID `4cb69919…`, scene cũ vẫn resolve) |
-| `PurchaseSuccessPopup` | nút OK/Close đều chỉ `Hide()` | OK: nếu là **gói coin** → `SplashItem.EnsureInstance().SplashCoin(5, btnOk → CoinHUD.IconTransform)` → `CoinHUD.ShowVFX()` → mới đóng; booster đóng luôn |
+| `Singleton<T>` | `OnDestroy` luôn `instance = null`; `Awake` bỏ qua nếu đã có instance | `OnDestroy` **chỉ gỡ khi chính mình là instance**; `Awake` nhận làm instance nếu instance cũ thuộc **scene khác** → chuyển scene thì gỡ rồi bind lại bản của scene mới |
+| `SplashItem` | chỉ đặt sẵn ở Gameplay/Entry | đã có ở **cả Home** (thêm trong scene, `prfCoin` = `ImgCoin`); bỏ auto-create |
+| `PurchaseSuccessPopup` | nút OK/Close đều chỉ `Hide()` | **ngay khi popup hiện** (`Show`) với **gói coin** → `SplashItem.Instance.SplashCoin(5, card → CoinHUD.IconTransform)` + `CoinHUD.ShowVFX()`; OK/Close chỉ đóng popup; ShopItemView mua thành công **bỏ tooltip** |
 | `CoinHUD.ShowVFX` | `EffectUIManager.Instance != null` (log lỗi khi thiếu) | `EffectUIManager.HasInstance` (Home không có EffectUIManager → bỏ qua burst, không log lỗi) |
+| `ShopItemView` | mua thành công → `Notify()` (tooltip + text) | mua thành công **không bắn tooltip** (đã có popup nhận thưởng); mua lỗi vẫn báo tooltip |
+| SFX mua hàng | `PlayBoosterBuy()` (`sfxBoosterBuy` = `spend_coin`) dùng chung cho mọi lần mua | **tách riêng**: `sfxBuyCoin` (`spend_coin`, gói coin) + `sfxBuyBooster` (**`SFX_Unlock.wav`**, booster); `AudioService.PlayBuyCoin()` / `PlayBuyBooster()` |
 
-**Verify:** compile `Assembly-CSharp` + `Assembly-CSharp-Editor` PASS 0 error; `ImgCoin.prefab.meta` giữ đúng GUID; `PurchaseSuccessPopup.prefab` có `btnOk`/`btnClose`.
-**Còn:** hiệu ứng bắn coin của shop phát khi bấm **OK** (đóng popup thưởng) — đúng nhịp như lúc win (bấm nút trên popup); burst hạt của HUD chỉ có ở scene có `EffectUIManager` (Gameplay), ở Home chỉ có coin bay + nảy thanh coin. Chờ test Play mode.
+**Verify:** compile `Assembly-CSharp` + `Assembly-CSharp-Editor` PASS 0 error; `SplashItem` có ở cả 3 scene (Home/Gameplay/EntryScene), `prfCoin` gán `ImgCoin` (giữ nguyên vị trí `_Game/Prefab/UI/`); `PurchaseSuccessPopup.prefab` có `btnOk`/`btnClose`.
+**Còn:** coin bắn **ngay khi popup mua thành công hiện lên** (không đợi bấm OK); burst hạt của HUD chỉ có ở scene có `EffectUIManager` (Gameplay), ở Home chỉ có coin bay + nảy thanh coin. Chờ test Play mode.
+
+### BGM phát lại khi chuyển scene (2026-11-07)
+
+Yêu cầu: *"bgm play xong load scene khác ko play lại"*.
+
+Hai nguyên nhân:
+1. `AudioBootstrap` (thứ phát BGM theo scene) **chỉ có ở `EntryScene`** → mở Home/Gameplay trực tiếp, hoặc về scene không có bootstrap, thì không có gì phát BGM.
+2. Trong `_KIT`: `KitSound.PlayAudio` gọi `StopAllMusic` **sau khi** đã `PrepareAudio` clip mới → chính clip mới bị đánh cờ `Stopping = true`; ở frame `delta = 0` (ngay khi vừa load scene) `Audio.Update` thấy `Volume == 0 && Stopping` nên `Stop()` luôn → mất BGM.
+
+| Phần | Sửa |
+|---|---|
+| `AudioBootstrap` | tự boot ở **mọi scene** (`[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` tạo instance nếu scene chưa có) + reset static (`SubsystemRegistration`) để khỏi dính state cũ khi Play lại; subscribe `sceneLoaded` → mỗi lần đổi scene phát lại đúng BGM; phát luôn BGM của scene đang mở |
+| `GameManager.LoadLevel` | bỏ dòng phát BGM Gameplay (tránh restart 2 lần vì bootstrap đã phát) |
+| `_KIT/.../Audio.Play()` | reset `Stopping = false; Paused = false;` sau khi `Play()` |
+
+**Verify:** compile `Assembly-CSharp` + `Assembly-CSharp-Editor` PASS 0 error.
+**Còn:** chờ test Play mode — mở từng scene trực tiếp và đi vòng Entry→Home→Gameplay→Home, kiểm tra BGM phát/lặp đúng scene.
+
+## Vòng 24 — Daily Reward 7 ngày: khảo sát + port art/code/UI (2026-11-07)
+
+Yêu cầu: *"check tính năng 7d, pick code và ui + prefab ở dự án gốc sang"*. Chốt với user: **A** = copy art ra folder riêng để pick dần; **B/C/D/E** = port; **bỏ** reward `HeartTime`; **bỏ** ads (x2 / recover / comeback); data **lấy giá trị gốc** nhưng chỉ **coin + booster**.
+
+### Hiện trạng trước khi làm
+Target **chỉ có 4 script** daily reward (`DailyRewardService/Config/Popup/Item`) — không prefab, không sprite, không gắn scene nào → chưa chạy được. Gốc có đủ: prefab `DailyPopup/DailyItem/btnDailyGray`, 7 sprite Slot/Icon, config 7 ngày — nhưng phụ thuộc `FrameBase/UIScale/UIAnimation/I2 Localize/GameData/TimeHackManager/KitSDK(ads)` (**đã prune hết**) ⇒ không port thẳng được.
+
+### Đã làm
+
+| Nhóm | Kết quả |
+|---|---|
+| **A — art** | copy **16 sprite** (~705 KB) `_Game/Textures/UIV2/` từ gốc (giữ GUID): `Slot_Daily_1A/1B/1C/1D/2/Mask`, `icon_Daily(_Gray)`, `Icon_Check`, `Text_DailyReward`, `Panel_Special`, `Header`, `Decor`, `Button_Close/Green/Blue` |
+| **C — code native** | `DailyRewardConfig` → **nhiều reward/ngày** (`DailyRewardDay` + `DailyRewardEntry`); `DailyRewardService.Claim()` cấp cả ngày + tăng streak 0..6 vòng lại; `DailyRewardItem` (state normal/today/missed/claimed + nhiều icon), `DailyRewardPopup` (7 ô + nút CLAIM/Close, dot-ween), mới `DailyRewardIcon`, `DailyRewardButton` |
+| **B/D/E — generator** | `Assets/Editor/DailyRewardSetupEditor.cs` (menu **WoolSort/Daily Reward**): tạo `DailyRewardConfig.asset` (7 ngày: `coin60` · `magic×1` · `coin80` · `addslot×1` · `coin120` · `clean×1` · `coin240+magic×2`) + build `DailyRewardIcon/Item.prefab` (`_Game/Prefab/UI`) và `DailyRewardPopup.prefab` (**`_Game/Resources`** để runtime load) |
+| **Nút mở (E)** | **Nút đặt thẳng trong `Home.unity`**: GO `DailyRewardButton` (con của `Canvas`, sprite `icon_Daily`, góc trên-trái) + `Image` + `Button` + `DailyRewardButton`. Click → `Open()` mở popup (tìm trong scene, không có thì `Resources.Load("DailyRewardPopup")`). Đã **gỡ** launcher runtime |
+
+### Ghi chú
+- Port theo pattern dự án: **pick art + viết lại code/prefab native** (không YAML-port prefab gốc vì script gốc đã prune).
+- Đã bỏ: `HeartTime`, x2-ads, recover-ngày-bỏ-lỡ, comeback, anti-cheat giờ, localization (thay bằng text cứng).
+
+### Verify
+| Kiểm tra | Kết quả |
+|---|---|
+| Compile `Assembly-CSharp` + `Assembly-CSharp-Editor` | PASS — 0 error |
+| Sprite stage đủ 16 file + `.meta` | ✅ |
+| Auto-build | `[InitializeOnLoad]` tự sinh config + 3 prefab khi Unity reload (guard: còn thiếu mới chạy) |
+| Scene `Home.unity` | thêm GO `DailyRewardButton` (id `990000001..5`); validator scene: 90 block / **0 id trùng** / **0 ref hỏng** |
+| Còn | cần Unity reload 1 lần (tự build prefab) rồi Play `Home` → bấm nút góc trên-trái để mở popup |
 
 ## Tổng kết sau mỗi tuần
 

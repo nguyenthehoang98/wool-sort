@@ -62,7 +62,7 @@ using _Game.Scripts.Core;
             var level = _economy != null ? _economy.GetLevel() : 1;
             var target = (!alwaysGoHome && level == 1) ? gameplaySceneName : homeSceneName;
             Debug.Log($"[EntryFlow] Level={level} -> chuyển vào {target}");
-            AudioService.Instance?.PlayClick();
+           
             if (!string.IsNullOrEmpty(target))
                 SceneManager.LoadScene(target);
         }

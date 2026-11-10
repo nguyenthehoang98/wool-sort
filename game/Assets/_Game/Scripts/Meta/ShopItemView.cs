@@ -57,8 +57,11 @@ namespace _Game.Scripts.Meta
 
             if (_shop.Buy(_item.id))
             {
-                AudioService.Instance?.PlayBoosterBuy();
-                Notify($"Purchased {_item.displayName}", onNotify);
+                // Mua gói coin -> tiếng coin; mua booster -> tiếng booster riêng.
+                if (_item.IsBooster) AudioService.Instance?.PlayBuyBooster();
+                else AudioService.Instance?.PlayBuyCoin();
+                // Mua thành công: đã có popup nhận thưởng -> KHÔNG bắn tooltip nữa.
+                onNotify?.Invoke($"Purchased {_item.displayName}");
                 // Màn hình nhận thưởng sau khi mua.
                 // Dùng Acquire() vì GameObject gốc của popup để TẮT trong scene
                 // -> Instance còn null nếu chỉ gọi PurchaseSuccessPopup.Instance.

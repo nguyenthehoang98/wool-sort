@@ -34,35 +34,29 @@ namespace _Game.Scripts.Meta
         {
             Instance = this;
 
-            if (btnOk != null) btnOk.onClick.AddListener(OnClickOk);
+            if (btnOk != null) btnOk.onClick.AddListener(Hide);
             if (btnClose != null) btnClose.onClick.AddListener(Hide);
 
             SetVisible(false);
         }
 
         /// <summary>
-        /// Bấm OK: nếu là GÓI COIN thì bắn coin từ nút lên HUD coin (giống lúc Win) rồi mới đóng;
-        /// gói khác (booster) đóng luôn.
+        /// Bắn coin từ popup lên HUD coin (giống lúc Win). Chạy NGAY khi popup hiện lên
+        /// (lúc mua xong), KHÔNG đợi bấm xác nhận. Chỉ áp dụng cho gói coin.
         /// </summary>
-        private void OnClickOk()
+        private void PlayCoinFly()
         {
             var hud = CoinHUD.Instance;
             bool isCoinPack = _item != null && !_item.IsBooster && _item.coinAmount > 0;
+            if (!isCoinPack || hud == null) return;
 
-            if (isCoinPack && hud != null)
-            {
-                var splash = SplashItem.EnsureInstance();
-                if (splash != null)
-                {
-                    var from = btnOk != null ? btnOk.gameObject : gameObject;
-                    splash.SplashCoin(5, from, hud.IconTransform.gameObject, 0.5f, null,
-                        () => hud.ShowVFX(),
-                        Hide);
-                    return;
-                }
-            }
+            var splash = SplashItem.HasInstance ? SplashItem.Instance : null;
+            if (splash == null) return;
 
-            Hide();
+            var from = cardRect != null ? cardRect.gameObject
+                     : (card != null ? card : gameObject);
+            splash.SplashCoin(5, from, hud.IconTransform.gameObject, 0.5f, null,
+                () => hud.ShowVFX(), null);
         }
 
         private void OnDestroy()
@@ -114,6 +108,9 @@ namespace _Game.Scripts.Meta
             SetVisible(true);
 
             AudioService.Instance?.PlayPopupOpen();
+
+            // Bắn coin lên HUD ngay khi popup hiện lên (không đợi bấm OK).
+            PlayCoinFly();
 
             if (cardRect != null)
             {

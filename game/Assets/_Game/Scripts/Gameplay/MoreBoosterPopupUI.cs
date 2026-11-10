@@ -289,7 +289,7 @@ namespace _Game.Scripts.Gameplay
                 return;
             }
 
-            AudioService.Instance?.PlayBoosterBuy();
+            AudioService.Instance?.PlayBuyBooster();
             Debug.Log($"[MoreBoosterPopupUI] Bought {_currentType} with coins. Remaining: {CoinManager.Instance.GetBalance()}");
             GrantAndUse();
         }
