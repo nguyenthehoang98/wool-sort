@@ -21,6 +21,7 @@ namespace _Game.Scripts.Core
         {
             EnsureEconomy();
             EnsureShop();
+            EnsureDailyReward();
         }
 
         /// <summary>Đảm bảo EconomyService tồn tại và đã init (trả về null nếu không tạo được).</summary>
@@ -36,5 +37,9 @@ namespace _Game.Scripts.Core
             if (ShopService.Instance != null) return ShopService.Instance;
             return new GameObject("ShopService").AddComponent<ShopService>();
         }
-    }
-}
+        /// <summary>Đảm bảo DailyRewardService tồn tại (trả về null nếu không tạo được).</summary>
+        public static DailyRewardService EnsureDailyReward()
+        {
+            if (DailyRewardService.Instance != null) return DailyRewardService.Instance;
+            return new GameObject("DailyRewardService").AddComponent<DailyRewardService>();
+        }
