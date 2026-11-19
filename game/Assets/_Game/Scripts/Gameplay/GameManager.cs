@@ -646,6 +646,10 @@ namespace _Game.Scripts.Gameplay
         private void LoseLevel(Slot slot)
         {
             isGameOver = true;
+            // Đóng băng in ảnh NGAY khi thua: popup Lose hiển thị RenderTexture live của
+            // board nên nếu để coroutine in tiếp, ảnh trong popup sẽ "chạy màu" sau khi mở.
+            // Dừng ở đây cũng làm mốc tiến trình (tỷ lệ pixel đã in) khớp đúng ảnh.
+            JamImage.Instance?.FreezePrinting();
             Debug.Log("=== YOU LOSE LEVEL ===");
             GameUIController.Instance.HandleLoseDelayed(slot);
         }
@@ -1203,6 +1207,14 @@ namespace _Game.Scripts.Gameplay
 
         public float GetGameProgress()
         {
+            // Tiến trình = tỷ lệ pixel đã in trên ảnh level, khớp đúng ảnh hiển thị.
+            // Trước đây tính theo số len còn lại nên lệch với ảnh (len đã vào box nhưng
+            // box chưa in xong vẫn bị tính là xong).
+            if (JamImage.Instance != null && JamImage.Instance.IsInitialized)
+                return JamImage.Instance.PrintedFraction;
+
+            if (currentLevelHolder == null || currentLevelHolder.totalYarnPartCount <= 0)
+                return 0f;
             var gameProgress = 1f - (float)countYarnRemain / (float)currentLevelHolder.totalYarnPartCount;
             return gameProgress;
         }

@@ -44,6 +44,20 @@ namespace _Game.Scripts
         /// </summary>
         public int PrintedBatchCount { get; private set; }
 
+        /// <summary>Đã Initialize cho level hiện tại chưa.</summary>
+        public bool IsInitialized => initialized;
+
+        // Số ô đã thực sự tô màu (in xong), không tính ô mới reserve.
+        private int _printedCellCount;
+
+        /// <summary>
+        /// Tỷ lệ pixel đã in trên tổng số ô của ảnh level (0..1).
+        /// Dùng làm tiến trình hiển thị trên popup Lose để khớp đúng ảnh đang thấy.
+        /// </summary>
+        public float PrintedFraction => initialized && revealedCells != null && revealedCells.Length > 0
+            ? Mathf.Clamp01((float)_printedCellCount / revealedCells.Length)
+            : 0f;
+
         /// <summary>
         /// Hệ số tăng tốc khi in. Khi win, set > 1 để các pixel còn lại chạy nhanh
         /// (thay vì bắt người chơi đợi in hết mới thấy WinPopup).
@@ -70,6 +84,7 @@ namespace _Game.Scripts
             StopAllCoroutines();
             _activePrintCount = 0;
             PrintedBatchCount = 0;
+            _printedCellCount = 0;
             // Level mới: trả tốc độ in về mặc định (lượt win trước có thể đã tăng tốc).
             PrintSpeedMultiplier = 1f;
 
@@ -158,6 +173,17 @@ namespace _Game.Scripts
         public void ResetPrintingSpeed()
         {
             PrintSpeedMultiplier = 1f;
+        }
+
+        /// <summary>
+        /// Dừng ngay mọi lượt in pixel và giữ ảnh đúng trạng thái đã in tại thời điểm gọi.
+        /// Gọi khi thua: popup Lose hiển thị RenderTexture live của board, nếu không dừng
+        /// thì pixel vẫn in tiếp sau khi popup mở ("chạy màu" trong ảnh).
+        /// </summary>
+        public void FreezePrinting()
+        {
+            StopAllCoroutines();
+            _activePrintCount = 0;
         }
 
         public bool Print(YarnColor color, float timePerPixel)
@@ -250,6 +276,7 @@ namespace _Game.Scripts
                         runtimePixels[index] = targetTexture.GetPixel(sx, sy);
                     }
                     revealedCells[index] = true;
+                    _printedCellCount++;
                     runtimeTexture.SetPixel(cell.x, cell.y, runtimePixels[index]);
                     runtimeTexture.Apply(false, false);
 

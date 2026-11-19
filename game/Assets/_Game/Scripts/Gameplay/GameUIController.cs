@@ -364,6 +364,9 @@ namespace _Game.Scripts.Gameplay
                 Debug.LogWarning("[GameUIController] LosePopup chưa có trong scene.", this);
                 return;
             }
+            // Chốt an toàn (gồm cả hotkey test L): đóng băng in ảnh trước khi đọc tiến trình
+            // để % và ảnh RenderTexture trong popup khớp nhau, không tiếp tục "chạy màu".
+            JamImage.Instance?.FreezePrinting();
             int level = GameManager.Instance != null ? GameManager.Instance.CurrentLevel : 1;
             float progress = GameManager.Instance != null ? GameManager.Instance.GetGameProgress() : 0.5f;
             losePopup.Show(level, progress);
