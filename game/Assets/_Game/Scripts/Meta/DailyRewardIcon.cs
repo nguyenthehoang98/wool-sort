@@ -10,14 +10,20 @@ namespace _Game.Scripts.Meta
         public Image icon;
         public TextMeshProUGUI amount;
 
-        public void Set(Sprite sprite, string amountText)
+        public void Set(Sprite sprite, string amountText, bool dimmed = false)
         {
             if (icon != null)
             {
                 icon.sprite = sprite;
-                icon.color = sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+                if (sprite == null) icon.color = new Color(1f, 1f, 1f, 0f);
+                else icon.color = dimmed ? new Color(1f, 1f, 1f, 0.45f) : Color.white;
             }
-            if (amount != null) amount.text = amountText;
+
+            if (amount != null)
+            {
+                amount.text = amountText;
+                amount.alpha = dimmed ? 0.45f : 1f;
+            }
         }
     }
 }

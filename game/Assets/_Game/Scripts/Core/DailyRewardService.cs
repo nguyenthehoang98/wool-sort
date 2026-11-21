@@ -53,12 +53,10 @@ namespace _Game.Scripts.Core
         {
             if (_lastClaimUtcTicks <= 0) { _streak = Mathf.Clamp(_streak, 0, 6); return; }
 
-            DateTime last;
-            try { last = DateTime.FromBinary(_lastClaimUtcTicks).ToUniversalTime().Date; }
-            catch { _streak = 0; _lastClaimUtcTicks = 0; Persist(); return; }
+            var last = LocalDateFromTicks(_lastClaimUtcTicks);
+            if (last == DateTime.MinValue) { _streak = 0; _lastClaimUtcTicks = 0; Persist(); return; }
 
-            var today = DateTime.UtcNow.Date;
-            var days = (int)(today - last).TotalDays;
+            var days = (DateTime.Now.Date - last).Days;
             if (days >= 2)
             {
                 _streak = 0;
@@ -67,7 +65,8 @@ namespace _Game.Scripts.Core
             }
             else if (days < 0)
             {
-                _lastClaimUtcTicks = today.Ticks;
+                // Tick nằm ở tương lai (đổi giờ máy) → coi như chưa claim để không khoá nút.
+                _lastClaimUtcTicks = 0;
                 Persist();
             }
         }
@@ -76,20 +75,29 @@ namespace _Game.Scripts.Core
         public bool CanClaimToday()
         {
             if (_lastClaimUtcTicks <= 0) return true;
-            DateTime last;
-            try { last = DateTime.FromBinary(_lastClaimUtcTicks).ToUniversalTime().Date; }
-            catch { return true; }
-            return last != DateTime.UtcNow.Date;
+            return LocalDateFromTicks(_lastClaimUtcTicks) != DateTime.Now.Date;
+        }
+
+        /// <summary>
+        /// Tick được lưu bằng <see cref="DateTime.UtcNow"/>.Ticks nên phải đọc lại đúng kind UTC
+        /// rồi đổi sang ngày local (reset nửa đêm giờ máy).
+        /// Dùng FromBinary() sẽ hiểu nhầm thành giờ local và lệch ngày (VN UTC+7).
+        /// </summary>
+        private static DateTime LocalDateFromTicks(long ticks)
+        {
+            if (ticks <= 0) return DateTime.MinValue;
+            try { return new DateTime(ticks, DateTimeKind.Utc).ToLocalTime().Date; }
+            catch { return DateTime.MinValue; }
         }
 
         /// <summary>Index ngày có thể claim/đang chờ trong chu kỳ 7 ngày.</summary>
         public int TodayIndex => Mathf.Clamp(_streak, 0, 6);
 
-        /// <summary>Thời gian còn lại tới lần claim tiếp theo (UTC ngày mới).</summary>
+        /// <summary>Thời gian còn lại tới lần claim tiếp theo (nửa đêm giờ máy).</summary>
         public TimeSpan TimeUntilNextClaim()
         {
             if (CanClaimToday()) return TimeSpan.Zero;
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var next = now.Date.AddDays(1);
             var remain = next - now;
             return remain < TimeSpan.Zero ? TimeSpan.Zero : remain;

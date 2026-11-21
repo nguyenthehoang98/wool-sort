@@ -28,8 +28,6 @@ namespace _Game.Scripts.Meta
         [SerializeField] private GameObject card;
         [SerializeField] private RectTransform cardRect;
 
-        private ShopItem _item;
-
         private void Awake()
         {
             Instance = this;
@@ -42,16 +40,16 @@ namespace _Game.Scripts.Meta
 
         /// <summary>
         /// Bắn coin từ popup lên HUD coin (giống lúc Win). Chạy NGAY khi popup hiện lên
-        /// (lúc mua xong), KHÔNG đợi bấm xác nhận. Chỉ áp dụng cho gói coin.
+        /// (lúc mua xong), KHÔNG đợi bấm xác nhận.
         /// </summary>
         private void PlayCoinFly()
         {
+            // HUD coin có thể nằm trong page đang tắt (tab Shop) -> tìm cả inactive.
             var hud = CoinHUD.Instance;
-            bool isCoinPack = _item != null && !_item.IsBooster && _item.coinAmount > 0;
-            if (!isCoinPack || hud == null) return;
+            if (hud == null) hud = FindFirstObjectByType<CoinHUD>(FindObjectsInactive.Include);
 
             var splash = SplashItem.HasInstance ? SplashItem.Instance : null;
-            if (splash == null) return;
+            if (hud == null || splash == null) return;
 
             var from = cardRect != null ? cardRect.gameObject
                      : (card != null ? card : gameObject);
@@ -95,22 +93,43 @@ namespace _Game.Scripts.Meta
         {
             if (item == null) return;
 
-            _item = item;
+            bool coinFly = !item.IsBooster && item.coinAmount > 0;
+            ShowReward(item.icon, "Purchase Complete!", item.displayName, BuildAmount(item), coinFly);
+        }
 
+        /// <summary>
+        /// Hiện popup nhận thưởng với nội dung tuỳ ý (dùng cho Daily Reward, giữ đúng
+        /// phong cách popup mua đồ). <paramref name="playCoinFly"/> bật hiệu ứng coin bay.
+        /// </summary>
+        public void ShowReward(Sprite sprite, string title, string name, string amount, bool playCoinFly)
+        {
             // GameObject gốc có thể đang tắt (đặt vậy trong scene) -> bật lên.
             if (!gameObject.activeSelf) gameObject.SetActive(true);
 
-            if (icon != null) icon.sprite = item.icon;
-            if (txtTitle != null) txtTitle.text = "Purchase Complete!";
-            if (txtName != null) txtName.text = item.displayName;
-            if (txtAmount != null) txtAmount.text = BuildAmount(item);
+            // Popup mở từ một popup khác (Daily Reward) -> phải nằm trên cùng.
+            transform.SetAsLastSibling();
+
+            if (icon != null)
+            {
+                icon.sprite = sprite;
+                icon.enabled = sprite != null;
+            }
+            if (txtTitle != null) txtTitle.text = title;
+            if (txtName != null) txtName.text = name;
+            if (txtAmount != null)
+            {
+                txtAmount.text = amount;
+                txtAmount.enableAutoSizing = true;
+                txtAmount.fontSizeMin = 24;
+                txtAmount.fontSizeMax = 80;
+            }
 
             SetVisible(true);
 
             AudioService.Instance?.PlayPopupOpen();
 
             // Bắn coin lên HUD ngay khi popup hiện lên (không đợi bấm OK).
-            PlayCoinFly();
+            if (playCoinFly) PlayCoinFly();
 
             if (cardRect != null)
             {

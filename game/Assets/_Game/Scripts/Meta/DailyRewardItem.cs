@@ -6,13 +6,15 @@ namespace _Game.Scripts.Meta
     using UnityEngine.UI;
 
     /// <summary>Một ô ngày trong Daily Reward popup (7 ô). Hiển thị các phần thưởng của ngày đó + trạng thái.
-    /// Kéo ref trong prefab DailyRewardItem.</summary>
+    /// 3 trạng thái: khoá / có thể nhận / đã nhận. Kéo ref trong prefab DailyRewardItem.</summary>
     public class DailyRewardItem : MonoBehaviour
     {
-        [Header("State overlays (tùy chọn)")]
-        public GameObject normalState;
-        public GameObject todayState;
-        public GameObject missedState;
+        [Header("State")]
+        public Image background;       // Image nền của ô (Slot_Daily_1A)
+        public GameObject todayState;  // viền "có thể nhận" (Slot_Daily_1B)
+        public GameObject lockMask;    // lớp phủ tối cho trạng thái khoá
+        public GameObject lockMark;    // icon ổ khoá
+        public GameObject claimedMark; // dấu tick đã nhận
 
         [Header("Reward display")]
         public Transform rewardContainer;
@@ -23,21 +25,32 @@ namespace _Game.Scripts.Meta
         public Sprite cleanIcon;
         public Sprite magicBoxIcon;
 
-        [Header("Claimed")]
-        public GameObject claimedMark;
-
         [Header("Text")]
         public TextMeshProUGUI txtDay;
 
         public int DayIndex { get; private set; }
 
-        public void Setup(int dayIndex, DailyRewardDay day, bool isToday, bool isClaimed, bool isMissed)
+        public void Setup(int dayIndex, DailyRewardDay day, bool isToday, bool isClaimed, bool isLocked)
         {
             DayIndex = dayIndex;
+            ResolveRefs();
 
-            if (txtDay != null) txtDay.text = $"DAY {dayIndex + 1}";
+            if (txtDay != null)
+            {
+                txtDay.text = $"DAY {dayIndex + 1}";
+                txtDay.color = isLocked ? new Color(0.72f, 0.72f, 0.72f, 1f) : Color.white;
+            }
 
-            // Dựng lại icon phần thưởng
+            // Nền: khoá thì làm xám, còn lại giữ màu gốc; hôm nay phủ viền xanh phía dưới nội dung.
+            if (background != null)
+                background.color = isLocked ? new Color(0.62f, 0.62f, 0.62f, 1f) : Color.white;
+
+            if (todayState != null) todayState.SetActive(isToday);
+            if (lockMask != null) lockMask.SetActive(isLocked);
+            if (lockMark != null) lockMark.SetActive(isLocked);
+            if (claimedMark != null) claimedMark.SetActive(isClaimed);
+
+            // Dựng lại icon phần thưởng — LUÔN hiện (kể cả đã nhận) để thấy nội dung quà.
             if (rewardContainer != null)
             {
                 for (int i = rewardContainer.childCount - 1; i >= 0; i--)
@@ -48,17 +61,36 @@ namespace _Game.Scripts.Meta
                     foreach (var r in day.rewards)
                     {
                         var go = Instantiate(rewardIconPrefab, rewardContainer);
-                        go.Set(r.icon != null ? r.icon : IconFor(r.rewardId), AmountText(r));
+                        go.Set(r.icon != null ? r.icon : IconFor(r.rewardId), AmountText(r), isLocked);
                     }
                 }
             }
+        }
 
-            if (normalState != null) normalState.SetActive(!isToday && !isMissed);
-            if (todayState != null) todayState.SetActive(isToday);
-            if (missedState != null) missedState.SetActive(isMissed);
+        /// <summary>Tự nối ref theo tên con nếu prefab bị mất tham chiếu (Unity re-save / đổi cấu trúc).</summary>
+        private void ResolveRefs()
+        {
+            if (background == null) background = GetComponent<Image>();
+            if (todayState == null) todayState = Child("TodayState");
+            if (lockMask == null) lockMask = Child("LockMask");
+            if (lockMark == null) lockMark = Child("LockMark");
+            if (claimedMark == null) claimedMark = Child("ClaimedMark");
+            if (rewardContainer == null)
+            {
+                var t = transform.Find("RewardContainer");
+                if (t != null) rewardContainer = t;
+            }
+            if (txtDay == null)
+            {
+                var t = transform.Find("TxtDay");
+                if (t != null) txtDay = t.GetComponent<TextMeshProUGUI>();
+            }
+        }
 
-            if (claimedMark != null) claimedMark.SetActive(isClaimed);
-            if (rewardContainer != null) rewardContainer.gameObject.SetActive(!isClaimed);
+        private GameObject Child(string childName)
+        {
+            var t = transform.Find(childName);
+            return t != null ? t.gameObject : null;
         }
 
         private Sprite IconFor(string rewardId) => rewardId switch

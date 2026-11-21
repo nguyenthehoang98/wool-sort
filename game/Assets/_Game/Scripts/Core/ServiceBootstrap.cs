@@ -43,3 +43,5 @@ namespace _Game.Scripts.Core
             if (DailyRewardService.Instance != null) return DailyRewardService.Instance;
             return new GameObject("DailyRewardService").AddComponent<DailyRewardService>();
         }
+    }
+}

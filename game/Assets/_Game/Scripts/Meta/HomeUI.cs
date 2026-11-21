@@ -2,6 +2,7 @@ namespace _Game.Scripts.Meta
 {
     using System;
     using _Game.Scripts.Core;
+    using _Game.Scripts.UI;
     using _Game.Scripts.Utils;
     using TMPro;
     using UnityEngine;
@@ -29,6 +30,8 @@ namespace _Game.Scripts.Meta
 
         [Header("Coin HUD (trên cùng)")]
         [SerializeField] private TMP_Text txtCoin;
+        [Tooltip("Chỉ hiện ở tab Shop; để trống sẽ tự tìm trong scene.")]
+        [SerializeField] private CoinHUD coinHud;
 
         [Header("Nút Settings (ẩn khi ở tab Shop)")]
         [Tooltip("Để trống sẽ tự tìm SettingsButton trong scene.")]
@@ -66,6 +69,8 @@ namespace _Game.Scripts.Meta
 
             if (settingsButton == null)
                 settingsButton = FindObjectOfType<SettingsButton>(true);
+            if (coinHud == null)
+                coinHud = FindFirstObjectByType<CoinHUD>(FindObjectsInactive.Include);
         }
 
         private void OnDestroy()
@@ -135,6 +140,8 @@ namespace _Game.Scripts.Meta
             if (homePage != null) homePage.SetActive(tab == HomeTab.Home);
             if (shopPage != null) shopPage.SetActive(tab == HomeTab.Shop);
             if (comingSoonPage != null) comingSoonPage.SetActive(tab == HomeTab.ComingSoon);
+            // HUD coin chỉ hiện ở tab Shop; tab Home/Coming Soon thì tắt.
+            if (coinHud != null) coinHud.gameObject.SetActive(tab == HomeTab.Shop);
             // Ẩn nút Settings khi ở tab Shop, các tab còn lại bật lại.
             if (settingsButton != null) settingsButton.gameObject.SetActive(tab != HomeTab.Shop);
             // ShopUI tự Refresh() trong OnEnable khi ShopPage được bật -> không

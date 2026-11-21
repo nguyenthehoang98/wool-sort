@@ -76,7 +76,51 @@ namespace _Game.Scripts.Meta
 
             AudioService.Instance?.PlayCoinCollect();
             Refresh(); // giữ popup mở để thấy tick
+            ShowRewardPopup(claimed);
         }
+
+        /// <summary>Popup nhận thưởng kiểu mua đồ (icon + tên ngày + số lượng quà) + coin bay.</summary>
+        private void ShowRewardPopup(int claimedIndex)
+        {
+            var day = config != null ? config.GetDay(claimedIndex) : null;
+            if (day == null || day.rewards == null || day.rewards.Count == 0) return;
+
+            Sprite iconSprite = null;
+            bool hasCoin = false;
+            var parts = new List<string>();
+
+            foreach (var r in day.rewards)
+            {
+                if (r == null) continue;
+                if (r.rewardId == "coin")
+                {
+                    hasCoin = true;
+                    parts.Add($"+{r.amount} {(r.amount == 1 ? "coin" : "coins")}");
+                }
+                else
+                {
+                    parts.Add($"x{r.amount} {BoosterName(r.rewardId)}");
+                }
+
+                if (iconSprite == null && r.icon != null) iconSprite = r.icon;
+            }
+
+            if (parts.Count == 0) return;
+
+            var popup = PurchaseSuccessPopup.Acquire();
+            if (popup == null) return;
+
+            popup.ShowReward(iconSprite, "Daily Reward!",
+                $"Day {claimedIndex + 1}", string.Join("  ", parts), hasCoin);
+        }
+
+        private static string BoosterName(string rewardId) => rewardId switch
+        {
+            "addslot" => "Add Slot",
+            "clean" => "Clean",
+            "magicbox" => "Magic Box",
+            _ => rewardId
+        };
 
         private void Refresh()
         {
@@ -94,6 +138,7 @@ namespace _Game.Scripts.Meta
 
             int streak = svc != null ? Mathf.Clamp(svc.Streak, 0, 6) : 0;
             bool canClaim = svc != null && svc.CanClaimToday();
+            // Chưa claim: streak là ngày sắp nhận. Đã claim: ngày vừa nhận là streak - 1.
             int todayIndex = canClaim ? streak : (streak + 6) % 7;
 
             for (int i = 0; i < _items.Count; i++)
@@ -105,22 +150,11 @@ namespace _Game.Scripts.Meta
                 if (!inCycle) continue;
 
                 var day = config != null ? config.GetDay(i) : null;
-                bool isToday = i == streak;
-                bool claimed;
-                if (canClaim)
-                {
-                    // streak = ngày tiếp theo có thể claim
-                    claimed = streak == 0 ? false : i < streak;
-                }
-                else
-                {
-                    // đã claim hôm nay: streak đã tăng sang ngày kế tiếp
-                    int lastClaimed = (streak + 6) % 7;
-                    claimed = streak == 0 ? true : i <= lastClaimed;
-                    isToday = i == streak; // ngày tiếp theo, đang chờ
-                }
+                bool isToday = canClaim && i == todayIndex;
+                bool claimed = canClaim ? i < todayIndex : i <= todayIndex;
+                bool isLocked = !claimed && !isToday;
 
-                item.Setup(i, day, isToday, claimed, false);
+                item.Setup(i, day, isToday, claimed, isLocked);
             }
 
             if (btnClaim != null) btnClaim.gameObject.SetActive(canClaim);

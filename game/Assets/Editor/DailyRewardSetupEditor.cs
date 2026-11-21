@@ -24,6 +24,8 @@ public static class DailyRewardSetupEditor
 
     private static Sprite Art(string name) => AssetDatabase.LoadAssetAtPath<Sprite>($"{ArtDir}/{name}.png");
     private static Sprite Res(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    private static TMP_FontAsset FontAsset()
+        => AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Game/Fonts/LilitaOne-Regular SDF.asset");
 
     [MenuItem("WoolSort/Daily Reward/1. Build Config + Prefabs")]
     public static void BuildAll()
@@ -96,9 +98,9 @@ public static class DailyRewardSetupEditor
 
         // giá trị lấy từ game gốc (chỉ coin + booster; bỏ heart-time)
         var coin = Res("Assets/_Game/Resources/Textures/icon_coin.png");
-        var slot = Res("Assets/_Game/Resources/BoosterUI/Icon_Slot_3.png");
-        var broom = Res("Assets/_Game/Resources/BoosterUI/Icon_Broom_2.png");
-        var spool = Res("Assets/_Game/Resources/BoosterUI/Icon_Spool_2.png");
+        var slot = Res("Assets/_Game/Resources/Textures/booster_1.png");
+        var broom = Res("Assets/_Game/Resources/Textures/booster_3.png");
+        var spool = Res("Assets/_Game/Resources/Textures/booster_2.png");
 
         DailyRewardDay D(params DailyRewardEntry[] es) => new DailyRewardDay { rewards = new List<DailyRewardEntry>(es) };
         DailyRewardEntry E(string id, int amt, Sprite ic) => new DailyRewardEntry { rewardId = id, amount = amt, icon = ic };
@@ -144,6 +146,7 @@ public static class DailyRewardSetupEditor
     {
         var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
         t.text = text;
+        t.font = FontAsset();
         t.fontSize = size;
         t.alignment = TextAlignmentOptions.Center;
         t.color = Color.white;
@@ -179,6 +182,7 @@ public static class DailyRewardSetupEditor
 
         var amtRt = NewUI("Amount", root);
         comp.amount = AddText(amtRt, "0", 34f, new Vector2(120f, 40f), new Vector2(0f, -58f));
+        comp.amount.color = new Color(0.42f, 0.26f, 0.12f, 1f);
 
         return Save(root, UiDir, "DailyRewardIcon");
     }
@@ -189,9 +193,26 @@ public static class DailyRewardSetupEditor
         root.sizeDelta = new Vector2(230f, 250f);
         var bg = AddImage(root, Art("Slot_Daily_1A"), sliced: true);
         var comp = root.gameObject.AddComponent<DailyRewardItem>();
+        comp.background = bg;
+
+        // Overlay nền phải nằm dưới nội dung (thêm trước TxtDay/RewardContainer).
+        var today = NewUI("TodayState", root);
+        today.sizeDelta = new Vector2(230f, 250f);
+        AddImage(today, Art("Slot_Daily_1B"), sliced: true);
+        today.gameObject.SetActive(false);
+        comp.todayState = today.gameObject;
 
         var txtRt = NewUI("TxtDay", root);
         comp.txtDay = AddText(txtRt, "DAY 1", 30f, new Vector2(200f, 40f), new Vector2(0f, 92f));
+
+        // Lớp masking tối chỉ bật khi ngày đó đang bị khoá.
+        var lockMask = NewUI("LockMask", root);
+        lockMask.sizeDelta = new Vector2(230f, 250f);
+        var lockMaskImg = AddImage(lockMask, Res("Assets/_Game/Resources/Textures/Slot_Daily_masking.png"));
+        lockMaskImg.color = new Color(0f, 0f, 0f, 0.7647059f);
+        lockMaskImg.preserveAspect = false;
+        lockMask.gameObject.SetActive(false);
+        comp.lockMask = lockMask.gameObject;
 
         var rc = NewUI("RewardContainer", root);
         rc.sizeDelta = new Vector2(200f, 110f);
@@ -205,27 +226,23 @@ public static class DailyRewardSetupEditor
         comp.rewardIconPrefab = iconPrefab.GetComponent<DailyRewardIcon>();
 
         var tick = NewUI("ClaimedMark", root);
-        tick.sizeDelta = new Vector2(90f, 90f);
+        tick.sizeDelta = new Vector2(52f, 52f);
+        tick.anchoredPosition = new Vector2(82f, 88f);
         AddImage(tick, Art("Icon_Check"));
         tick.gameObject.SetActive(false);
         comp.claimedMark = tick.gameObject;
 
-        var today = NewUI("TodayState", root);
-        today.sizeDelta = new Vector2(230f, 250f);
-        AddImage(today, Art("Slot_Daily_1B"), sliced: true);
-        today.gameObject.SetActive(false);
-        comp.todayState = today.gameObject;
-
-        var missed = NewUI("MissedState", root);
-        missed.sizeDelta = new Vector2(230f, 250f);
-        AddImage(missed, Art("Slot_Daily_1D"), sliced: true);
-        missed.gameObject.SetActive(false);
-        comp.missedState = missed.gameObject;
+        var lockMark = NewUI("LockMark", root);
+        lockMark.sizeDelta = new Vector2(96f, 96f);
+        lockMark.anchoredPosition = new Vector2(0f, 10f);
+        AddImage(lockMark, Res("Assets/_Game/Resources/Textures/icon_lock.png"));
+        lockMark.gameObject.SetActive(false);
+        comp.lockMark = lockMark.gameObject;
 
         comp.coinIcon = Res("Assets/_Game/Resources/Textures/icon_coin.png");
-        comp.addSlotIcon = Res("Assets/_Game/Resources/BoosterUI/Icon_Slot_3.png");
-        comp.cleanIcon = Res("Assets/_Game/Resources/BoosterUI/Icon_Broom_2.png");
-        comp.magicBoxIcon = Res("Assets/_Game/Resources/BoosterUI/Icon_Spool_2.png");
+        comp.addSlotIcon = Res("Assets/_Game/Resources/Textures/booster_1.png");
+        comp.cleanIcon = Res("Assets/_Game/Resources/Textures/booster_3.png");
+        comp.magicBoxIcon = Res("Assets/_Game/Resources/Textures/booster_2.png");
 
         return Save(root, UiDir, "DailyRewardItem");
     }
@@ -274,6 +291,12 @@ public static class DailyRewardSetupEditor
         grid.childAlignment = TextAnchor.MiddleCenter;
         comp.dayContainer = dc;
         comp.dayItemPrefab = itemPrefab.GetComponent<DailyRewardItem>();
+
+        // Countdown tới lượt nhận kế tiếp
+        var countdown = NewUI("Countdown", card);
+        comp.txtCountdown = AddText(countdown, "Claim now!", 34f,
+            new Vector2(800f, 60f), new Vector2(0f, 470f));
+        comp.txtCountdown.color = new Color(0.55f, 0.22f, 0.02f, 1f);
 
         // BtnClaim
         var claim = NewUI("BtnClaim", card);
